@@ -1,0 +1,161 @@
+import { useState } from 'react'
+import ChemicalSearch from './ChemicalSearch'
+
+const UNITS = ['kg', 'L', 'pct_weight', 'pct_volume', 'g', 'mL', 'lb', 'gal']
+const UNIT_LABELS = {
+  kg: 'kg', L: 'L', pct_weight: '% wt', pct_volume: '% vol',
+  g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
+}
+
+export default function MixtureBuilder({ components, onChange }) {
+  const [qty, setQty] = useState('')
+  const [unit, setUnit] = useState('kg')
+  const [customName, setCustomName] = useState('')
+  const [selectedChem, setSelectedChem] = useState(null)
+  const [overrides, setOverrides] = useState({ flash_point: '', ph: '', reactive: false })
+  const [showOverrides, setShowOverrides] = useState(false)
+
+  const handleAdd = () => {
+    if (!qty || isNaN(parseFloat(qty))) return
+    if (!selectedChem && !customName.trim()) return
+
+    const comp = {
+      chemical: selectedChem ? selectedChem.id : null,
+      custom_name: selectedChem ? '' : customName.trim(),
+      quantity: parseFloat(qty),
+      unit,
+      override_flash_point_c: overrides.flash_point !== '' ? parseFloat(overrides.flash_point) : null,
+      override_ph: overrides.ph !== '' ? parseFloat(overrides.ph) : null,
+      override_is_reactive: overrides.reactive,
+      _displayName: selectedChem ? selectedChem.name : customName.trim(),
+      _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
+    }
+    onChange([...components, comp])
+    setSelectedChem(null)
+    setCustomName('')
+    setQty('')
+    setUnit('kg')
+    setOverrides({ flash_point: '', ph: '', reactive: false })
+    setShowOverrides(false)
+  }
+
+  const handleRemove = (index) => {
+    onChange(components.filter((_, i) => i !== index))
+  }
+
+  return (
+    <div>
+      {components.length > 0 && (
+        <div className="table-wrap" style={{ marginBottom: '1.25rem' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Chemical</th>
+                <th>EPA Code</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {components.map((comp, i) => (
+                <tr key={i}>
+                  <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
+                  <td>
+                    {comp._epaCode
+                      ? <span className="badge badge-warning">{comp._epaCode}</span>
+                      : <span style={{ color: '#9ca3af' }}>—</span>}
+                  </td>
+                  <td>{comp.quantity}</td>
+                  <td>{UNIT_LABELS[comp.unit] || comp.unit}</td>
+                  <td>
+                    <button className="btn btn-danger" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+                      onClick={() => handleRemove(i)}>✕</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div style={{ background: '#f9fafb', borderRadius: 8, padding: '1rem', border: '1.5px solid #e5e7eb' }}>
+        <p style={{ fontWeight: 700, marginBottom: '0.75rem', color: '#166534' }}>Add Chemical</p>
+
+        <div className="form-group">
+          <label>Search Chemical Database</label>
+          <ChemicalSearch onSelect={(chem) => { setSelectedChem(chem); setCustomName('') }} />
+          {selectedChem && (
+            <div style={{ marginTop: '0.4rem', padding: '0.4rem 0.75rem', background: '#f0fdf4', borderRadius: 6, fontSize: '0.88rem' }}>
+              ✅ <strong>{selectedChem.name}</strong>
+              {selectedChem.epa_waste_code && <> · EPA: <strong>{selectedChem.epa_waste_code}</strong></>}
+              <button onClick={() => setSelectedChem(null)} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '0.8rem' }}>✕ Clear</button>
+            </div>
+          )}
+        </div>
+
+        {!selectedChem && (
+          <div className="form-group">
+            <label>— or enter custom chemical name —</label>
+            <input className="form-control" value={customName} onChange={e => setCustomName(e.target.value)}
+              placeholder="e.g., Waste Solvent Mixture" />
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+            <label>Quantity</label>
+            <input className="form-control" type="number" min="0" step="any"
+              value={qty} onChange={e => setQty(e.target.value)} placeholder="0" />
+          </div>
+          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+            <label>Unit</label>
+            <select className="form-control" value={unit} onChange={e => setUnit(e.target.value)}>
+              {UNITS.map(u => <option key={u} value={u}>{UNIT_LABELS[u]}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '0.75rem' }}>
+          <button
+            type="button"
+            style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}
+            onClick={() => setShowOverrides(!showOverrides)}
+          >
+            {showOverrides ? '▲' : '▼'} Property overrides (flash point, pH, reactivity)
+          </button>
+          {showOverrides && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0 }}>
+                <label style={{ fontSize: '0.85rem' }}>Flash point (°C)</label>
+                <input className="form-control" type="number" step="any" placeholder="e.g., 23"
+                  value={overrides.flash_point}
+                  onChange={e => setOverrides(p => ({ ...p, flash_point: e.target.value }))} />
+              </div>
+              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0 }}>
+                <label style={{ fontSize: '0.85rem' }}>pH value</label>
+                <input className="form-control" type="number" min="0" max="14" step="0.1" placeholder="e.g., 1.5"
+                  value={overrides.ph}
+                  onChange={e => setOverrides(p => ({ ...p, ph: e.target.value }))} />
+              </div>
+              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', paddingTop: '1.6rem' }}>
+                <input type="checkbox" id="ov-reactive" checked={overrides.reactive}
+                  onChange={e => setOverrides(p => ({ ...p, reactive: e.target.checked }))} />
+                <label htmlFor="ov-reactive" style={{ fontSize: '0.85rem', marginBottom: 0 }}>Reactive material</label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          className="btn btn-primary"
+          style={{ marginTop: '1rem' }}
+          onClick={handleAdd}
+          disabled={(!selectedChem && !customName.trim()) || !qty}
+        >
+          + Add to Mixture
+        </button>
+      </div>
+    </div>
+  )
+}
