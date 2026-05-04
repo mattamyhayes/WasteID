@@ -7,7 +7,7 @@ import History from './pages/History'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/WasteID">
       <Navbar />
       <main style={{ minHeight: 'calc(100vh - 60px)', background: '#f5f7f5' }}>
         <Routes>
