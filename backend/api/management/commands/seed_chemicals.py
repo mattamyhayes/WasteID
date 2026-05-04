@@ -164,7 +164,7 @@ class Command(BaseCommand):
              'category': 'P', 'is_acutely_hazardous': True, 'is_toxic': True,
              'is_ignitable': True, 'flash_point_c': -26.0,
              'notes': 'P003 – acrolein; reactive, ignitable, acutely toxic'},
-            {'name': 'Acrylonitrile', 'cas_number': '107-13-1', 'epa_waste_code': 'P003',
+            {'name': 'Acrylonitrile (acutely hazardous)', 'cas_number': '107-13-1', 'epa_waste_code': 'P004',
              'category': 'P', 'is_acutely_hazardous': True, 'is_toxic': True,
              'is_ignitable': True, 'flash_point_c': 0.0,
              'notes': 'P004 – acrylonitrile; ignitable, acutely toxic'},
