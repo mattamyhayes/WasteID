@@ -11,7 +11,8 @@ class ChemicalAdmin(admin.ModelAdmin):
 
 @admin.register(Mixture)
 class MixtureAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at', 'is_discarded']
+    list_display = ['name', 'customer_name', 'customer_location', 'created_at', 'is_discarded']
+    search_fields = ['name', 'customer_name', 'customer_location']
 
 
 @admin.register(MixtureComponent)

@@ -23,6 +23,8 @@ export default function NewDetermination() {
 
   // Step 1
   const [name, setName] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [customerLocation, setCustomerLocation] = useState('')
   const [isDiscarded, setIsDiscarded] = useState(true)
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
@@ -53,6 +55,8 @@ export default function NewDetermination() {
       // Create mixture
       const mixturePayload = {
         name: name.trim(),
+        customer_name: customerName.trim(),
+        customer_location: customerLocation.trim(),
         is_discarded: isDiscarded,
         discard_reason: isDiscarded ? discardReason : '',
         process_description: processDesc,
@@ -112,6 +116,18 @@ export default function NewDetermination() {
             <label>Mixture / Sample Name *</label>
             <input className="form-control" value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label>Customer</label>
+              <input className="form-control" value={customerName} onChange={e => setCustomerName(e.target.value)}
+                placeholder="e.g., Acme Manufacturing" />
+            </div>
+            <div className="form-group">
+              <label>Customer Location</label>
+              <input className="form-control" value={customerLocation} onChange={e => setCustomerLocation(e.target.value)}
+                placeholder="e.g., 123 Industrial Pkwy, Springfield, IL" />
+            </div>
           </div>
           <div className="form-group">
             <label>Is this material being discarded?</label>
@@ -195,8 +211,11 @@ export default function NewDetermination() {
           <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Review & Submit</h2>
           <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: 8 }}>
             <strong>Mixture:</strong> {name}<br />
+            {customerName && <><strong>Customer:</strong> {customerName}<br /></>}
+            {customerLocation && <><strong>Location:</strong> {customerLocation}<br /></>}
             <strong>Discarded:</strong> {isDiscarded ? `Yes (${discardReason})` : 'No'}<br />
             {processDesc && <><strong>Process:</strong> {processDesc}<br /></>}
+            {notes && <><strong>Notes:</strong> {notes}<br /></>}
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <strong>Components ({components.length}):</strong>

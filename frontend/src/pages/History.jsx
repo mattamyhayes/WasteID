@@ -27,6 +27,20 @@ export default function History() {
     setItems(prev => prev.filter(m => m.id !== id))
   }
 
+  const handlePdf = async (mixtureId) => {
+    try {
+      const res = await mixtures.reportPdf(mixtureId)
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `wasteid_report_${mixtureId}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('PDF generation failed.')
+    }
+  }
+
   return (
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -60,6 +74,13 @@ export default function History() {
                   )}
                   {!latestDet && <span className="badge badge-warning">No determination yet</span>}
                 </div>
+                {(m.customer_name || m.customer_location) && (
+                  <div style={{ color: '#374151', fontSize: '0.88rem', marginTop: '0.2rem' }}>
+                    {m.customer_name}
+                    {m.customer_name && m.customer_location && ' · '}
+                    {m.customer_location}
+                  </div>
+                )}
                 <div style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>
                   {m.components?.length ?? 0} component{m.components?.length !== 1 ? 's' : ''} ·
                   Created {new Date(m.created_at).toLocaleDateString()}
@@ -76,6 +97,11 @@ export default function History() {
                   <Link to={`/results/${latestDet.id}`} className="btn btn-secondary" style={{ fontSize: '0.9rem' }}>
                     View Results
                   </Link>
+                )}
+                {latestDet && (
+                  <button className="btn btn-secondary" style={{ fontSize: '0.9rem' }} onClick={() => handlePdf(m.id)}>
+                    📄 PDF
+                  </button>
                 )}
                 <button className="btn btn-danger" style={{ fontSize: '0.9rem' }} onClick={() => handleDelete(m.id)}>
                   Delete
