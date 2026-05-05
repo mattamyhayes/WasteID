@@ -18,7 +18,6 @@ const sortMixtures = (items, sort) => {
     if (!an && bn) return 1
     if (an < bn) return -1
     if (an > bn) return 1
-    // tiebreak on location, then name
     const al = (a.customer_location_name || '').toLowerCase()
     const bl = (b.customer_location_name || '').toLowerCase()
     if (al < bl) return -1
@@ -34,29 +33,6 @@ const sortMixtures = (items, sort) => {
   }
 }
 
-const groupByCustomerAndLocation = (items) => {
-  // Returns: [{ customer, locations: [{ location, mixtures: [] }] }, ...]
-  const customerMap = new Map()
-  for (const m of items) {
-    const cKey = m.customer || `__none_${m.customer_name || ''}`
-    const cName = m.customer_name || '(No customer)'
-    if (!customerMap.has(cKey)) customerMap.set(cKey, { key: cKey, name: cName, locations: new Map() })
-    const cEntry = customerMap.get(cKey)
-
-    const lKey = m.customer_location || `__none_${m.customer_location_name || ''}`
-    const lName = m.customer_location_name || '(No location)'
-    if (!cEntry.locations.has(lKey)) cEntry.locations.set(lKey, { key: lKey, name: lName, mixtures: [] })
-    cEntry.locations.get(lKey).mixtures.push(m)
-  }
-  // Convert to arrays and sort customer & locations alphabetically
-  const customers = Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-  for (const c of customers) {
-    c.locations = Array.from(c.locations.values()).sort((a, b) => a.name.localeCompare(b.name))
-    for (const loc of c.locations) loc.mixtures.sort((a, b) => b.id - a.id)
-  }
-  return customers
-}
-
 function MixtureRow({ m, onDelete, onPdf }) {
   const latestDet = m.determinations?.[m.determinations.length - 1]
   const isHazardous = latestDet?.is_hazardous_waste
@@ -64,6 +40,9 @@ function MixtureRow({ m, onDelete, onPdf }) {
     <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
       <div style={{ flex: 1, minWidth: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.8rem', color: '#4b5563', fontWeight: 600, background: '#f3f4f6', borderRadius: '4px', padding: '0.1rem 0.4rem' }}>
+            #{m.id}
+          </span>
           <strong style={{ fontSize: '1.05rem' }}>{m.name}</strong>
           {m.transaction_id && (
             <span style={{ fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
@@ -112,7 +91,8 @@ export default function History() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState('newest')
-  const [groupByCustomer, setGroupByCustomer] = useState(false)
+  const [customerFilter, setCustomerFilter] = useState('')
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -147,8 +127,43 @@ export default function History() {
     }
   }
 
-  const sorted = useMemo(() => sortMixtures(items, sort), [items, sort])
-  const grouped = useMemo(() => groupByCustomerAndLocation(items), [items])
+  const customerOptions = useMemo(() => {
+    const names = new Set()
+    for (const m of items) {
+      if (m.customer_name) names.add(m.customer_name)
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b))
+  }, [items])
+
+  const filtered = useMemo(() => {
+    let result = items
+    if (customerFilter) {
+      result = result.filter(m => m.customer_name === customerFilter)
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      result = result.filter(m => {
+        const latestDet = m.determinations?.[m.determinations.length - 1]
+        let wasteCodes = ''
+        if (latestDet) {
+          try { wasteCodes = JSON.parse(latestDet.waste_codes || '[]').join(' ') } catch { /* ignore */ }
+        }
+        const searchable = [
+          String(m.id),
+          m.name,
+          m.transaction_id,
+          m.customer_name,
+          m.customer_location_name,
+          new Date(m.created_at).toLocaleDateString(),
+          wasteCodes,
+        ].filter(Boolean).join(' ').toLowerCase()
+        return searchable.includes(q)
+      })
+    }
+    return result
+  }, [items, customerFilter, search])
+
+  const sorted = useMemo(() => sortMixtures(filtered, sort), [filtered, sort])
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
@@ -160,15 +175,30 @@ export default function History() {
       {!loading && items.length > 0 && (
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-            <span style={{ color: '#374151', fontWeight: 600 }}>Sort:</span>
+            <span style={{ color: '#374151', fontWeight: 600 }}>Customer:</span>
             <select className="form-control" style={{ width: 'auto', padding: '0.35rem 0.6rem' }}
-              value={sort} onChange={e => setSort(e.target.value)} disabled={groupByCustomer}>
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}>
+              <option value="">All Customers</option>
+              {customerOptions.map(name => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: '#374151' }}>
-            <input type="checkbox" checked={groupByCustomer} onChange={e => setGroupByCustomer(e.target.checked)} />
-            Group by Customer &amp; Location
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+            <span style={{ color: '#374151', fontWeight: 600 }}>Search:</span>
+            <input
+              type="text"
+              className="form-control"
+              style={{ width: '220px', padding: '0.35rem 0.6rem' }}
+              placeholder="Search by ID, name, code…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+            <span style={{ color: '#374151', fontWeight: 600 }}>Sort:</span>
+            <select className="form-control" style={{ width: 'auto', padding: '0.35rem 0.6rem' }}
+              value={sort} onChange={e => setSort(e.target.value)}>
+              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </label>
         </div>
       )}
@@ -183,29 +213,15 @@ export default function History() {
         </div>
       )}
 
-      {!loading && items.length > 0 && !groupByCustomer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {sorted.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} onPdf={handlePdf} />)}
+      {!loading && items.length > 0 && sorted.length === 0 && (
+        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ color: '#6b7280' }}>No results match your filters.</p>
         </div>
       )}
 
-      {!loading && items.length > 0 && groupByCustomer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {grouped.map(c => (
-            <div key={c.key}>
-              <h2 style={{ color: '#14532d', marginBottom: '0.75rem', fontSize: '1.2rem' }}>{c.name}</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingLeft: '0.5rem' }}>
-                {c.locations.map(loc => (
-                  <div key={loc.key}>
-                    <h3 style={{ color: '#166534', fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>📍 {loc.name}</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {loc.mixtures.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} onPdf={handlePdf} />)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+      {!loading && sorted.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {sorted.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} onPdf={handlePdf} />)}
         </div>
       )}
     </div>
