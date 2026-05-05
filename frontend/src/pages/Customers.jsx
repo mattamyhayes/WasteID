@@ -1,38 +1,15 @@
-import { useEffect, useState } from 'react'
-import { customers as customersApi, customerLocations as locationsApi } from '../api/client'
-
-const emptyCustomer = {
-  name: '',
-  contact_name: '',
-  contact_email: '',
-  contact_phone: '',
-  billing_address: '',
-  notes: '',
-}
-
-const emptyLocation = {
-  name: '',
-  address: '',
-  city: '',
-  state: '',
-  postal_code: '',
-  notes: '',
-}
+import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { customers as customersApi } from '../api/client'
 
 export default function Customers() {
+  const navigate = useNavigate()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-
-  // New customer form state (with multiple locations)
-  const [form, setForm] = useState(emptyCustomer)
-  const [pendingLocations, setPendingLocations] = useState([])
-  const [locForm, setLocForm] = useState(emptyLocation)
-
-  // For existing customers: per-customer "add location" form state
-  const [openLocForms, setOpenLocForms] = useState({})
+  const [search, setSearch] = useState('')
+  const [sortColumn, setSortColumn] = useState('name')
+  const [sortDirection, setSortDirection] = useState('asc')
 
   const load = async () => {
     setLoading(true)
@@ -49,252 +26,178 @@ export default function Customers() {
 
   useEffect(() => { load() }, [])
 
-  const resetNewForm = () => {
-    setForm(emptyCustomer)
-    setPendingLocations([])
-    setLocForm(emptyLocation)
-    setError('')
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
   }
 
-  const addPendingLocation = () => {
-    if (!locForm.name.trim()) { setError('Location name is required.'); return }
-    setPendingLocations(prev => [...prev, { ...locForm, name: locForm.name.trim() }])
-    setLocForm(emptyLocation)
-    setError('')
+  const getSortIndicator = (column) => {
+    if (sortColumn !== column) return ' ↕'
+    return sortDirection === 'asc' ? ' ↑' : ' ↓'
   }
 
-  const removePendingLocation = (idx) => {
-    setPendingLocations(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  const submitNewCustomer = async () => {
-    if (!form.name.trim()) { setError('Customer name is required.'); return }
-    setSubmitting(true)
-    setError('')
-    try {
-      const res = await customersApi.create({ ...form, name: form.name.trim() })
-      const newId = res.data.id
-      for (const loc of pendingLocations) {
-        await locationsApi.create({ ...loc, customer: newId })
+  // Flatten customers with their locations for searching and display
+  const rows = useMemo(() => {
+    const flat = []
+    for (const c of customers) {
+      if (c.locations && c.locations.length > 0) {
+        for (const loc of c.locations) {
+          flat.push({
+            id: `${c.id}-${loc.id}`,
+            customerId: c.id,
+            customerName: c.name,
+            contactName: c.contact_name || '',
+            contactEmail: c.contact_email || '',
+            contactPhone: c.contact_phone || '',
+            locationName: loc.name || '',
+            locationCity: loc.city || '',
+            locationState: loc.state || '',
+          })
+        }
+      } else {
+        flat.push({
+          id: `${c.id}-no-loc`,
+          customerId: c.id,
+          customerName: c.name,
+          contactName: c.contact_name || '',
+          contactEmail: c.contact_email || '',
+          contactPhone: c.contact_phone || '',
+          locationName: '',
+          locationCity: '',
+          locationState: '',
+        })
       }
-      await load()
-      setShowForm(false)
-      resetNewForm()
-    } catch (e) {
-      const detail = e.response?.data
-      setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || 'Failed to create customer.'))
-    } finally {
-      setSubmitting(false)
     }
+    return flat
+  }, [customers])
+
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return rows
+    const term = search.toLowerCase()
+    return rows.filter(r =>
+      r.customerName.toLowerCase().includes(term) ||
+      r.locationName.toLowerCase().includes(term) ||
+      r.locationCity.toLowerCase().includes(term) ||
+      r.locationState.toLowerCase().includes(term)
+    )
+  }, [rows, search])
+
+  const sortedRows = useMemo(() => {
+    const sorted = [...filteredRows]
+    sorted.sort((a, b) => {
+      let aVal = '', bVal = ''
+      switch (sortColumn) {
+        case 'name': aVal = a.customerName; bVal = b.customerName; break
+        case 'contact': aVal = a.contactName; bVal = b.contactName; break
+        case 'email': aVal = a.contactEmail; bVal = b.contactEmail; break
+        case 'phone': aVal = a.contactPhone; bVal = b.contactPhone; break
+        case 'location': aVal = a.locationName; bVal = b.locationName; break
+        case 'city': aVal = a.locationCity; bVal = b.locationCity; break
+        case 'state': aVal = a.locationState; bVal = b.locationState; break
+        default: aVal = a.customerName; bVal = b.customerName;
+      }
+      const cmp = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' })
+      return sortDirection === 'asc' ? cmp : -cmp
+    })
+    return sorted
+  }, [filteredRows, sortColumn, sortDirection])
+
+  const thStyle = {
+    cursor: 'pointer',
+    userSelect: 'none',
+    padding: '0.75rem 0.5rem',
+    textAlign: 'left',
+    borderBottom: '2px solid #d1d5db',
+    color: '#374151',
+    fontWeight: 600,
+    fontSize: '0.88rem',
+    whiteSpace: 'nowrap',
   }
 
-  const addLocationToExisting = async (customerId) => {
-    const data = openLocForms[customerId]
-    if (!data || !data.name?.trim()) { setError('Location name is required.'); return }
-    try {
-      await locationsApi.create({ ...data, name: data.name.trim(), customer: customerId })
-      setOpenLocForms(prev => ({ ...prev, [customerId]: null }))
-      await load()
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to add location.')
-    }
-  }
-
-  const removeLocation = async (locId) => {
-    if (!confirm('Remove this location?')) return
-    await locationsApi.delete(locId)
-    await load()
-  }
-
-  const removeCustomer = async (id) => {
-    if (!confirm('Delete this customer? Existing mixtures will keep their record but lose the customer link.')) return
-    await customersApi.delete(id)
-    await load()
+  const tdStyle = {
+    padding: '0.6rem 0.5rem',
+    borderBottom: '1px solid #e5e7eb',
+    fontSize: '0.9rem',
+    color: '#1f2937',
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 960 }}>
+    <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 1100 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Customers</h1>
-        {!showForm && (
-          <button className="btn btn-primary" onClick={() => { resetNewForm(); setShowForm(true) }}>
-            + Add New Customer
-          </button>
-        )}
+        <button className="btn btn-primary" onClick={() => navigate('/customers/new')}>
+          + Add Customer
+        </button>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {showForm && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ marginBottom: '1rem', color: '#166534' }}>New Customer</h2>
-          <div className="form-group">
-            <label>Customer Name *</label>
-            <input className="form-control" value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g., Acme Manufacturing" />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Contact Name</label>
-              <input className="form-control" value={form.contact_name}
-                onChange={e => setForm({ ...form, contact_name: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Contact Email</label>
-              <input className="form-control" type="email" value={form.contact_email}
-                onChange={e => setForm({ ...form, contact_email: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Contact Phone</label>
-              <input className="form-control" value={form.contact_phone}
-                onChange={e => setForm({ ...form, contact_phone: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Billing Address</label>
-              <input className="form-control" value={form.billing_address}
-                onChange={e => setForm({ ...form, billing_address: e.target.value })} />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Notes</label>
-            <textarea className="form-control" rows={2} value={form.notes}
-              onChange={e => setForm({ ...form, notes: e.target.value })} />
-          </div>
-
-          <h3 style={{ color: '#166534', marginTop: '1rem', marginBottom: '0.5rem' }}>Locations</h3>
-          <p style={{ color: '#6b7280', fontSize: '0.88rem', marginBottom: '0.75rem' }}>
-            Add one or more locations for this customer. You can add more locations later.
-          </p>
-
-          {pendingLocations.length > 0 && (
-            <ul style={{ marginBottom: '1rem', paddingLeft: '1.25rem' }}>
-              {pendingLocations.map((loc, i) => (
-                <li key={i} style={{ marginBottom: '0.25rem' }}>
-                  <strong>{loc.name}</strong>
-                  {(loc.city || loc.state) && ` — ${[loc.city, loc.state].filter(Boolean).join(', ')}`}
-                  <button type="button" className="btn btn-danger" style={{ marginLeft: '0.75rem', padding: '0.1rem 0.5rem', fontSize: '0.8rem' }}
-                    onClick={() => removePendingLocation(i)}>Remove</button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', alignItems: 'end' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Location Name *</label>
-              <input className="form-control" value={locForm.name}
-                onChange={e => setLocForm({ ...locForm, name: e.target.value })}
-                placeholder="e.g., Main Plant" />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>City</label>
-              <input className="form-control" value={locForm.city}
-                onChange={e => setLocForm({ ...locForm, city: e.target.value })} />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>State</label>
-              <input className="form-control" value={locForm.state}
-                onChange={e => setLocForm({ ...locForm, state: e.target.value })} />
-            </div>
-          </div>
-          <div className="form-group" style={{ marginTop: '0.5rem' }}>
-            <label>Address</label>
-            <input className="form-control" value={locForm.address}
-              onChange={e => setLocForm({ ...locForm, address: e.target.value })} />
-          </div>
-          <button type="button" className="btn btn-secondary" onClick={addPendingLocation}>+ Add Location</button>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
-              {submitting ? 'Saving…' : 'Save Customer'}
-            </button>
-            <button className="btn btn-secondary" onClick={() => { setShowForm(false); resetNewForm() }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <div style={{ marginBottom: '1rem' }}>
+        <input
+          className="form-control"
+          type="text"
+          placeholder="Search by customer or location..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: 400 }}
+        />
+      </div>
 
       {loading && <p style={{ color: '#6b7280' }}>Loading…</p>}
 
-      {!loading && customers.length === 0 && !showForm && (
+      {!loading && customers.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
           <p style={{ color: '#6b7280', marginBottom: '1rem' }}>No customers yet.</p>
-          <button className="btn btn-primary" onClick={() => { resetNewForm(); setShowForm(true) }}>
+          <button className="btn btn-primary" onClick={() => navigate('/customers/new')}>
             + Add Your First Customer
           </button>
         </div>
       )}
 
-      {!loading && customers.map(c => (
-        <div key={c.id} className="card" style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div>
-              <h3 style={{ color: '#166534', marginBottom: '0.25rem' }}>{c.name}</h3>
-              <div style={{ color: '#6b7280', fontSize: '0.88rem' }}>
-                {c.contact_name && <span>{c.contact_name} · </span>}
-                {c.contact_email && <span>{c.contact_email} · </span>}
-                {c.contact_phone && <span>{c.contact_phone}</span>}
-              </div>
-              {c.billing_address && (
-                <div style={{ color: '#6b7280', fontSize: '0.88rem', marginTop: '0.25rem' }}>
-                  {c.billing_address}
-                </div>
+      {!loading && customers.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={thStyle} onClick={() => handleSort('name')}>Customer{getSortIndicator('name')}</th>
+                <th style={thStyle} onClick={() => handleSort('contact')}>Contact{getSortIndicator('contact')}</th>
+                <th style={thStyle} onClick={() => handleSort('email')}>Email{getSortIndicator('email')}</th>
+                <th style={thStyle} onClick={() => handleSort('phone')}>Phone{getSortIndicator('phone')}</th>
+                <th style={thStyle} onClick={() => handleSort('location')}>Location{getSortIndicator('location')}</th>
+                <th style={thStyle} onClick={() => handleSort('city')}>City{getSortIndicator('city')}</th>
+                <th style={thStyle} onClick={() => handleSort('state')}>State{getSortIndicator('state')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
+                    No results match your search.
+                  </td>
+                </tr>
+              ) : (
+                sortedRows.map(row => (
+                  <tr key={row.id} style={{ transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}>
+                    <td style={tdStyle}><strong>{row.customerName}</strong></td>
+                    <td style={tdStyle}>{row.contactName}</td>
+                    <td style={tdStyle}>{row.contactEmail}</td>
+                    <td style={tdStyle}>{row.contactPhone}</td>
+                    <td style={tdStyle}>{row.locationName}</td>
+                    <td style={tdStyle}>{row.locationCity}</td>
+                    <td style={tdStyle}>{row.locationState}</td>
+                  </tr>
+                ))
               )}
-            </div>
-            <button className="btn btn-danger" style={{ fontSize: '0.85rem' }} onClick={() => removeCustomer(c.id)}>Delete</button>
-          </div>
-
-          <div style={{ marginTop: '1rem' }}>
-            <strong style={{ fontSize: '0.92rem', color: '#374151' }}>Locations ({c.locations?.length || 0}):</strong>
-            {c.locations && c.locations.length > 0 ? (
-              <ul style={{ marginTop: '0.4rem', paddingLeft: '1.25rem' }}>
-                {c.locations.map(loc => (
-                  <li key={loc.id} style={{ marginBottom: '0.25rem' }}>
-                    <strong>{loc.name}</strong>
-                    {(loc.city || loc.state) && ` — ${[loc.city, loc.state].filter(Boolean).join(', ')}`}
-                    {loc.address && <span style={{ color: '#6b7280' }}> · {loc.address}</span>}
-                    <button className="btn btn-danger" style={{ marginLeft: '0.75rem', padding: '0.1rem 0.5rem', fontSize: '0.78rem' }}
-                      onClick={() => removeLocation(loc.id)}>Remove</button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: '0.4rem 0' }}>No locations yet.</p>
-            )}
-
-            {openLocForms[c.id] ? (
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f9fafb', borderRadius: 6 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <input className="form-control" placeholder="Location name *"
-                    value={openLocForms[c.id].name || ''}
-                    onChange={e => setOpenLocForms(prev => ({ ...prev, [c.id]: { ...prev[c.id], name: e.target.value } }))} />
-                  <input className="form-control" placeholder="City"
-                    value={openLocForms[c.id].city || ''}
-                    onChange={e => setOpenLocForms(prev => ({ ...prev, [c.id]: { ...prev[c.id], city: e.target.value } }))} />
-                  <input className="form-control" placeholder="State"
-                    value={openLocForms[c.id].state || ''}
-                    onChange={e => setOpenLocForms(prev => ({ ...prev, [c.id]: { ...prev[c.id], state: e.target.value } }))} />
-                </div>
-                <input className="form-control" placeholder="Address"
-                  style={{ marginBottom: '0.5rem' }}
-                  value={openLocForms[c.id].address || ''}
-                  onChange={e => setOpenLocForms(prev => ({ ...prev, [c.id]: { ...prev[c.id], address: e.target.value } }))} />
-                <button className="btn btn-primary" style={{ fontSize: '0.85rem', marginRight: '0.5rem' }}
-                  onClick={() => addLocationToExisting(c.id)}>Save Location</button>
-                <button className="btn btn-secondary" style={{ fontSize: '0.85rem' }}
-                  onClick={() => setOpenLocForms(prev => ({ ...prev, [c.id]: null }))}>Cancel</button>
-              </div>
-            ) : (
-              <button className="btn btn-secondary" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}
-                onClick={() => setOpenLocForms(prev => ({ ...prev, [c.id]: { ...emptyLocation } }))}>
-                + Add Location
-              </button>
-            )}
-          </div>
+            </tbody>
+          </table>
         </div>
-      ))}
+      )}
     </div>
   )
 }
