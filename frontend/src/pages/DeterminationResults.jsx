@@ -46,14 +46,18 @@ export default function DeterminationResults() {
     try {
       const res = await mixtures.reportPdf(mixture.id)
       downloadBlob(res.data, `wasteid_report_${mixture.id}.pdf`)
-    } catch { alert('PDF generation failed.') }
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'PDF generation failed.')
+    }
   }
 
   const handleCsv = async () => {
     try {
       const res = await mixtures.exportCsv(mixture.id)
       downloadBlob(res.data, `mixture_${mixture.id}.csv`)
-    } catch { alert('CSV export failed.') }
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'CSV export failed.')
+    }
   }
 
   if (loading) return <div className="container" style={{ padding: '3rem' }}>Loading results…</div>
