@@ -87,3 +87,36 @@ export const mixtures = {
     ? localMixtures.removeComponent(componentId)
     : client.delete(`/components/${componentId}/`),
 }
+
+export const customers = {
+  list: () => useLocalMixtures
+    ? Promise.resolve({ data: { results: [] } })
+    : client.get('/customers/'),
+  get: (id) => useLocalMixtures
+    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    : client.get(`/customers/${id}/`),
+  create: (data) => useLocalMixtures
+    ? Promise.reject(new Error('Customers are unavailable in static mode. Connect a backend to manage customers.'))
+    : client.post('/customers/', data),
+  update: (id, data) => useLocalMixtures
+    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    : client.patch(`/customers/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    : client.delete(`/customers/${id}/`),
+}
+
+export const customerLocations = {
+  list: (customerId) => useLocalMixtures
+    ? Promise.resolve({ data: { results: [] } })
+    : client.get('/customer-locations/', { params: customerId ? { customer: customerId } : {} }),
+  create: (data) => useLocalMixtures
+    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    : client.post('/customer-locations/', data),
+  update: (id, data) => useLocalMixtures
+    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    : client.patch(`/customer-locations/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    : client.delete(`/customer-locations/${id}/`),
+}

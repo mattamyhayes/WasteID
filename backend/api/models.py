@@ -1,5 +1,41 @@
 from django.db import models
 import json
+import uuid
+
+
+class Customer(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    contact_name = models.CharField(max_length=200, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=50, blank=True)
+    billing_address = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class CustomerLocation(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='locations')
+    name = models.CharField(max_length=200)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['customer__name', 'name']
+        unique_together = ('customer', 'name')
+
+    def __str__(self):
+        return f"{self.customer.name} - {self.name}"
 
 
 class Chemical(models.Model):
@@ -39,12 +75,16 @@ class Chemical(models.Model):
         ordering = ['name']
 
 
+def _generate_transaction_id():
+    return f"TX-{uuid.uuid4().hex[:10].upper()}"
+
+
 class Mixture(models.Model):
     name = models.CharField(max_length=200, default='Unnamed Mixture')
+    transaction_id = models.CharField(max_length=32, unique=True, default=_generate_transaction_id)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
+    customer_location = models.ForeignKey(CustomerLocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
     created_at = models.DateTimeField(auto_now_add=True)
-
-    customer_name = models.CharField(max_length=200, blank=True)
-    customer_location = models.CharField(max_length=300, blank=True)
 
     is_discarded = models.BooleanField(default=True)
     discard_reason = models.CharField(max_length=50, blank=True)
@@ -53,7 +93,7 @@ class Mixture(models.Model):
     notes = models.TextField(blank=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.transaction_id}: {self.name}"
 
 
 class MixtureComponent(models.Model):
