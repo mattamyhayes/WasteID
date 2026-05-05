@@ -1,6 +1,6 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
-import { localMixtures } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -90,33 +90,33 @@ export const mixtures = {
 
 export const customers = {
   list: () => useLocalMixtures
-    ? Promise.resolve({ data: { results: [] } })
+    ? localCustomers.list()
     : client.get('/customers/'),
   get: (id) => useLocalMixtures
-    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    ? localCustomers.get(id)
     : client.get(`/customers/${id}/`),
   create: (data) => useLocalMixtures
-    ? Promise.reject(new Error('Customers are unavailable in static mode. Connect a backend to manage customers.'))
+    ? localCustomers.create(data)
     : client.post('/customers/', data),
   update: (id, data) => useLocalMixtures
-    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    ? localCustomers.update(id, data)
     : client.patch(`/customers/${id}/`, data),
   delete: (id) => useLocalMixtures
-    ? Promise.reject(new Error('Customers are unavailable in static mode.'))
+    ? localCustomers.delete(id)
     : client.delete(`/customers/${id}/`),
 }
 
 export const customerLocations = {
   list: (customerId) => useLocalMixtures
-    ? Promise.resolve({ data: { results: [] } })
+    ? localCustomerLocations.list(customerId)
     : client.get('/customer-locations/', { params: customerId ? { customer: customerId } : {} }),
   create: (data) => useLocalMixtures
-    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    ? localCustomerLocations.create(data)
     : client.post('/customer-locations/', data),
   update: (id, data) => useLocalMixtures
-    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    ? localCustomerLocations.update(id, data)
     : client.patch(`/customer-locations/${id}/`, data),
   delete: (id) => useLocalMixtures
-    ? Promise.reject(new Error('Customer locations are unavailable in static mode.'))
+    ? localCustomerLocations.delete(id)
     : client.delete(`/customer-locations/${id}/`),
 }

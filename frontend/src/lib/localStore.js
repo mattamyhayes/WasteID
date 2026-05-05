@@ -11,6 +11,7 @@ import localChemicals from '../data/chemicals.json'
 import { determineHazardousWaste } from './determination.js'
 
 const STORAGE_KEY = 'wasteid_local_store_v1'
+const CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v1'
 
 function emptyStore() {
   return {
@@ -18,6 +19,15 @@ function emptyStore() {
     components: [],
     determinations: [],
     nextId: { mixture: 1, component: 1, determination: 1 },
+  }
+}
+
+function emptyCustomerStore() {
+  return {
+    customers: [],
+    locations: [],
+    nextId: { customer: 1, location: 1 },
+    seeded: false,
   }
 }
 
@@ -46,6 +56,150 @@ function saveStore(store) {
     // Storage may be unavailable (private mode, quota). Operations remain
     // in-memory for the lifetime of the page.
   }
+}
+
+// Seed data matching the backend seed_customers management command
+const SEED_CUSTOMERS = [
+  {
+    name: 'Cascade Auto Body & Paint',
+    contact_name: 'Marcus Reilly',
+    contact_email: 'marcus.reilly@cascadeautobody.com',
+    contact_phone: '(503) 555-0142',
+    billing_address: '1820 NW Industrial St, Portland, OR 97209',
+    notes: 'Auto body shop chain. Generates waste paint, solvents, thinners, and used oil from collision repair operations.',
+    locations: [
+      { name: 'Portland - NW Industrial', address: '1820 NW Industrial St', city: 'Portland', state: 'OR', postal_code: '97209', notes: 'Main shop and corporate office.' },
+      { name: 'Beaverton Collision Center', address: '4455 SW Murray Blvd', city: 'Beaverton', state: 'OR', postal_code: '97005', notes: 'High-volume collision repair location.' },
+      { name: 'Vancouver Service Bay', address: '7820 NE Hwy 99', city: 'Vancouver', state: 'WA', postal_code: '98665', notes: 'Smaller satellite shop.' },
+    ],
+  },
+  {
+    name: 'Pacific Northwest Printing Co.',
+    contact_name: 'Jenna Whitcomb',
+    contact_email: 'jwhitcomb@pnwprinting.com',
+    contact_phone: '(206) 555-0188',
+    billing_address: '900 4th Ave, Seattle, WA 98104',
+    notes: 'Commercial printer. Generates waste inks, photographic fixers, isopropyl alcohol, and press-cleaning solvents.',
+    locations: [
+      { name: 'Seattle Headquarters Press', address: '900 4th Ave', city: 'Seattle', state: 'WA', postal_code: '98104', notes: 'Headquarters and main press.' },
+      { name: 'Tacoma Print Facility', address: '3120 S 38th St', city: 'Tacoma', state: 'WA', postal_code: '98409', notes: 'Large-format and packaging printing.' },
+      { name: 'Spokane Quick Print', address: '511 W Riverside Ave', city: 'Spokane', state: 'WA', postal_code: '99201', notes: 'Eastern Washington branch.' },
+    ],
+  },
+  {
+    name: 'Evergreen Pharmaceuticals',
+    contact_name: 'Dr. Priya Natarajan',
+    contact_email: 'p.natarajan@evergreenpharma.com',
+    contact_phone: '(425) 555-0117',
+    billing_address: '15500 NE 38th St, Redmond, WA 98052',
+    notes: 'Pharmaceutical research and manufacturing. Generates P-listed and U-listed pharmaceutical waste, lab solvents, and reactive intermediates.',
+    locations: [
+      { name: 'Redmond R&D Campus', address: '15500 NE 38th St', city: 'Redmond', state: 'WA', postal_code: '98052', notes: 'Primary research labs.' },
+      { name: 'Bothell Manufacturing Plant', address: '22130 17th Ave SE', city: 'Bothell', state: 'WA', postal_code: '98021', notes: 'GMP manufacturing facility.' },
+      { name: 'Hillsboro Bio Lab', address: '2701 NW 229th Ave', city: 'Hillsboro', state: 'OR', postal_code: '97124', notes: 'Biologics development laboratory.' },
+    ],
+  },
+  {
+    name: 'Sawtooth Mining & Metals',
+    contact_name: 'Hank Brennan',
+    contact_email: 'hbrennan@sawtoothmining.com',
+    contact_phone: '(208) 555-0163',
+    billing_address: '500 W Bannock St, Boise, ID 83702',
+    notes: 'Mining and ore processing. Generates corrosive acids, cyanide solutions, heavy-metal sludges, and reactive reagents.',
+    locations: [
+      { name: 'Boise Corporate & Assay Lab', address: '500 W Bannock St', city: 'Boise', state: 'ID', postal_code: '83702', notes: 'Corporate office and assay laboratory.' },
+      { name: "Coeur d'Alene Mill Site", address: '8200 Silver Valley Rd', city: "Coeur d'Alene", state: 'ID', postal_code: '83814', notes: 'Active ore milling.' },
+      { name: 'Fairbanks Operations', address: '3501 Airport Way', city: 'Fairbanks', state: 'AK', postal_code: '99709', notes: 'Alaska placer and hard-rock operations.' },
+    ],
+  },
+  {
+    name: 'Northern Lights Hospital Network',
+    contact_name: 'Sarah Kowalski, RN',
+    contact_email: 'skowalski@nlhospitals.org',
+    contact_phone: '(907) 555-0199',
+    billing_address: '3260 Providence Dr, Anchorage, AK 99508',
+    notes: 'Regional hospital network. Generates chemotherapy waste, formaldehyde, xylene, mercury-containing devices, and expired pharmaceuticals.',
+    locations: [
+      { name: 'Anchorage Regional Medical Center', address: '3260 Providence Dr', city: 'Anchorage', state: 'AK', postal_code: '99508', notes: 'Flagship hospital.' },
+      { name: 'Juneau Community Hospital', address: '3260 Hospital Dr', city: 'Juneau', state: 'AK', postal_code: '99801', notes: 'Smaller community hospital.' },
+      { name: 'Eugene Outpatient Clinic', address: '1255 Hilyard St', city: 'Eugene', state: 'OR', postal_code: '97401', notes: 'Outpatient and infusion services.' },
+    ],
+  },
+]
+
+function loadCustomerStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(CUSTOMERS_STORAGE_KEY) : null
+    if (!raw) {
+      const store = seedCustomerStore()
+      return store
+    }
+    const parsed = JSON.parse(raw)
+    const store = {
+      customers: parsed.customers || [],
+      locations: parsed.locations || [],
+      nextId: parsed.nextId || { customer: 1, location: 1 },
+      seeded: parsed.seeded || false,
+    }
+    if (!store.seeded) {
+      return seedCustomerStore()
+    }
+    return store
+  } catch {
+    return seedCustomerStore()
+  }
+}
+
+function seedCustomerStore() {
+  const store = emptyCustomerStore()
+  for (const entry of SEED_CUSTOMERS) {
+    const customerId = store.nextId.customer++
+    const now = new Date().toISOString()
+    store.customers.push({
+      id: customerId,
+      name: entry.name,
+      contact_name: entry.contact_name,
+      contact_email: entry.contact_email,
+      contact_phone: entry.contact_phone,
+      billing_address: entry.billing_address,
+      notes: entry.notes,
+      created_at: now,
+      updated_at: now,
+    })
+    for (const loc of entry.locations) {
+      store.locations.push({
+        id: store.nextId.location++,
+        customer: customerId,
+        name: loc.name,
+        address: loc.address || '',
+        city: loc.city || '',
+        state: loc.state || '',
+        postal_code: loc.postal_code || '',
+        notes: loc.notes || '',
+        created_at: now,
+      })
+    }
+  }
+  store.seeded = true
+  saveCustomerStore(store)
+  return store
+}
+
+function saveCustomerStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch {
+    // Storage may be unavailable
+  }
+}
+
+function hydrateCustomer(customer, store) {
+  const locations = store.locations
+    .filter(l => l.customer === customer.id)
+    .map(l => ({ ...l }))
+  return { ...customer, locations }
 }
 
 function findChemical(chemicalId) {
@@ -294,6 +448,110 @@ export const localMixtures = {
     // export and the on-screen report (which can be printed to PDF via
     // the browser).
     return reject('PDF report generation is only available when the backend is deployed. Use CSV export or print this page to PDF.', 501)
+  },
+}
+
+// --------------------------------------------------------------- Local Customers
+export const localCustomers = {
+  list() {
+    const store = loadCustomerStore()
+    const results = store.customers.map(c => hydrateCustomer(c, store))
+    return ok({ results })
+  },
+
+  get(id) {
+    const store = loadCustomerStore()
+    const c = store.customers.find(x => x.id === Number(id))
+    if (!c) return reject('Customer not found.', 404)
+    return ok(hydrateCustomer(c, store))
+  },
+
+  create(payload) {
+    const store = loadCustomerStore()
+    if (!payload.name || !payload.name.trim()) return reject('Customer name is required.')
+    const existing = store.customers.find(c => c.name.toLowerCase() === payload.name.trim().toLowerCase())
+    if (existing) return reject('A customer with this name already exists.')
+    const now = new Date().toISOString()
+    const customer = {
+      id: store.nextId.customer++,
+      name: payload.name.trim(),
+      contact_name: payload.contact_name || '',
+      contact_email: payload.contact_email || '',
+      contact_phone: payload.contact_phone || '',
+      billing_address: payload.billing_address || '',
+      notes: payload.notes || '',
+      created_at: now,
+      updated_at: now,
+    }
+    store.customers.push(customer)
+    saveCustomerStore(store)
+    return ok({ ...customer, locations: [] })
+  },
+
+  update(id, payload) {
+    const store = loadCustomerStore()
+    const c = store.customers.find(x => x.id === Number(id))
+    if (!c) return reject('Customer not found.', 404)
+    Object.assign(c, payload, { updated_at: new Date().toISOString() })
+    saveCustomerStore(store)
+    return ok(hydrateCustomer(c, store))
+  },
+
+  delete(id) {
+    const store = loadCustomerStore()
+    const numId = Number(id)
+    store.customers = store.customers.filter(c => c.id !== numId)
+    store.locations = store.locations.filter(l => l.customer !== numId)
+    saveCustomerStore(store)
+    return ok({})
+  },
+}
+
+export const localCustomerLocations = {
+  list(customerId) {
+    const store = loadCustomerStore()
+    let results = store.locations
+    if (customerId) {
+      results = results.filter(l => l.customer === Number(customerId))
+    }
+    return ok({ results })
+  },
+
+  create(payload) {
+    const store = loadCustomerStore()
+    if (!payload.customer) return reject('Customer ID is required.')
+    if (!payload.name || !payload.name.trim()) return reject('Location name is required.')
+    const now = new Date().toISOString()
+    const location = {
+      id: store.nextId.location++,
+      customer: Number(payload.customer),
+      name: payload.name.trim(),
+      address: payload.address || '',
+      city: payload.city || '',
+      state: payload.state || '',
+      postal_code: payload.postal_code || '',
+      notes: payload.notes || '',
+      created_at: now,
+    }
+    store.locations.push(location)
+    saveCustomerStore(store)
+    return ok(location)
+  },
+
+  update(id, payload) {
+    const store = loadCustomerStore()
+    const loc = store.locations.find(l => l.id === Number(id))
+    if (!loc) return reject('Location not found.', 404)
+    Object.assign(loc, payload)
+    saveCustomerStore(store)
+    return ok(loc)
+  },
+
+  delete(id) {
+    const store = loadCustomerStore()
+    store.locations = store.locations.filter(l => l.id !== Number(id))
+    saveCustomerStore(store)
+    return ok({})
   },
 }
 
