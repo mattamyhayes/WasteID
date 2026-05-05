@@ -270,6 +270,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
     if (!chem) continue
     if (chem.tclp_threshold_mgl != null && chem.epa_waste_code && chem.epa_waste_code.startsWith('D')) {
       if ((comp.unit === 'pct_weight' || comp.unit === 'pct_volume') && comp.quantity > 0) {
+        // Simplified TCLP estimate: (pct/100) * 1,000,000 mg/kg / 20 dilution = mg/L
         const tclpEstimate = (comp.quantity / 100.0) * 1_000_000 / 20.0
         if (tclpEstimate >= chem.tclp_threshold_mgl) {
           const dCode = chem.epa_waste_code
