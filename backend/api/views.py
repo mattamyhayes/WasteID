@@ -117,18 +117,55 @@ class MixtureViewSet(viewsets.ModelViewSet):
             story.append(Paragraph(f'Mixture: {mixture.name}', styles['Heading2']))
             story.append(Spacer(1, 12))
 
+            # Customer / Location / Metadata
+            label_style = ParagraphStyle('Label', parent=styles['Normal'], fontSize=10, spaceAfter=4)
+            info_rows = [
+                ('Transaction ID', mixture.transaction_id or '—'),
+                ('Customer', mixture.customer.name if mixture.customer else '—'),
+                ('Location', mixture.customer_location.name if mixture.customer_location else '—'),
+                ('Mixture Created', mixture.created_at.strftime('%Y-%m-%d %H:%M') if mixture.created_at else '—'),
+            ]
+            if det:
+                info_rows.append(('Determination Date', det.created_at.strftime('%Y-%m-%d %H:%M')))
+            info_table = Table(
+                [[Paragraph(f'<b>{k}</b>', label_style), Paragraph(str(v), label_style)] for k, v in info_rows],
+                colWidths=[1.5 * inch, 5.5 * inch]
+            )
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('BOX', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            story.append(info_table)
+            story.append(Spacer(1, 12))
+
+            if mixture.process_description:
+                story.append(Paragraph('Process Description', styles['Heading3']))
+                story.append(Paragraph(mixture.process_description.replace('\n', '<br/>'), styles['Normal']))
+                story.append(Spacer(1, 8))
+
+            if mixture.notes:
+                story.append(Paragraph('Notes', styles['Heading3']))
+                story.append(Paragraph(mixture.notes.replace('\n', '<br/>'), styles['Normal']))
+                story.append(Spacer(1, 8))
+
             story.append(Paragraph('Mixture Composition', styles['Heading2']))
-            table_data = [['Chemical', 'Quantity', 'Unit', 'EPA Code']]
+            table_data = [['Chemical', 'CAS Number', 'Quantity', 'Unit', 'EPA Code']]
             for comp in mixture.components.all():
                 chem = comp.chemical
                 table_data.append([
                     comp.component_name,
+                    chem.cas_number if chem else '—',
                     str(comp.quantity),
                     comp.unit,
-                    chem.epa_waste_code if chem else '-'
+                    chem.epa_waste_code if chem else '—'
                 ])
 
-            t = Table(table_data, colWidths=[3 * inch, 1 * inch, 1.5 * inch, 1.5 * inch])
+            t = Table(table_data, colWidths=[2.6 * inch, 1.2 * inch, 1 * inch, 1 * inch, 1.2 * inch])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

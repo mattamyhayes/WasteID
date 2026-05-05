@@ -46,14 +46,18 @@ export default function DeterminationResults() {
     try {
       const res = await mixtures.reportPdf(mixture.id)
       downloadBlob(res.data, `wasteid_report_${mixture.id}.pdf`)
-    } catch { alert('PDF generation failed.') }
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'PDF generation failed.')
+    }
   }
 
   const handleCsv = async () => {
     try {
       const res = await mixtures.exportCsv(mixture.id)
       downloadBlob(res.data, `mixture_${mixture.id}.csv`)
-    } catch { alert('CSV export failed.') }
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'CSV export failed.')
+    }
   }
 
   if (loading) return <div className="container" style={{ padding: '3rem' }}>Loading results…</div>
@@ -70,6 +74,13 @@ export default function DeterminationResults() {
         <div>
           <Link to="/history" style={{ color: '#166534', fontSize: '0.9rem' }}>← Back to History</Link>
           <h1 style={{ color: '#14532d', marginTop: '0.25rem' }}>{mixture.name}</h1>
+          {(mixture.customer_name || mixture.customer_location_name) && (
+            <p style={{ color: '#374151', fontSize: '0.92rem', margin: '0.15rem 0 0' }}>
+              {mixture.customer_name && <><strong>Customer:</strong> {mixture.customer_name}</>}
+              {mixture.customer_name && mixture.customer_location_name && ' · '}
+              {mixture.customer_location_name && <><strong>Location:</strong> {mixture.customer_location_name}</>}
+            </p>
+          )}
           <p style={{ color: '#6b7280', fontSize: '0.88rem' }}>
             Determined: {new Date(det.created_at).toLocaleString()}
           </p>

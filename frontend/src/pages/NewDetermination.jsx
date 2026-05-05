@@ -337,6 +337,7 @@ export default function NewDetermination() {
             <strong>Mixture:</strong> {name}<br />
             <strong>Discarded:</strong> {isDiscarded ? `Yes (${discardReason})` : 'No'}<br />
             {processDesc && <><strong>Process:</strong> {processDesc}<br /></>}
+            {notes && <><strong>Notes:</strong> {notes}<br /></>}
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <strong>Components ({components.length}):</strong>

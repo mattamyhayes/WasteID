@@ -57,7 +57,7 @@ const groupByCustomerAndLocation = (items) => {
   return customers
 }
 
-function MixtureRow({ m, onDelete }) {
+function MixtureRow({ m, onDelete, onPdf }) {
   const latestDet = m.determinations?.[m.determinations.length - 1]
   const isHazardous = latestDet?.is_hazardous_waste
   return (
@@ -95,6 +95,11 @@ function MixtureRow({ m, onDelete }) {
             View Results
           </Link>
         )}
+        {latestDet && (
+          <button className="btn btn-secondary" style={{ fontSize: '0.9rem' }} onClick={() => onPdf(m.id)}>
+            📄 PDF
+          </button>
+        )}
         <button className="btn btn-danger" style={{ fontSize: '0.9rem' }} onClick={() => onDelete(m.id)}>
           Delete
         </button>
@@ -126,6 +131,20 @@ export default function History() {
     if (!confirm('Delete this mixture and all its determinations?')) return
     await mixtures.delete(id)
     setItems(prev => prev.filter(m => m.id !== id))
+  }
+
+  const handlePdf = async (mixtureId) => {
+    try {
+      const res = await mixtures.reportPdf(mixtureId)
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `wasteid_report_${mixtureId}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('PDF generation failed.')
+    }
   }
 
   const sorted = useMemo(() => sortMixtures(items, sort), [items, sort])
@@ -166,7 +185,7 @@ export default function History() {
 
       {!loading && items.length > 0 && !groupByCustomer && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {sorted.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} />)}
+          {sorted.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} onPdf={handlePdf} />)}
         </div>
       )}
 
@@ -180,7 +199,7 @@ export default function History() {
                   <div key={loc.key}>
                     <h3 style={{ color: '#166534', fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>📍 {loc.name}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {loc.mixtures.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} />)}
+                      {loc.mixtures.map(m => <MixtureRow key={m.id} m={m} onDelete={handleDelete} onPdf={handlePdf} />)}
                     </div>
                   </div>
                 ))}
