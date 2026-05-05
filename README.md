@@ -80,6 +80,8 @@ The frontend is automatically deployed to **https://mattamyhayes.github.io/Waste
 
 The workflow file lives at `.github/workflows/deploy.yml` and runs `npm ci && npm run build` inside `frontend/`, then publishes the `dist/` directory.
 
+> **Status:** GitHub Pages is enabled and `VITE_API_URL` is configured.
+
 ## Disclaimer
 
 WasteID is for **informational purposes only** and does not constitute legal advice. Always verify determination results with qualified environmental professionals. Laboratory testing (EPA SW-846 methods) is required to confirm characteristics. Check applicable state regulations, which may be more stringent than federal RCRA standards.
