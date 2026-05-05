@@ -70,6 +70,13 @@ export default function DeterminationResults() {
         <div>
           <Link to="/history" style={{ color: '#166534', fontSize: '0.9rem' }}>← Back to History</Link>
           <h1 style={{ color: '#14532d', marginTop: '0.25rem' }}>{mixture.name}</h1>
+          {(mixture.customer_name || mixture.customer_location) && (
+            <p style={{ color: '#374151', fontSize: '0.92rem', margin: '0.15rem 0 0' }}>
+              {mixture.customer_name && <><strong>Customer:</strong> {mixture.customer_name}</>}
+              {mixture.customer_name && mixture.customer_location && ' · '}
+              {mixture.customer_location && <><strong>Location:</strong> {mixture.customer_location}</>}
+            </p>
+          )}
           <p style={{ color: '#6b7280', fontSize: '0.88rem' }}>
             Determined: {new Date(det.created_at).toLocaleString()}
           </p>

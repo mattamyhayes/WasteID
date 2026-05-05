@@ -43,6 +43,9 @@ class Mixture(models.Model):
     name = models.CharField(max_length=200, default='Unnamed Mixture')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    customer_name = models.CharField(max_length=200, blank=True)
+    customer_location = models.CharField(max_length=300, blank=True)
+
     is_discarded = models.BooleanField(default=True)
     discard_reason = models.CharField(max_length=50, blank=True)
 
