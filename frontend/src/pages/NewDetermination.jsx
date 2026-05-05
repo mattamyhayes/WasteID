@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
-import { mixtures } from '../api/client'
+import { mixtures, customers as customersApi, customerLocations as locationsApi } from '../api/client'
 
 const DISCARD_REASONS = [
   { value: 'spent', label: 'Spent material (used and no longer useful)' },
@@ -21,8 +21,14 @@ export default function NewDetermination() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Mixture record (created after Step 1)
+  const [mixtureId, setMixtureId] = useState(null)
+  const [transactionId, setTransactionId] = useState('')
+
   // Step 1
   const [name, setName] = useState('')
+  const [customerId, setCustomerId] = useState('')
+  const [locationId, setLocationId] = useState('')
   const [isDiscarded, setIsDiscarded] = useState(true)
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
@@ -36,30 +42,112 @@ export default function NewDetermination() {
   const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
+  // Customer data
+  const [customerList, setCustomerList] = useState([])
+  const [customersLoading, setCustomersLoading] = useState(true)
+  const [customersError, setCustomersError] = useState('')
+
+  // Reset all in-progress mixture state when starting a new determination so the
+  // user always begins with a fresh slate.
+  useEffect(() => {
+    setStep(0)
+    setError('')
+    setSubmitting(false)
+    setMixtureId(null)
+    setTransactionId('')
+    setName('')
+    setCustomerId('')
+    setLocationId('')
+    setIsDiscarded(true)
+    setDiscardReason('spent')
+    setProcessDesc('')
+    setComponents([])
+    setFlashPoint('')
+    setPh('')
+    setIsReactive(false)
+    setNotes('')
+  }, [])
+
+  // Load customers (and their locations) once
+  useEffect(() => {
+    let cancelled = false
+    async function loadCustomers() {
+      setCustomersLoading(true)
+      try {
+        const res = await customersApi.list()
+        if (cancelled) return
+        setCustomerList(res.data.results || res.data)
+      } catch (e) {
+        if (cancelled) return
+        setCustomersError('Could not load customers. You can still proceed by adding a customer first.')
+      } finally {
+        if (!cancelled) setCustomersLoading(false)
+      }
+    }
+    loadCustomers()
+    return () => { cancelled = true }
+  }, [])
+
+  const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
+  const locationsForCustomer = selectedCustomer?.locations || []
+
   const validateStep = () => {
-    if (step === 0 && !name.trim()) { setError('Please enter a mixture name.'); return false }
+    if (step === 0) {
+      if (!name.trim()) { setError('Please enter a mixture name.'); return false }
+      if (!customerId) { setError('Please select a customer.'); return false }
+      if (locationsForCustomer.length > 0 && !locationId) {
+        setError('Please select a customer location.'); return false
+      }
+    }
     if (step === 1 && components.length === 0) { setError('Add at least one component to the mixture.'); return false }
     setError('')
     return true
   }
 
-  const next = () => { if (validateStep()) setStep(s => s + 1) }
-  const back = () => { setError(''); setStep(s => s - 1) }
-
-  const handleSubmit = async () => {
+  // After step 1 is validated, persist the mixture and obtain a transaction ID.
+  const completeStep1 = async () => {
+    if (!validateStep()) return
     setSubmitting(true)
     setError('')
     try {
-      // Create mixture
-      const mixturePayload = {
+      const payload = {
         name: name.trim(),
         is_discarded: isDiscarded,
         discard_reason: isDiscarded ? discardReason : '',
         process_description: processDesc,
-        notes,
+        customer: customerId ? Number(customerId) : null,
+        customer_location: locationId ? Number(locationId) : null,
       }
-      const res = await mixtures.create(mixturePayload)
-      const mixtureId = res.data.id
+      if (mixtureId) {
+        // Step 1 already submitted earlier; just update it on edits.
+        const res = await mixtures.update(mixtureId, payload)
+        setTransactionId(res.data.transaction_id || transactionId)
+      } else {
+        const res = await mixtures.create(payload)
+        setMixtureId(res.data.id)
+        setTransactionId(res.data.transaction_id || '')
+      }
+      setStep(1)
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Could not save mixture. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const next = () => {
+    if (step === 0) { completeStep1(); return }
+    if (validateStep()) setStep(s => s + 1)
+  }
+  const back = () => { setError(''); setStep(s => s - 1) }
+
+  const handleSubmit = async () => {
+    if (!mixtureId) { setError('Mixture has not been initialized.'); return }
+    setSubmitting(true)
+    setError('')
+    try {
+      // Update notes on the existing mixture record
+      await mixtures.update(mixtureId, { notes })
 
       // Add components
       for (const comp of components) {
@@ -93,6 +181,13 @@ export default function NewDetermination() {
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
       <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Waste Determination</h1>
 
+      {/* Transaction ID banner once issued */}
+      {transactionId && (
+        <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
+          <strong>Transaction ID:</strong> {transactionId}
+        </div>
+      )}
+
       {/* Progress */}
       <div className="wizard-steps">
         {STEPS.map((label, i) => (
@@ -108,6 +203,48 @@ export default function NewDetermination() {
       {step === 0 && (
         <div className="card">
           <h2 style={{ marginBottom: '1.25rem', color: '#166534' }}>Mixture Information</h2>
+
+          <div className="form-group">
+            <label>Customer *</label>
+            {customersError && <div style={{ color: '#b91c1c', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{customersError}</div>}
+            <select className="form-control" value={customerId}
+              onChange={e => { setCustomerId(e.target.value); setLocationId('') }}
+              disabled={customersLoading}>
+              <option value="">{customersLoading ? 'Loading customers…' : '-- Select a customer --'}</option>
+              {customerList.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <small style={{ color: '#6b7280' }}>
+              Don’t see your customer?{' '}
+              <Link to="/customers" style={{ color: '#166534', fontWeight: 600 }}>Add a new customer</Link>
+              {' '}first, then return here.
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label>Customer Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
+            <select className="form-control" value={locationId}
+              onChange={e => setLocationId(e.target.value)}
+              disabled={!customerId || locationsForCustomer.length === 0}>
+              <option value="">
+                {!customerId ? '-- Select a customer first --'
+                  : locationsForCustomer.length === 0 ? 'No locations on file for this customer'
+                  : '-- Select a location --'}
+              </option>
+              {locationsForCustomer.map(loc => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}{(loc.city || loc.state) ? ` — ${[loc.city, loc.state].filter(Boolean).join(', ')}` : ''}
+                </option>
+              ))}
+            </select>
+            {customerId && locationsForCustomer.length === 0 && (
+              <small style={{ color: '#6b7280' }}>
+                <Link to="/customers" style={{ color: '#166534', fontWeight: 600 }}>Manage this customer</Link> to add a location.
+              </small>
+            )}
+          </div>
+
           <div className="form-group">
             <label>Mixture / Sample Name *</label>
             <input className="form-control" value={name} onChange={e => setName(e.target.value)}
@@ -194,6 +331,9 @@ export default function NewDetermination() {
         <div className="card">
           <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Review & Submit</h2>
           <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: 8 }}>
+            {transactionId && <><strong>Transaction ID:</strong> {transactionId}<br /></>}
+            <strong>Customer:</strong> {selectedCustomer?.name || '—'}<br />
+            <strong>Location:</strong> {locationsForCustomer.find(l => String(l.id) === String(locationId))?.name || '—'}<br />
             <strong>Mixture:</strong> {name}<br />
             <strong>Discarded:</strong> {isDiscarded ? `Yes (${discardReason})` : 'No'}<br />
             {processDesc && <><strong>Process:</strong> {processDesc}<br /></>}
@@ -222,9 +362,11 @@ export default function NewDetermination() {
 
       {/* Navigation */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-        <button className="btn btn-secondary" onClick={back} disabled={step === 0}>← Back</button>
+        <button className="btn btn-secondary" onClick={back} disabled={step === 0 || submitting}>← Back</button>
         {step < 3
-          ? <button className="btn btn-primary" onClick={next}>Next →</button>
+          ? <button className="btn btn-primary" onClick={next} disabled={submitting}>
+              {submitting && step === 0 ? 'Saving…' : 'Next →'}
+            </button>
           : <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Running…' : '🔬 Run Determination'}
             </button>}

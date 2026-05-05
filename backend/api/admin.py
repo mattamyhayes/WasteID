@@ -1,5 +1,24 @@
 from django.contrib import admin
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
+
+
+class CustomerLocationInline(admin.TabularInline):
+    model = CustomerLocation
+    extra = 1
+
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ['name', 'contact_name', 'contact_email', 'created_at']
+    search_fields = ['name', 'contact_name', 'contact_email']
+    inlines = [CustomerLocationInline]
+
+
+@admin.register(CustomerLocation)
+class CustomerLocationAdmin(admin.ModelAdmin):
+    list_display = ['customer', 'name', 'city', 'state']
+    list_filter = ['state']
+    search_fields = ['customer__name', 'name', 'city']
 
 
 @admin.register(Chemical)
@@ -11,7 +30,9 @@ class ChemicalAdmin(admin.ModelAdmin):
 
 @admin.register(Mixture)
 class MixtureAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at', 'is_discarded']
+    list_display = ['transaction_id', 'name', 'customer', 'customer_location', 'created_at', 'is_discarded']
+    list_filter = ['customer', 'is_discarded']
+    search_fields = ['transaction_id', 'name', 'customer__name']
 
 
 @admin.register(MixtureComponent)

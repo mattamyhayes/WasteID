@@ -4,11 +4,35 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
-                           MixtureCreateSerializer)
+                           MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer)
 from .determination import determine_hazardous_waste
+
+
+class CustomerViewSet(viewsets.ModelViewSet):
+    queryset = Customer.objects.prefetch_related('locations').all()
+    serializer_class = CustomerSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        q = self.request.query_params.get('q', '')
+        if q:
+            qs = qs.filter(name__icontains=q)
+        return qs
+
+
+class CustomerLocationViewSet(viewsets.ModelViewSet):
+    queryset = CustomerLocation.objects.select_related('customer').all()
+    serializer_class = CustomerLocationSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        customer_id = self.request.query_params.get('customer', '')
+        if customer_id:
+            qs = qs.filter(customer_id=customer_id)
+        return qs
 
 
 class ChemicalViewSet(viewsets.ReadOnlyModelViewSet):
@@ -33,7 +57,7 @@ class ChemicalViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MixtureViewSet(viewsets.ModelViewSet):
-    queryset = Mixture.objects.prefetch_related('components__chemical', 'determinations').all()
+    queryset = Mixture.objects.select_related('customer', 'customer_location').prefetch_related('components__chemical', 'determinations').all()
     serializer_class = MixtureSerializer
 
     def get_serializer_class(self):

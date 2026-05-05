@@ -1,6 +1,23 @@
 from rest_framework import serializers
 import json
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
+
+
+class CustomerLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerLocation
+        fields = ['id', 'customer', 'name', 'address', 'city', 'state', 'postal_code', 'notes', 'created_at']
+        read_only_fields = ['created_at']
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    locations = CustomerLocationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'name', 'contact_name', 'contact_email', 'contact_phone',
+                  'billing_address', 'notes', 'created_at', 'updated_at', 'locations']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class ChemicalSerializer(serializers.ModelSerializer):
@@ -44,10 +61,13 @@ class WasteDeterminationSerializer(serializers.ModelSerializer):
 class MixtureSerializer(serializers.ModelSerializer):
     components = MixtureComponentSerializer(many=True, read_only=True)
     determinations = WasteDeterminationSerializer(many=True, read_only=True)
+    customer_name = serializers.CharField(source='customer.name', read_only=True, default='')
+    customer_location_name = serializers.CharField(source='customer_location.name', read_only=True, default='')
 
     class Meta:
         model = Mixture
         fields = '__all__'
+        read_only_fields = ['transaction_id']
 
 
 class MixtureCreateSerializer(serializers.ModelSerializer):
@@ -56,6 +76,7 @@ class MixtureCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mixture
         fields = '__all__'
+        read_only_fields = ['transaction_id']
 
     def create(self, validated_data):
         components_data = validated_data.pop('components', [])

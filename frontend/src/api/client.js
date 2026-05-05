@@ -70,3 +70,18 @@ export const mixtures = {
   addComponent: (mixtureId, data) => client.post('/components/', { ...data, mixture: mixtureId }),
   removeComponent: (componentId) => client.delete(`/components/${componentId}/`),
 }
+
+export const customers = {
+  list: () => client.get('/customers/'),
+  get: (id) => client.get(`/customers/${id}/`),
+  create: (data) => client.post('/customers/', data),
+  update: (id, data) => client.patch(`/customers/${id}/`, data),
+  delete: (id) => client.delete(`/customers/${id}/`),
+}
+
+export const customerLocations = {
+  list: (customerId) => client.get('/customer-locations/', { params: customerId ? { customer: customerId } : {} }),
+  create: (data) => client.post('/customer-locations/', data),
+  update: (id, data) => client.patch(`/customer-locations/${id}/`, data),
+  delete: (id) => client.delete(`/customer-locations/${id}/`),
+}

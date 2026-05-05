@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import NewDetermination from './pages/NewDetermination'
 import DeterminationResults from './pages/DeterminationResults'
 import History from './pages/History'
+import Customers from './pages/Customers'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/determine" element={<NewDetermination />} />
           <Route path="/results/:id" element={<DeterminationResults />} />
           <Route path="/history" element={<History />} />
+          <Route path="/customers" element={<Customers />} />
         </Routes>
       </main>
     </BrowserRouter>
