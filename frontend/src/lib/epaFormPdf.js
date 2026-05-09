@@ -3,7 +3,9 @@
  * Used in offline / static mode when no backend is available.
  */
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import { applyPlugin } from 'jspdf-autotable'
+
+applyPlugin(jsPDF)
 
 const CONTAINER_TYPE_LABELS = {
   DM: 'DM', DW: 'DW', DF: 'DF', TP: 'TP', TT: 'TT', TC: 'TC',
