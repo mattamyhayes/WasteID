@@ -155,4 +155,7 @@ export const manifests = {
   delete: (id) => useLocalMixtures
     ? localManifests.delete(id)
     : client.delete(`/manifests/${id}/`),
+  exportPdf: (id) => useLocalMixtures
+    ? localManifests.exportPdf(id)
+    : client.get(`/manifests/${id}/export_pdf/`, { responseType: 'blob' }),
 }
