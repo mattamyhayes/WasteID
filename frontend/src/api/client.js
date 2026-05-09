@@ -1,6 +1,6 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
-import { localMixtures, localCustomers, localCustomerLocations } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -119,4 +119,40 @@ export const customerLocations = {
   delete: (id) => useLocalMixtures
     ? localCustomerLocations.delete(id)
     : client.delete(`/customer-locations/${id}/`),
+}
+
+export const shippers = {
+  list: () => useLocalMixtures
+    ? localShippers.list()
+    : client.get('/shippers/'),
+  get: (id) => useLocalMixtures
+    ? localShippers.get(id)
+    : client.get(`/shippers/${id}/`),
+  create: (data) => useLocalMixtures
+    ? localShippers.create(data)
+    : client.post('/shippers/', data),
+  update: (id, data) => useLocalMixtures
+    ? localShippers.update(id, data)
+    : client.patch(`/shippers/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? localShippers.delete(id)
+    : client.delete(`/shippers/${id}/`),
+}
+
+export const manifests = {
+  list: () => useLocalMixtures
+    ? localManifests.list()
+    : client.get('/manifests/'),
+  get: (id) => useLocalMixtures
+    ? localManifests.get(id)
+    : client.get(`/manifests/${id}/`),
+  create: (data) => useLocalMixtures
+    ? localManifests.create(data)
+    : client.post('/manifests/', data),
+  update: (id, data) => useLocalMixtures
+    ? localManifests.update(id, data)
+    : client.patch(`/manifests/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? localManifests.delete(id)
+    : client.delete(`/manifests/${id}/`),
 }

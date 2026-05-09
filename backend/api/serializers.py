@@ -1,6 +1,7 @@
 from rest_framework import serializers
 import json
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
+from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
+                     Customer, CustomerLocation, Shipper, EPAManifest)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -84,3 +85,33 @@ class MixtureCreateSerializer(serializers.ModelSerializer):
         for comp_data in components_data:
             MixtureComponent.objects.create(mixture=mixture, **comp_data)
         return mixture
+
+
+class ShipperSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shipper
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class EPAManifestSerializer(serializers.ModelSerializer):
+    waste_items_list = serializers.SerializerMethodField()
+    determination_ids_list = serializers.SerializerMethodField()
+    shipper_name = serializers.CharField(source='generator_shipper.company_name', read_only=True, default='')
+
+    def get_waste_items_list(self, obj):
+        try:
+            return json.loads(obj.waste_items)
+        except Exception:
+            return []
+
+    def get_determination_ids_list(self, obj):
+        try:
+            return json.loads(obj.determination_ids)
+        except Exception:
+            return []
+
+    class Meta:
+        model = EPAManifest
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']

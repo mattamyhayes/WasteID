@@ -556,3 +556,149 @@ export const localCustomerLocations = {
 }
 
 export default localMixtures
+
+// --------------------------------------------------------------- Local Shippers
+const SHIPPERS_STORAGE_KEY = 'wasteid_shippers_v1'
+
+function emptyShipperStore() {
+  return { shippers: [], nextId: 1 }
+}
+
+function loadShipperStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SHIPPERS_STORAGE_KEY) : null
+    if (!raw) return emptyShipperStore()
+    return JSON.parse(raw)
+  } catch {
+    return emptyShipperStore()
+  }
+}
+
+function saveShipperStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SHIPPERS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+export const localShippers = {
+  list() {
+    const store = loadShipperStore()
+    return ok({ results: store.shippers })
+  },
+  get(id) {
+    const store = loadShipperStore()
+    const s = store.shippers.find(x => x.id === Number(id))
+    if (!s) return reject('Shipper not found.', 404)
+    return ok(s)
+  },
+  create(payload) {
+    const store = loadShipperStore()
+    const now = new Date().toISOString()
+    const shipper = {
+      id: store.nextId++,
+      company_name: payload.company_name || '',
+      epa_id: payload.epa_id || '',
+      address: payload.address || '',
+      city: payload.city || '',
+      state: payload.state || '',
+      zip_code: payload.zip_code || '',
+      phone: payload.phone || '',
+      emergency_phone: payload.emergency_phone || '',
+      contact_name: payload.contact_name || '',
+      site_address: payload.site_address || '',
+      site_city: payload.site_city || '',
+      site_state: payload.site_state || '',
+      site_zip_code: payload.site_zip_code || '',
+      notes: payload.notes || '',
+      created_at: now,
+      updated_at: now,
+    }
+    store.shippers.push(shipper)
+    saveShipperStore(store)
+    return ok(shipper)
+  },
+  update(id, payload) {
+    const store = loadShipperStore()
+    const s = store.shippers.find(x => x.id === Number(id))
+    if (!s) return reject('Shipper not found.', 404)
+    Object.assign(s, payload, { updated_at: new Date().toISOString() })
+    saveShipperStore(store)
+    return ok(s)
+  },
+  delete(id) {
+    const store = loadShipperStore()
+    store.shippers = store.shippers.filter(s => s.id !== Number(id))
+    saveShipperStore(store)
+    return ok({})
+  },
+}
+
+// --------------------------------------------------------------- Local Manifests
+const MANIFESTS_STORAGE_KEY = 'wasteid_manifests_v1'
+
+function emptyManifestStore() {
+  return { manifests: [], nextId: 1 }
+}
+
+function loadManifestStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(MANIFESTS_STORAGE_KEY) : null
+    if (!raw) return emptyManifestStore()
+    return JSON.parse(raw)
+  } catch {
+    return emptyManifestStore()
+  }
+}
+
+function saveManifestStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(MANIFESTS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+export const localManifests = {
+  list() {
+    const store = loadManifestStore()
+    return ok({ results: store.manifests })
+  },
+  get(id) {
+    const store = loadManifestStore()
+    const m = store.manifests.find(x => x.id === Number(id))
+    if (!m) return reject('Manifest not found.', 404)
+    return ok(m)
+  },
+  create(payload) {
+    const store = loadManifestStore()
+    const now = new Date().toISOString()
+    const manifest = {
+      id: store.nextId++,
+      ...payload,
+      waste_items: payload.waste_items || '[]',
+      determination_ids: payload.determination_ids || '[]',
+      status: payload.status || 'draft',
+      created_at: now,
+      updated_at: now,
+    }
+    store.manifests.push(manifest)
+    saveManifestStore(store)
+    return ok(manifest)
+  },
+  update(id, payload) {
+    const store = loadManifestStore()
+    const m = store.manifests.find(x => x.id === Number(id))
+    if (!m) return reject('Manifest not found.', 404)
+    Object.assign(m, payload, { updated_at: new Date().toISOString() })
+    saveManifestStore(store)
+    return ok(m)
+  },
+  delete(id) {
+    const store = loadManifestStore()
+    store.manifests = store.manifests.filter(m => m.id !== Number(id))
+    saveManifestStore(store)
+    return ok({})
+  },
+}
