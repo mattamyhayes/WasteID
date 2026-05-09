@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { shippers as shippersApi, manifests as manifestsApi, mixtures as mixturesApi } from '../api/client'
+import { generateEpaFormPdf } from '../lib/epaFormPdf'
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -88,17 +89,21 @@ export default function EPAForm() {
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [savedManifests, setSavedManifests] = useState([])
+  const [exportingId, setExportingId] = useState(null)
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [shipRes, mixRes] = await Promise.all([
+        const [shipRes, mixRes, manRes] = await Promise.all([
           shippersApi.list(),
           mixturesApi.list(),
+          manifestsApi.list(),
         ])
         setShippers(shipRes.data.results || shipRes.data)
         const mixes = mixRes.data.results || mixRes.data
         setAllMixtures(mixes)
+        setSavedManifests(manRes.data.results || manRes.data || [])
       } catch {
         // Data loading errors are non-fatal
       } finally {
@@ -196,6 +201,41 @@ export default function EPAForm() {
     })
   }
 
+  const handleExportPdf = async (manifestId) => {
+    setExportingId(manifestId)
+    try {
+      const res = await manifestsApi.exportPdf(manifestId)
+      // If backend returns a blob, trigger download
+      if (res.data instanceof Blob) {
+        const url = URL.createObjectURL(res.data)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `EPA_8700-22_manifest_${manifestId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+      }
+      // In local mode, the PDF is saved directly via jsPDF
+    } catch (e) {
+      setError('Failed to export PDF. ' + (e.message || ''))
+    } finally {
+      setExportingId(null)
+    }
+  }
+
+  const handleExportCurrentForm = () => {
+    // Build a manifest-like object from the current form state and export as PDF
+    const manifestObj = {
+      ...form,
+      id: 'draft',
+      waste_items: JSON.stringify(wasteItems),
+      status: 'draft',
+      created_at: new Date().toISOString(),
+    }
+    generateEpaFormPdf(manifestObj)
+  }
+
   const handleSubmit = async () => {
     if (!form.generator_name.trim()) { setError('Generator name is required.'); return }
     setSubmitting(true)
@@ -214,6 +254,11 @@ export default function EPAForm() {
       setWasteItems([{ ...emptyWasteItem }])
       setSelectedShipper('')
       setSelectedDeterminations([])
+      // Reload saved manifests
+      try {
+        const manRes = await manifestsApi.list()
+        setSavedManifests(manRes.data.results || manRes.data || [])
+      } catch { /* non-fatal */ }
     } catch (e) {
       const detail = e.response?.data
       setError(typeof detail === 'string' ? detail : 'Failed to save manifest.')
@@ -599,8 +644,67 @@ export default function EPAForm() {
           style={{ padding: '0.6rem 2rem', fontSize: '1rem' }}>
           {submitting ? 'Saving…' : '💾 Save Manifest'}
         </button>
+        <button className="btn btn-secondary" onClick={handleExportCurrentForm}
+          style={{ padding: '0.6rem 1.5rem', fontSize: '1rem' }}>
+          📄 Export Current Form as PDF
+        </button>
         <button className="btn btn-secondary" onClick={() => navigate('/')}>Cancel</button>
       </div>
+
+      {/* Saved Manifests */}
+      {savedManifests.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>Saved Manifests</div>
+          <p style={{ fontSize: '0.88rem', color: '#6b7280', marginBottom: '0.75rem' }}>
+            Previously saved manifests can be exported as PDF in the official EPA Form 8700-22 format.
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+              <thead>
+                <tr style={{ background: '#f3f4f6', textAlign: 'left' }}>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '2px solid #e5e7eb' }}>Tracking #</th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '2px solid #e5e7eb' }}>Generator</th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '2px solid #e5e7eb' }}>Status</th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '2px solid #e5e7eb' }}>Created</th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '2px solid #e5e7eb' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {savedManifests.map(m => (
+                  <tr key={m.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      {m.manifest_tracking_number || <span style={{ color: '#9ca3af' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>{m.generator_name || '—'}</td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <span style={{
+                        padding: '0.15rem 0.5rem', borderRadius: 4, fontSize: '0.8rem', fontWeight: 600,
+                        background: m.status === 'draft' ? '#fef3c7' : m.status === 'signed' ? '#dbeafe' : '#d1fae5',
+                        color: m.status === 'draft' ? '#92400e' : m.status === 'signed' ? '#1e40af' : '#065f46',
+                      }}>
+                        {m.status || 'draft'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      {m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <button
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.82rem', padding: '0.25rem 0.75rem' }}
+                        disabled={exportingId === m.id}
+                        onClick={() => handleExportPdf(m.id)}
+                      >
+                        {exportingId === m.id ? 'Exporting…' : '📄 Export PDF'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

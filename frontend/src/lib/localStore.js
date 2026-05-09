@@ -701,4 +701,12 @@ export const localManifests = {
     saveManifestStore(store)
     return ok({})
   },
+  async exportPdf(id) {
+    const store = loadManifestStore()
+    const m = store.manifests.find(x => x.id === Number(id))
+    if (!m) return reject('Manifest not found.', 404)
+    const { generateEpaFormPdf } = await import('./epaFormPdf.js')
+    generateEpaFormPdf(m)
+    return ok({})
+  },
 }
