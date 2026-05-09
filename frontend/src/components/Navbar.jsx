@@ -4,6 +4,8 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/determine', label: 'New Determination' },
   { to: '/customers', label: 'Customers' },
+  { to: '/shippers', label: 'Shippers' },
+  { to: '/epa-form', label: 'EPA Form' },
   { to: '/history', label: 'History' },
 ]
 

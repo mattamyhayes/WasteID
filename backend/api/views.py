@@ -4,10 +4,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
-                           MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer)
+                           MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
+                           ShipperSerializer, EPAManifestSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -258,3 +259,24 @@ class MixtureComponentViewSet(viewsets.ModelViewSet):
 class WasteDeterminationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WasteDetermination.objects.all()
     serializer_class = WasteDeterminationSerializer
+
+
+class ShipperViewSet(viewsets.ModelViewSet):
+    queryset = Shipper.objects.all()
+    serializer_class = ShipperSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        q = self.request.query_params.get('q', '')
+        if q:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(company_name__icontains=q) |
+                Q(epa_id__icontains=q)
+            )
+        return qs
+
+
+class EPAManifestViewSet(viewsets.ModelViewSet):
+    queryset = EPAManifest.objects.select_related('generator_shipper').all()
+    serializer_class = EPAManifestSerializer

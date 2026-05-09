@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
 
 
 class CustomerLocationInline(admin.TabularInline):
@@ -43,3 +43,16 @@ class MixtureComponentAdmin(admin.ModelAdmin):
 @admin.register(WasteDetermination)
 class WasteDeterminationAdmin(admin.ModelAdmin):
     list_display = ['mixture', 'is_hazardous_waste', 'created_at']
+
+
+@admin.register(Shipper)
+class ShipperAdmin(admin.ModelAdmin):
+    list_display = ['company_name', 'epa_id', 'city', 'state', 'phone']
+    search_fields = ['company_name', 'epa_id']
+
+
+@admin.register(EPAManifest)
+class EPAManifestAdmin(admin.ModelAdmin):
+    list_display = ['manifest_tracking_number', 'generator_name', 'status', 'created_at']
+    list_filter = ['status']
+    search_fields = ['manifest_tracking_number', 'generator_name']

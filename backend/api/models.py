@@ -155,3 +155,98 @@ class WasteDetermination(models.Model):
 
     def __str__(self):
         return f"Determination for {self.mixture.name} - {'Hazardous' if self.is_hazardous_waste else 'Non-Hazardous'}"
+
+
+class Shipper(models.Model):
+    """Reusable shipper / generator profile for EPA manifests."""
+    company_name = models.CharField(max_length=300)
+    epa_id = models.CharField(max_length=20, blank=True, help_text='US EPA ID Number')
+    address = models.CharField(max_length=500, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=50, blank=True)
+    zip_code = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    emergency_phone = models.CharField(max_length=50, blank=True)
+    contact_name = models.CharField(max_length=200, blank=True)
+    site_address = models.CharField(max_length=500, blank=True, help_text='Site address if different from mailing')
+    site_city = models.CharField(max_length=100, blank=True)
+    site_state = models.CharField(max_length=50, blank=True)
+    site_zip_code = models.CharField(max_length=20, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['company_name']
+
+    def __str__(self):
+        return f"{self.company_name} ({self.epa_id})"
+
+
+class EPAManifest(models.Model):
+    """EPA Form 8700-22 Uniform Hazardous Waste Manifest."""
+    manifest_tracking_number = models.CharField(max_length=30, blank=True)
+    generator_shipper = models.ForeignKey(Shipper, on_delete=models.SET_NULL, null=True, blank=True, related_name='manifests')
+    generator_name = models.CharField(max_length=300, blank=True)
+    generator_epa_id = models.CharField(max_length=20, blank=True)
+    generator_address = models.CharField(max_length=500, blank=True)
+    generator_city = models.CharField(max_length=100, blank=True)
+    generator_state = models.CharField(max_length=50, blank=True)
+    generator_zip = models.CharField(max_length=20, blank=True)
+    generator_phone = models.CharField(max_length=50, blank=True)
+    generator_site_address = models.CharField(max_length=500, blank=True)
+    emergency_response_phone = models.CharField(max_length=50, blank=True)
+
+    transporter1_name = models.CharField(max_length=300, blank=True)
+    transporter1_epa_id = models.CharField(max_length=20, blank=True)
+    transporter2_name = models.CharField(max_length=300, blank=True)
+    transporter2_epa_id = models.CharField(max_length=20, blank=True)
+
+    designated_facility_name = models.CharField(max_length=300, blank=True)
+    designated_facility_address = models.CharField(max_length=500, blank=True)
+    designated_facility_city = models.CharField(max_length=100, blank=True)
+    designated_facility_state = models.CharField(max_length=50, blank=True)
+    designated_facility_zip = models.CharField(max_length=20, blank=True)
+    designated_facility_epa_id = models.CharField(max_length=20, blank=True)
+    designated_facility_phone = models.CharField(max_length=50, blank=True)
+
+    # Waste items stored as JSON array of objects
+    # Each: {description, containers_no, container_type, quantity, unit, waste_codes[], dot_description}
+    waste_items = models.TextField(default='[]', help_text='JSON array of waste line items')
+
+    special_handling_instructions = models.TextField(blank=True)
+    additional_info = models.TextField(blank=True)
+
+    # Determinations linked to this manifest
+    determination_ids = models.TextField(default='[]', help_text='JSON array of determination IDs')
+
+    generator_certification = models.BooleanField(default=False)
+    generator_printed_name = models.CharField(max_length=200, blank=True)
+    generator_signature_date = models.DateField(null=True, blank=True)
+
+    international_shipment = models.BooleanField(default=False)
+    import_to_us = models.BooleanField(default=False)
+    port_of_entry_exit = models.CharField(max_length=200, blank=True)
+    date_leaving_us = models.DateField(null=True, blank=True)
+
+    status = models.CharField(max_length=20, default='draft', choices=[
+        ('draft', 'Draft'),
+        ('signed', 'Signed'),
+        ('shipped', 'Shipped'),
+        ('received', 'Received'),
+    ])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def get_waste_items(self):
+        return json.loads(self.waste_items)
+
+    def get_determination_ids(self):
+        return json.loads(self.determination_ids)
+
+    def __str__(self):
+        return f"Manifest {self.manifest_tracking_number or '(draft)'} - {self.generator_name}"

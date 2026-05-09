@@ -6,6 +6,8 @@ import DeterminationResults from './pages/DeterminationResults'
 import History from './pages/History'
 import Customers from './pages/Customers'
 import AddCustomer from './pages/AddCustomer'
+import Shippers from './pages/Shippers'
+import EPAForm from './pages/EPAForm'
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
           <Route path="/history" element={<History />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/new" element={<AddCustomer />} />
+          <Route path="/shippers" element={<Shippers />} />
+          <Route path="/epa-form" element={<EPAForm />} />
         </Routes>
       </main>
     </BrowserRouter>
