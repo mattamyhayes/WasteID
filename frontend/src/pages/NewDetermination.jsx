@@ -112,6 +112,8 @@ export default function NewDetermination() {
       if (!disclaimerAccepted) { setError('You must accept the legal disclaimer before proceeding.'); return false }
       if (!reviewerName.trim()) { setError('Please enter your full name to sign off on this determination.'); return false }
       if (!reviewerDate) { setError('Please enter the sign-off date.'); return false }
+      const today = new Date().toISOString().split('T')[0]
+      if (reviewerDate > today) { setError('Sign-off date cannot be in the future.'); return false }
     }
     setError('')
     return true
