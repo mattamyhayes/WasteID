@@ -257,6 +257,8 @@ function hydrateDetermination(rawDet) {
     recommendations: rawDet.recommendations || '',
     waste_codes_list: wasteCodesArr,
     reasoning_list: reasoningArr,
+    reviewer_name: rawDet.reviewer_name || '',
+    reviewer_sign_off_date: rawDet.reviewer_sign_off_date || null,
   }
 }
 
@@ -376,7 +378,7 @@ export const localMixtures = {
     return ok({})
   },
 
-  determine(mixtureId, additionalProps = {}) {
+  determine(mixtureId, additionalProps = {}, reviewerInfo = {}) {
     const store = loadStore()
     const numId = Number(mixtureId)
     const m = store.mixtures.find(x => x.id === numId)
@@ -398,6 +400,8 @@ export const localMixtures = {
       waste_codes: JSON.stringify(result.waste_codes),
       reasoning: JSON.stringify(result.reasoning),
       recommendations: result.recommendations,
+      reviewer_name: reviewerInfo.reviewer_name || '',
+      reviewer_sign_off_date: reviewerInfo.reviewer_sign_off_date || null,
     }
     store.determinations.push(det)
     saveStore(store)
@@ -432,6 +436,10 @@ export const localMixtures = {
       lines.push([])
       lines.push(['Determination', latest.is_hazardous_waste ? 'HAZARDOUS' : 'NOT HAZARDOUS'])
       lines.push(['Waste Codes', latest.waste_codes_list.join('; ')])
+      if (latest.reviewer_name) {
+        lines.push(['Reviewed By', latest.reviewer_name])
+        lines.push(['Sign-Off Date', latest.reviewer_sign_off_date || ''])
+      }
     }
     const csv = lines.map(row =>
       row.map(cell => {

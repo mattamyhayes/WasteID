@@ -199,6 +199,38 @@ export default function DeterminationResults() {
         </div>
       )}
 
+      {/* Reviewer Sign-Off */}
+      {det.reviewer_name && (
+        <div className="card" style={{ marginBottom: '1.25rem' }}>
+          <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Reviewer Sign-Off</h3>
+          <div style={{
+            padding: '1rem',
+            background: '#fffbeb',
+            border: '1px solid #f59e0b',
+            borderRadius: 8,
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.75rem' }}>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 2 }}>Reviewed By</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{det.reviewer_name}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 2 }}>Sign-Off Date</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>
+                  {det.reviewer_sign_off_date
+                    ? new Date(det.reviewer_sign_off_date + 'T00:00:00').toLocaleDateString()
+                    : '—'}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>
+              This determination was reviewed and signed off by the individual named above, who certifies that all inputs
+              and outputs have been fully reviewed and accepts full responsibility for the accuracy of this determination.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Components Table */}
       <div className="card">
         <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Components ({mixture.components.length})</h3>

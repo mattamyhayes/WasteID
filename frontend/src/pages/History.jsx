@@ -66,6 +66,13 @@ function MixtureRow({ m, onDelete, onPdf }) {
               Waste codes: {JSON.parse(latestDet.waste_codes || '[]').join(', ') || 'None'}
             </>
           )}
+          {latestDet?.reviewer_name && (
+            <>
+              {' · '}
+              Reviewed by: {latestDet.reviewer_name}
+              {latestDet.reviewer_sign_off_date && ` (${new Date(latestDet.reviewer_sign_off_date + 'T00:00:00').toLocaleDateString()})`}
+            </>
+          )}
         </div>
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
