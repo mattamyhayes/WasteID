@@ -71,9 +71,9 @@ export const mixtures = {
   create: (data) => useLocalMixtures ? localMixtures.create(data) : client.post('/mixtures/', data),
   update: (id, data) => useLocalMixtures ? localMixtures.update(id, data) : client.patch(`/mixtures/${id}/`, data),
   delete: (id) => useLocalMixtures ? localMixtures.delete(id) : client.delete(`/mixtures/${id}/`),
-  determine: (id, props) => useLocalMixtures
-    ? localMixtures.determine(id, props)
-    : client.post(`/mixtures/${id}/determine/`, { additional_props: props }),
+  determine: (id, props, reviewerInfo) => useLocalMixtures
+    ? localMixtures.determine(id, props, reviewerInfo)
+    : client.post(`/mixtures/${id}/determine/`, { additional_props: props, ...reviewerInfo }),
   reportPdf: (id) => useLocalMixtures
     ? localMixtures.reportPdf(id)
     : client.get(`/mixtures/${id}/report_pdf/`, { responseType: 'blob' }),

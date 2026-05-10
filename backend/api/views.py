@@ -86,6 +86,8 @@ class MixtureViewSet(viewsets.ModelViewSet):
             waste_codes=json.dumps(result['waste_codes']),
             reasoning=json.dumps(result['reasoning']),
             recommendations=result['recommendations'],
+            reviewer_name=request.data.get('reviewer_name', ''),
+            reviewer_sign_off_date=request.data.get('reviewer_sign_off_date') or None,
         )
 
         result['determination_id'] = det.id
@@ -208,6 +210,38 @@ class MixtureViewSet(viewsets.ModelViewSet):
                         story.append(Paragraph(f'• {line}', styles['Normal']))
 
             story.append(Spacer(1, 24))
+
+            # Reviewer sign-off section
+            if det and det.reviewer_name:
+                story.append(HRFlowable(width='100%'))
+                story.append(Spacer(1, 8))
+                story.append(Paragraph('Reviewer Sign-Off', styles['Heading2']))
+                signoff_rows = [
+                    ('Reviewed By', det.reviewer_name),
+                    ('Sign-Off Date', det.reviewer_sign_off_date.strftime('%Y-%m-%d') if det.reviewer_sign_off_date else '—'),
+                ]
+                signoff_table = Table(
+                    [[Paragraph(f'<b>{k}</b>', label_style), Paragraph(str(v), label_style)] for k, v in signoff_rows],
+                    colWidths=[1.5 * inch, 5.5 * inch]
+                )
+                signoff_table.setStyle(TableStyle([
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('BOX', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+                    ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                    ('TOPPADDING', (0, 0), (-1, -1), 4),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ]))
+                story.append(signoff_table)
+                story.append(Spacer(1, 8))
+                story.append(Paragraph(
+                    'By signing off on this determination, the reviewer certifies that they have fully reviewed '
+                    'all inputs and outputs of this report and accept full responsibility for the accuracy of this determination.',
+                    ParagraphStyle('SignoffNote', parent=styles['Normal'], fontSize=9, textColor=colors.darkgrey)
+                ))
+                story.append(Spacer(1, 12))
+
             disclaimer_style = ParagraphStyle('Disclaimer', parent=styles['Normal'],
                                               fontSize=8, textColor=colors.grey, spaceAfter=6)
             story.append(Paragraph(

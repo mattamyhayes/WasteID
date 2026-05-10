@@ -147,6 +147,9 @@ class WasteDetermination(models.Model):
     reasoning = models.TextField(default='[]')
     recommendations = models.TextField(blank=True)
 
+    reviewer_name = models.CharField(max_length=200, blank=True, help_text='Name of person who reviewed and signed off on this determination')
+    reviewer_sign_off_date = models.DateField(null=True, blank=True, help_text='Date the reviewer signed off on this determination')
+
     def get_waste_codes(self):
         return json.loads(self.waste_codes)
 
