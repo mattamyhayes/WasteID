@@ -54,7 +54,7 @@ function MixtureRow({ m, onDelete, onPdf }) {
               {isHazardous ? '⚠️ Hazardous' : '✅ Not Hazardous'}
             </span>
           )}
-          {!latestDet && <span className="badge badge-warning">No determination yet</span>}
+          {!latestDet && <span className="badge badge-warning">No profile yet</span>}
         </div>
         <div style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>
           {m.customer_name && <span><strong>{m.customer_name}</strong>{m.customer_location_name ? ` · ${m.customer_location_name}` : ''} · </span>}
@@ -115,7 +115,7 @@ export default function History() {
   useEffect(() => { load() }, [])
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this mixture and all its determinations?')) return
+    if (!confirm('Delete this mixture and all its profiles?')) return
     await mixtures.delete(id)
     setItems(prev => prev.filter(m => m.id !== id))
   }
@@ -175,8 +175,8 @@ export default function History() {
   return (
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ color: '#14532d' }}>Determination History</h1>
-        <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+        <h1 style={{ color: '#14532d' }}>Profile History</h1>
+        <Link to="/determine" className="btn btn-primary">+ Profiles</Link>
       </div>
 
       {!loading && items.length > 0 && (
@@ -215,8 +215,8 @@ export default function History() {
       {!loading && items.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No determinations yet.</p>
-          <Link to="/determine" className="btn btn-primary">Start Your First Determination</Link>
+          <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles yet.</p>
+          <Link to="/determine" className="btn btn-primary">Start Your First Profile</Link>
         </div>
       )}
 

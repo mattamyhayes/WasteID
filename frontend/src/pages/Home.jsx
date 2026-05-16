@@ -4,7 +4,7 @@ const features = [
   { icon: '🔬', title: 'Listed Waste (P/U/F/K)', desc: 'Cross-reference your chemicals against all four EPA RCRA listed waste codes.' },
   { icon: '⚗️', title: 'Characteristic Hazards', desc: 'Automatically evaluate D001–D043: ignitability, corrosivity, reactivity, and toxicity (TCLP).' },
   { icon: '📋', title: 'Step-by-Step Reasoning', desc: 'Follow the full RCRA decision framework with documented justification at each step.' },
-  { icon: '📄', title: 'PDF & CSV Export', desc: 'Generate professional determination reports and download your mixture data instantly.' },
+  { icon: '📄', title: 'PDF & CSV Export', desc: 'Generate professional profile reports and download your mixture data instantly.' },
 ]
 
 export default function Home() {
@@ -27,7 +27,7 @@ export default function Home() {
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/determine" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem' }}>
-              🚀 Start New Determination
+              🚀 Start Profiles
             </Link>
             <Link to="/history" className="btn btn-outline" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem', borderColor: '#fff', color: '#fff' }}>
               📂 View History
@@ -55,13 +55,13 @@ export default function Home() {
         {/* Disclaimer */}
         <div className="alert alert-warning" style={{ marginTop: '2.5rem' }}>
           <strong>⚠️ Disclaimer:</strong> WasteID is a decision-support tool for informational purposes only. It does not
-          constitute legal advice or replace laboratory testing (SW-846 methods). Always verify determinations with a
+          constitute legal advice or replace laboratory testing (SW-846 methods). Always verify profiles with a
           qualified environmental professional and consult applicable state regulations.
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <Link to="/determine" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-            Start a Determination →
+            Start Profiles →
           </Link>
         </div>
       </div>

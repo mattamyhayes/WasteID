@@ -23,11 +23,11 @@ export default function DeterminationResults() {
           const d = m.determinations?.find(d => String(d.id) === String(id))
           if (d) { found = m; foundDet = d; break }
         }
-        if (!found) throw new Error('Determination not found')
+        if (!found) throw new Error('Profile not found')
         setMixture(found)
         setDet(foundDet)
       } catch (e) {
-        setError('Could not load determination results.')
+        setError('Could not load profile results.')
       } finally {
         setLoading(false)
       }
@@ -82,13 +82,13 @@ export default function DeterminationResults() {
             </p>
           )}
           <p style={{ color: '#6b7280', fontSize: '0.88rem' }}>
-            Determined: {new Date(det.created_at).toLocaleString()}
+            Profiled: {new Date(det.created_at).toLocaleString()}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={handlePdf}>📄 PDF Report</button>
           <button className="btn btn-secondary" onClick={handleCsv}>📊 Export CSV</button>
-          <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+          <Link to="/determine" className="btn btn-primary">+ Profiles</Link>
         </div>
       </div>
 
@@ -154,7 +154,7 @@ export default function DeterminationResults() {
 
       {/* Reasoning Steps */}
       <div className="card" style={{ marginBottom: '1.25rem' }}>
-        <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Determination Reasoning</h3>
+        <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Profile Reasoning</h3>
         {reasoning.map((step) => (
           <div key={step.step} style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid #f0f0f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
@@ -224,8 +224,8 @@ export default function DeterminationResults() {
               </div>
             </div>
             <div style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>
-              This determination was reviewed and signed off by the individual named above, who certifies that all inputs
-              and outputs have been fully reviewed and accepts full responsibility for the accuracy of this determination.
+              This profile was reviewed and signed off by the individual named above, who certifies that all inputs
+              and outputs have been fully reviewed and accepts full responsibility for the accuracy of this profile.
             </div>
           </div>
         </div>

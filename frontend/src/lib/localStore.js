@@ -434,7 +434,7 @@ export const localMixtures = {
     const latest = hydrated.determinations[hydrated.determinations.length - 1]
     if (latest) {
       lines.push([])
-      lines.push(['Determination', latest.is_hazardous_waste ? 'HAZARDOUS' : 'NOT HAZARDOUS'])
+      lines.push(['Profile', latest.is_hazardous_waste ? 'HAZARDOUS' : 'NOT HAZARDOUS'])
       lines.push(['Waste Codes', latest.waste_codes_list.join('; ')])
       if (latest.reviewer_name) {
         lines.push(['Reviewed By', latest.reviewer_name])

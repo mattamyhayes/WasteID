@@ -310,7 +310,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   const isHazardous = isListed || allChar
 
   const recs = [
-    'DISCLAIMER: This determination is for informational purposes only and does not constitute legal advice.',
+    'DISCLAIMER: This profile is for informational purposes only and does not constitute legal advice.',
     'Verify results with qualified environmental professionals.',
     'Laboratory testing (SW-846 methods) is recommended to confirm characteristics.',
     'Check state-specific regulations, which may be more stringent than federal RCRA.',

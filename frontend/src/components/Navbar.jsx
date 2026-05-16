@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 const navLinks = [
   { to: '/', label: 'Home' },
-  { to: '/determine', label: 'New Determination' },
+  { to: '/determine', label: 'Profiles' },
   { to: '/customers', label: 'Customers' },
   { to: '/shippers', label: 'Shippers' },
   { to: '/epa-form', label: 'EPA Form' },

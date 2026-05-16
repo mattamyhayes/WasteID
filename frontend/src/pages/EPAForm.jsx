@@ -453,12 +453,12 @@ export default function EPAForm() {
         </div>
       </div>
 
-      {/* Section 5: Link Determinations */}
+      {/* Section 5: Link Profiles */}
       {availableDeterminations.length > 0 && (
         <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>5. Link Waste Determinations</div>
+          <div style={sectionTitleStyle}>5. Link Waste Profiles</div>
           <p style={{ fontSize: '0.88rem', color: '#6b7280', marginBottom: '0.75rem' }}>
-            Select one or more determinations to include waste code information in this manifest.
+            Select one or more profiles to include waste code information in this manifest.
           </p>
           <div style={{ maxHeight: 250, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.5rem' }}>
             {availableDeterminations.map(det => (
@@ -494,7 +494,7 @@ export default function EPAForm() {
           {selectedDeterminations.length > 0 && (
             <button className="btn btn-secondary" style={{ marginTop: '0.75rem', fontSize: '0.88rem' }}
               onClick={populateFromDeterminations}>
-              📥 Populate Waste Items from Selected Determinations
+              📥 Populate Waste Items from Selected Profiles
             </button>
           )}
         </div>
