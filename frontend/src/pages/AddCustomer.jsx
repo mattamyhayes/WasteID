@@ -40,7 +40,7 @@ export default function AddCustomer() {
   }
 
   const submitNewCustomer = async () => {
-    if (!form.name.trim()) { setError('Customer name is required.'); return }
+    if (!form.name.trim()) { setError('Generator name is required.'); return }
     setSubmitting(true)
     setError('')
     try {
@@ -49,10 +49,10 @@ export default function AddCustomer() {
       for (const loc of pendingLocations) {
         await locationsApi.create({ ...loc, customer: newId })
       }
-      navigate('/customers')
+      navigate('/generators')
     } catch (e) {
       const detail = e.response?.data
-      setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || 'Failed to create customer.'))
+      setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || 'Failed to create generator.'))
     } finally {
       setSubmitting(false)
     }
@@ -60,13 +60,13 @@ export default function AddCustomer() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 960 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>Add New Customer</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>Add New Generator</h1>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <div className="form-group">
-          <label>Customer Name *</label>
+          <label>Generator Name *</label>
           <input className="form-control" value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
             placeholder="e.g., Acme Manufacturing" />
@@ -101,7 +101,7 @@ export default function AddCustomer() {
 
         <h3 style={{ color: '#166534', marginTop: '1rem', marginBottom: '0.5rem' }}>Locations</h3>
         <p style={{ color: '#6b7280', fontSize: '0.88rem', marginBottom: '0.75rem' }}>
-          Add one or more locations for this customer. You can add more locations later.
+          Add one or more locations for this generator. You can add more locations later.
         </p>
 
         {pendingLocations.length > 0 && (
@@ -144,9 +144,9 @@ export default function AddCustomer() {
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
           <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save Customer'}
+            {submitting ? 'Saving…' : 'Save Generator'}
           </button>
-          <button className="btn btn-secondary" onClick={() => navigate('/customers')}>
+          <button className="btn btn-secondary" onClick={() => navigate('/generators')}>
             Cancel
           </button>
         </div>
