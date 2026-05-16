@@ -236,7 +236,7 @@ export default function NewDetermination() {
             </select>
             <small style={{ color: '#6b7280' }}>
               Don’t see your generator?{' '}
-              <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
+              <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
               {' '}first, then return here.
             </small>
           </div>
@@ -259,7 +259,7 @@ export default function NewDetermination() {
             </select>
             {customerId && locationsForCustomer.length === 0 && (
               <small style={{ color: '#6b7280' }}>
-                <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>Manage this generator</Link> to add a location.
+                <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
               </small>
             )}
           </div>
