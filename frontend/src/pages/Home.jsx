@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { navLinks } from '../components/Navbar'
 
 const features = [
   { icon: '🔬', title: 'Listed Waste (P/U/F/K)', desc: 'Cross-reference your chemicals against all four EPA RCRA listed waste codes.' },
@@ -6,6 +7,9 @@ const features = [
   { icon: '📋', title: 'Step-by-Step Reasoning', desc: 'Follow the full RCRA decision framework with documented justification at each step.' },
   { icon: '📄', title: 'PDF & CSV Export', desc: 'Generate professional determination reports and download your mixture data instantly.' },
 ]
+
+// All nav links except Home for the mobile quick-nav
+const mobileNavLinks = navLinks.filter(l => l.to !== '/')
 
 export default function Home() {
   return (
@@ -27,12 +31,25 @@ export default function Home() {
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/determine" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem' }}>
-              🚀 Start New Determination
+              🚀 New Profile
             </Link>
             <Link to="/history" className="btn btn-outline" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem', borderColor: '#fff', color: '#fff' }}>
               📂 View History
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile quick-nav: all menu options as tap-friendly buttons, hidden on desktop */}
+      <div className="mobile-only container" style={{ padding: '1.5rem 1.5rem 0' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#14532d', marginBottom: '0.75rem' }}>Quick Navigation</h2>
+        <div className="mobile-nav-grid">
+          {mobileNavLinks.map(({ to, label, icon }) => (
+            <Link key={to} to={to} className="mobile-nav-btn">
+              <span className="mnb-icon">{icon}</span>
+              {label}
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -61,7 +78,7 @@ export default function Home() {
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <Link to="/determine" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-            Start a Determination →
+            New Profile →
           </Link>
         </div>
       </div>

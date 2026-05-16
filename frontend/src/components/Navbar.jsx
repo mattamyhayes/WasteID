@@ -1,43 +1,67 @@
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/determine', label: 'New Determination' },
-  { to: '/generators', label: 'Generator' },
-  { to: '/orders', label: 'Orders' },
-  { to: '/admin', label: 'Admin' },
-  { to: '/shipping', label: 'Shipping' },
-  { to: '/scheduling', label: 'Scheduling' },
-  { to: '/marketplace', label: 'Marketplace' },
-  { to: '/shippers', label: 'Shippers' },
-  { to: '/epa-form', label: 'EPA Form' },
-  { to: '/history', label: 'History' },
+export const navLinks = [
+  { to: '/', label: 'Home', icon: '🏠' },
+  { to: '/determine', label: 'New Profile', icon: '🚀' },
+  { to: '/generators', label: 'Generator', icon: '🏭' },
+  { to: '/orders', label: 'Orders', icon: '📦' },
+  { to: '/admin', label: 'Admin', icon: '⚙️' },
+  { to: '/shipping', label: 'Shipping', icon: '🚛' },
+  { to: '/scheduling', label: 'Scheduling', icon: '📅' },
+  { to: '/marketplace', label: 'Marketplace', icon: '🛒' },
+  { to: '/shippers', label: 'Shippers', icon: '🚢' },
+  { to: '/epa-form', label: 'EPA Form', icon: '📋' },
+  { to: '/history', label: 'History', icon: '📂' },
 ]
 
 export default function Navbar() {
   const { pathname } = useLocation()
+  const [open, setOpen] = useState(false)
+  const navRef = useRef(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   return (
-    <nav style={{
-      background: '#14532d',
-      color: '#fff',
-      height: 60,
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 1.5rem',
-      gap: '2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-    }}>
-      <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#bbf7d0' }}>
+    <nav
+      ref={navRef}
+      style={{
+        background: '#14532d',
+        color: '#fff',
+        height: 'var(--navbar-height)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 1.5rem',
+        gap: '2rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+      <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#bbf7d0', flexShrink: 0 }}>
         🌿 WasteID
       </Link>
-      <div style={{ display: 'flex', gap: '0.25rem', marginLeft: 'auto' }}>
+
+      {/* Nav links (desktop: inline row; mobile: dropdown) */}
+      <div className={`nav-links${open ? ' open' : ''}`}>
         {navLinks.map(({ to, label }) => (
           <Link
             key={to}
             to={to}
+            onClick={() => setOpen(false)}
             style={{
               padding: '0.4rem 0.9rem',
               borderRadius: 6,
@@ -52,6 +76,16 @@ export default function Navbar() {
           </Link>
         ))}
       </div>
+
+      {/* Hamburger button (mobile only) */}
+      <button
+        className="hamburger"
+        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+      >
+        {open ? '✕' : '☰'}
+      </button>
     </nav>
   )
 }

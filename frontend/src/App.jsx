@@ -14,7 +14,7 @@ export default function App() {
   return (
     <BrowserRouter basename="/WasteID">
       <Navbar />
-      <main style={{ minHeight: 'calc(100vh - 60px)', background: '#f5f7f5' }}>
+      <main style={{ minHeight: 'calc(100vh - var(--navbar-height))', background: '#f5f7f5' }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/determine" element={<NewDetermination />} />
