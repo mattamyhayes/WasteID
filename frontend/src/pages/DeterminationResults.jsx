@@ -76,7 +76,7 @@ export default function DeterminationResults() {
           <h1 style={{ color: '#14532d', marginTop: '0.25rem' }}>{mixture.name}</h1>
           {(mixture.customer_name || mixture.customer_location_name) && (
             <p style={{ color: '#374151', fontSize: '0.92rem', margin: '0.15rem 0 0' }}>
-              {mixture.customer_name && <><strong>Customer:</strong> {mixture.customer_name}</>}
+              {mixture.customer_name && <><strong>Generator:</strong> {mixture.customer_name}</>}
               {mixture.customer_name && mixture.customer_location_name && ' · '}
               {mixture.customer_location_name && <><strong>Location:</strong> {mixture.customer_location_name}</>}
             </p>
