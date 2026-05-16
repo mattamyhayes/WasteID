@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 export const navLinks = [
@@ -18,21 +18,39 @@ export const navLinks = [
 export default function Navbar() {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
+  const navRef = useRef(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
-    <nav style={{
-      background: '#14532d',
-      color: '#fff',
-      height: 60,
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 1.5rem',
-      gap: '2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-    }}>
+    <nav
+      ref={navRef}
+      style={{
+        background: '#14532d',
+        color: '#fff',
+        height: 'var(--navbar-height)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 1.5rem',
+        gap: '2rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
       <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#bbf7d0', flexShrink: 0 }}>
         🌿 WasteID
       </Link>
@@ -62,7 +80,8 @@ export default function Navbar() {
       {/* Hamburger button (mobile only) */}
       <button
         className="hamburger"
-        aria-label="Toggle menu"
+        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
         {open ? '✕' : '☰'}

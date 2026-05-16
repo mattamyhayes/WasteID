@@ -1,4 +1,6 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navbar-height: 60px;
+}
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -164,7 +166,7 @@ input, select, textarea {
   .nav-links {
     display: none;
     position: absolute;
-    top: 60px;
+    top: var(--navbar-height);
     left: 0;
     right: 0;
     flex-direction: column;
