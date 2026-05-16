@@ -18,7 +18,7 @@ export default function Customers() {
       const all = res.data.results || res.data
       setCustomers(all)
     } catch (e) {
-      setError('Could not load customers. Make sure the backend is running.')
+      setError('Could not load generators. Make sure the backend is running.')
     } finally {
       setLoading(false)
     }
@@ -128,9 +128,9 @@ export default function Customers() {
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 1100 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ color: '#14532d' }}>Customers</h1>
-        <button className="btn btn-primary" onClick={() => navigate('/customers/new')}>
-          + Add Customer
+        <h1 style={{ color: '#14532d' }}>Generators</h1>
+        <button className="btn btn-primary" onClick={() => navigate('/generators/new')}>
+          + Add Generator
         </button>
       </div>
 
@@ -140,7 +140,7 @@ export default function Customers() {
         <input
           className="form-control"
           type="text"
-          placeholder="Search by customer or location..."
+          placeholder="Search by generator or location..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ maxWidth: 400 }}
@@ -151,9 +151,9 @@ export default function Customers() {
 
       {!loading && customers.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#6b7280', marginBottom: '1rem' }}>No customers yet.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/customers/new')}>
-            + Add Your First Customer
+          <p style={{ color: '#6b7280', marginBottom: '1rem' }}>No generators yet.</p>
+          <button className="btn btn-primary" onClick={() => navigate('/generators/new')}>
+            + Add Your First Generator
           </button>
         </div>
       )}
@@ -163,7 +163,7 @@ export default function Customers() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
-                <th style={thStyle} onClick={() => handleSort('name')}>Customer{getSortIndicator('name')}</th>
+                <th style={thStyle} onClick={() => handleSort('name')}>Generator{getSortIndicator('name')}</th>
                 <th style={thStyle} onClick={() => handleSort('contact')}>Contact{getSortIndicator('contact')}</th>
                 <th style={thStyle} onClick={() => handleSort('email')}>Email{getSortIndicator('email')}</th>
                 <th style={thStyle} onClick={() => handleSort('phone')}>Phone{getSortIndicator('phone')}</th>

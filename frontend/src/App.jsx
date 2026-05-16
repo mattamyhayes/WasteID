@@ -8,6 +8,7 @@ import Customers from './pages/Customers'
 import AddCustomer from './pages/AddCustomer'
 import Shippers from './pages/Shippers'
 import EPAForm from './pages/EPAForm'
+import ComingSoon from './pages/ComingSoon'
 
 export default function App() {
   return (
@@ -19,10 +20,17 @@ export default function App() {
           <Route path="/determine" element={<NewDetermination />} />
           <Route path="/results/:id" element={<DeterminationResults />} />
           <Route path="/history" element={<History />} />
+          <Route path="/generators" element={<Customers />} />
+          <Route path="/generators/new" element={<AddCustomer />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/new" element={<AddCustomer />} />
           <Route path="/shippers" element={<Shippers />} />
           <Route path="/epa-form" element={<EPAForm />} />
+          <Route path="/orders" element={<ComingSoon title="Orders" />} />
+          <Route path="/admin" element={<ComingSoon title="Admin" />} />
+          <Route path="/shipping" element={<ComingSoon title="Shipping" />} />
+          <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
+          <Route path="/marketplace" element={<ComingSoon title="Marketplace" />} />
         </Routes>
       </main>
     </BrowserRouter>

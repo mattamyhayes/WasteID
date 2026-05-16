@@ -5,8 +5,8 @@ import { mixtures } from '../api/client'
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
   { value: 'oldest', label: 'Oldest First' },
-  { value: 'customer_asc', label: 'Customer Name (A → Z)' },
-  { value: 'customer_desc', label: 'Customer Name (Z → A)' },
+  { value: 'customer_asc', label: 'Generator Name (A → Z)' },
+  { value: 'customer_desc', label: 'Generator Name (Z → A)' },
 ]
 
 const sortMixtures = (items, sort) => {
@@ -182,10 +182,10 @@ export default function History() {
       {!loading && items.length > 0 && (
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-            <span style={{ color: '#374151', fontWeight: 600 }}>Customer:</span>
+            <span style={{ color: '#374151', fontWeight: 600 }}>Generator:</span>
             <select className="form-control" style={{ width: 'auto', padding: '0.35rem 0.6rem' }}
               value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}>
-              <option value="">All Customers</option>
+              <option value="">All Generators</option>
               {customerOptions.map(name => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
