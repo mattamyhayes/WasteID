@@ -3,7 +3,12 @@ import { Link, useLocation } from 'react-router-dom'
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/determine', label: 'New Determination' },
-  { to: '/customers', label: 'Customers' },
+  { to: '/generators', label: 'Generator' },
+  { to: '/orders', label: 'Orders' },
+  { to: '/admin', label: 'Admin' },
+  { to: '/shipping', label: 'Shipping' },
+  { to: '/scheduling', label: 'Scheduling' },
+  { to: '/marketplace', label: 'Marketplace' },
   { to: '/shippers', label: 'Shippers' },
   { to: '/epa-form', label: 'EPA Form' },
   { to: '/history', label: 'History' },

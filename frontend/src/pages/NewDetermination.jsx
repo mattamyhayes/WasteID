@@ -47,7 +47,7 @@ export default function NewDetermination() {
   const [reviewerDate, setReviewerDate] = useState('')
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
 
-  // Customer data
+  // Generator data
   const [customerList, setCustomerList] = useState([])
   const [customersLoading, setCustomersLoading] = useState(true)
   const [customersError, setCustomersError] = useState('')
@@ -76,7 +76,7 @@ export default function NewDetermination() {
     setDisclaimerAccepted(false)
   }, [])
 
-  // Load customers (and their locations) once
+  // Load generators (and their locations) once
   useEffect(() => {
     let cancelled = false
     async function loadCustomers() {
@@ -87,7 +87,7 @@ export default function NewDetermination() {
         setCustomerList(res.data.results || res.data)
       } catch (e) {
         if (cancelled) return
-        setCustomersError('Could not load customers. You can still proceed by adding a customer first.')
+        setCustomersError('Could not load generators. You can still proceed by adding a generator first.')
       } finally {
         if (!cancelled) setCustomersLoading(false)
       }
@@ -102,9 +102,9 @@ export default function NewDetermination() {
   const validateStep = () => {
     if (step === 0) {
       if (!name.trim()) { setError('Please enter a mixture name.'); return false }
-      if (!customerId) { setError('Please select a customer.'); return false }
+      if (!customerId) { setError('Please select a generator.'); return false }
       if (locationsForCustomer.length > 0 && !locationId) {
-        setError('Please select a customer location.'); return false
+        setError('Please select a generator location.'); return false
       }
     }
     if (step === 1 && components.length === 0) { setError('Add at least one component to the mixture.'); return false }
@@ -224,31 +224,31 @@ export default function NewDetermination() {
           <h2 style={{ marginBottom: '1.25rem', color: '#166534' }}>Mixture Information</h2>
 
           <div className="form-group">
-            <label>Customer *</label>
+            <label>Generator *</label>
             {customersError && <div style={{ color: '#b91c1c', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{customersError}</div>}
             <select className="form-control" value={customerId}
               onChange={e => { setCustomerId(e.target.value); setLocationId('') }}
               disabled={customersLoading}>
-              <option value="">{customersLoading ? 'Loading customers…' : '-- Select a customer --'}</option>
+              <option value="">{customersLoading ? 'Loading generators…' : '-- Select a generator --'}</option>
               {customerList.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
             <small style={{ color: '#6b7280' }}>
-              Don’t see your customer?{' '}
-              <Link to="/customers" style={{ color: '#166534', fontWeight: 600 }}>Add a new customer</Link>
+              Don’t see your generator?{' '}
+              <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
               {' '}first, then return here.
             </small>
           </div>
 
           <div className="form-group">
-            <label>Customer Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
+            <label>Generator Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
             <select className="form-control" value={locationId}
               onChange={e => setLocationId(e.target.value)}
               disabled={!customerId || locationsForCustomer.length === 0}>
               <option value="">
-                {!customerId ? '-- Select a customer first --'
-                  : locationsForCustomer.length === 0 ? 'No locations on file for this customer'
+                {!customerId ? '-- Select a generator first --'
+                  : locationsForCustomer.length === 0 ? 'No locations on file for this generator'
                   : '-- Select a location --'}
               </option>
               {locationsForCustomer.map(loc => (
@@ -259,7 +259,7 @@ export default function NewDetermination() {
             </select>
             {customerId && locationsForCustomer.length === 0 && (
               <small style={{ color: '#6b7280' }}>
-                <Link to="/customers" style={{ color: '#166534', fontWeight: 600 }}>Manage this customer</Link> to add a location.
+                <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
               </small>
             )}
           </div>
@@ -351,7 +351,7 @@ export default function NewDetermination() {
           <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Review & Sign-Off</h2>
           <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: 8 }}>
             {transactionId && <><strong>Transaction ID:</strong> {transactionId}<br /></>}
-            <strong>Customer:</strong> {selectedCustomer?.name || '—'}<br />
+            <strong>Generator:</strong> {selectedCustomer?.name || '—'}<br />
             <strong>Location:</strong> {locationsForCustomer.find(l => String(l.id) === String(locationId))?.name || '—'}<br />
             <strong>Mixture:</strong> {name}<br />
             <strong>Discarded:</strong> {isDiscarded ? `Yes (${discardReason})` : 'No'}<br />
