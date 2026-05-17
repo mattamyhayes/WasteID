@@ -271,6 +271,8 @@ function safeParseJsonArray(s) {
   }
 }
 
+import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from './shipByUtils.js'
+
 function hydrateMixture(rawMixture, store) {
   const components = store.components
     .filter(c => c.mixture === rawMixture.id)
@@ -278,10 +280,15 @@ function hydrateMixture(rawMixture, store) {
   const determinations = store.determinations
     .filter(d => d.mixture === rawMixture.id)
     .map(hydrateDetermination)
+  const holdDays = EPA_STATUS_HOLD_DAYS[rawMixture.epa_generator_status] ?? null
+  const info = calcShipByInfo(rawMixture.epa_generator_status, rawMixture.generation_date)
   return {
     ...rawMixture,
     components,
     determinations,
+    hold_days: holdDays,
+    ship_by_date: info?.shipByDate ?? null,
+    days_remaining_to_ship: info?.daysRemaining ?? null,
   }
 }
 
@@ -315,8 +322,10 @@ export const localMixtures = {
   create(payload) {
     const store = loadStore()
     const id = store.nextId.mixture++
+    const transactionId = `PID-${id.toString().padStart(5, '0')}`
     const mixture = {
       id,
+      transaction_id: transactionId,
       name: payload.name,
       is_discarded: payload.is_discarded !== false,
       discard_reason: payload.discard_reason || '',
@@ -325,6 +334,12 @@ export const localMixtures = {
       review_status: payload.review_status || '',
       pickup_by_date: payload.pickup_by_date || null,
       hold_time_days: payload.hold_time_days || null,
+      produced_date: payload.produced_date || null,
+      profile_started_at: payload.profile_started_at || new Date().toISOString(),
+      shipment_size_unit: payload.shipment_size_unit || '',
+      shipment_size_qty: payload.shipment_size_qty ?? null,
+      epa_generator_status: payload.epa_generator_status || '',
+      generation_date: payload.generation_date || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -888,5 +903,238 @@ export const localManifests = {
     const { generateEpaFormPdf } = await import('./epaFormPdf.js')
     generateEpaFormPdf(m)
     return ok({})
+  },
+}
+
+// Re-export journey store
+export { localJourney } from './journeyStore.js'
+// --------------------------------------------------------------- Local Orders
+const ORDERS_STORAGE_KEY = 'wasteid_orders_v1'
+
+function generateOrderId(num) {
+  return `OID-${num.toString().padStart(5, '0')}`
+}
+
+function emptyOrderStore() {
+  return { orders: [], journeys: [], nextId: { order: 1, journey: 1 }, seeded: false }
+}
+
+const SEED_ORDERS = [
+  {
+    owner_name: 'Marcus Reilly',
+    generator_name: 'Cascade Auto Body & Paint',
+    status: 'open',
+    profile_names: ['Paint Waste Mixture'],
+    shipper_names: [],
+    notes: 'Initial order for paint waste pickup',
+  },
+  {
+    owner_name: 'Jenna Whitcomb',
+    generator_name: 'Pacific Northwest Printing Co.',
+    status: 'in_quote',
+    profile_names: ['Ink Solvent Mixture'],
+    shipper_names: ['Clean Harbors Environmental Services'],
+    notes: 'Submitted for bidding on ink waste',
+  },
+  {
+    owner_name: 'Dr. Priya Natarajan',
+    generator_name: 'Evergreen Pharmaceuticals',
+    status: 'waiting_signature',
+    profile_names: ['Lab Solvent Waste'],
+    shipper_names: ['Stericycle Environmental Solutions'],
+    notes: 'Awaiting customer signature for pharma waste',
+  },
+  {
+    owner_name: 'Hank Brennan',
+    generator_name: 'Sawtooth Mining & Metals',
+    status: 'rejected_transport',
+    profile_names: ['Acid Mine Drainage'],
+    shipper_names: ['US Ecology Holdings'],
+    notes: 'Rejected due to transport route issues',
+  },
+  {
+    owner_name: 'Sarah Kowalski, RN',
+    generator_name: 'Northern Lights Hospital Network',
+    status: 'rejected_tldr',
+    profile_names: ['Chemo Waste'],
+    shipper_names: ['Veolia Environmental Services'],
+    notes: 'Rejected by TLDR review',
+  },
+]
+
+function seedOrderStore() {
+  const store = emptyOrderStore()
+  const baseDate = new Date()
+  for (let i = 0; i < SEED_ORDERS.length; i++) {
+    const entry = SEED_ORDERS[i]
+    const orderId = store.nextId.order++
+    const orderIdStr = generateOrderId(orderId)
+    const createdDate = new Date(baseDate.getTime() - (SEED_ORDERS.length - i) * 86400000)
+    const now = createdDate.toISOString()
+    store.orders.push({
+      id: orderId,
+      order_id: orderIdStr,
+      owner_name: entry.owner_name,
+      generator_name: entry.generator_name,
+      status: entry.status,
+      profile_names: entry.profile_names,
+      shipper_names: entry.shipper_names,
+      profile_ids: [],
+      shipper_ids: [],
+      notes: entry.notes,
+      created_at: now,
+      updated_at: now,
+    })
+    // Create journey record for order creation
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: orderId,
+      stage: 'open',
+      timestamp: now,
+      notes: 'Order created',
+    })
+    // If status is not open, add journey for current stage
+    if (entry.status !== 'open') {
+      const stageDate = new Date(createdDate.getTime() + 3600000)
+      store.journeys.push({
+        id: store.nextId.journey++,
+        order: orderId,
+        stage: entry.status,
+        timestamp: stageDate.toISOString(),
+        notes: `Moved to ${entry.status}`,
+      })
+    }
+  }
+  store.seeded = true
+  saveOrderStore(store)
+  return store
+}
+
+function loadOrderStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null
+    if (!raw) return seedOrderStore()
+    const parsed = JSON.parse(raw)
+    const store = {
+      orders: parsed.orders || [],
+      journeys: parsed.journeys || [],
+      nextId: parsed.nextId || { order: 1, journey: 1 },
+      seeded: parsed.seeded || false,
+    }
+    if (!store.seeded) return seedOrderStore()
+    return store
+  } catch {
+    return seedOrderStore()
+  }
+}
+
+function saveOrderStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+export const localOrders = {
+  list(statusFilter) {
+    const store = loadOrderStore()
+    let results = store.orders
+    if (statusFilter) {
+      results = results.filter(o => o.status === statusFilter)
+    }
+    // Attach journey records
+    results = results.map(o => ({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    }))
+    return ok({ results })
+  },
+
+  get(id) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
+  },
+
+  create(payload) {
+    const store = loadOrderStore()
+    const id = store.nextId.order++
+    const orderIdStr = generateOrderId(id)
+    const now = new Date().toISOString()
+    const order = {
+      id,
+      order_id: orderIdStr,
+      owner_name: payload.owner_name || '',
+      generator_name: payload.generator_name || '',
+      generator: payload.generator || null,
+      status: payload.status || 'open',
+      profile_ids: payload.profile_ids || [],
+      profile_names: payload.profile_names || [],
+      shipper_ids: payload.shipper_ids || [],
+      shipper_names: payload.shipper_names || [],
+      notes: payload.notes || '',
+      created_at: now,
+      updated_at: now,
+    }
+    store.orders.push(order)
+    // Journey record for creation
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: id,
+      stage: 'open',
+      timestamp: now,
+      notes: 'Order created',
+    })
+    saveOrderStore(store)
+    return ok({
+      ...order,
+      journey_records: store.journeys.filter(j => j.order === id),
+    })
+  },
+
+  update(id, payload) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    Object.assign(o, payload, { updated_at: new Date().toISOString() })
+    saveOrderStore(store)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
+  },
+
+  delete(id) {
+    const store = loadOrderStore()
+    const numId = Number(id)
+    store.orders = store.orders.filter(o => o.id !== numId)
+    store.journeys = store.journeys.filter(j => j.order !== numId)
+    saveOrderStore(store)
+    return ok({})
+  },
+
+  submitToBid(id) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    o.status = 'in_quote'
+    o.updated_at = new Date().toISOString()
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: o.id,
+      stage: 'in_quote',
+      timestamp: new Date().toISOString(),
+      notes: 'Submitted to bid',
+    })
+    saveOrderStore(store)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
   },
 }

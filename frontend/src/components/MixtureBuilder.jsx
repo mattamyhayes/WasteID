@@ -7,13 +7,23 @@ const UNIT_LABELS = {
   g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
 }
 
-export default function MixtureBuilder({ components, onChange }) {
+/**
+ * Build/edit mixture components.
+ * Set `editable` to true when components should support inline quantity/unit edits.
+ * @param {Array} components
+ * @param {Function} onChange
+ * @param {boolean} [editable=false]
+ */
+export default function MixtureBuilder({ components, onChange, editable = false }) {
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('kg')
   const [customName, setCustomName] = useState('')
   const [selectedChem, setSelectedChem] = useState(null)
   const [overrides, setOverrides] = useState({ flash_point: '', ph: '', reactive: false })
   const [showOverrides, setShowOverrides] = useState(false)
+  const [editingIndex, setEditingIndex] = useState(null)
+  const [editQty, setEditQty] = useState('')
+  const [editUnit, setEditUnit] = useState('kg')
 
   const handleAdd = () => {
     if (!qty || isNaN(parseFloat(qty))) return
@@ -41,6 +51,26 @@ export default function MixtureBuilder({ components, onChange }) {
 
   const handleRemove = (index) => {
     onChange(components.filter((_, i) => i !== index))
+    if (editingIndex === index) setEditingIndex(null)
+  }
+
+  const handleStartEdit = (index) => {
+    setEditingIndex(index)
+    setEditQty(String(components[index].quantity))
+    setEditUnit(components[index].unit)
+  }
+
+  const handleSaveEdit = (index) => {
+    if (!editQty || isNaN(parseFloat(editQty))) return
+    const updated = components.map((comp, i) =>
+      i === index ? { ...comp, quantity: parseFloat(editQty), unit: editUnit } : comp
+    )
+    onChange(updated)
+    setEditingIndex(null)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null)
   }
 
   return (
@@ -66,11 +96,40 @@ export default function MixtureBuilder({ components, onChange }) {
                       ? <span className="badge badge-warning">{comp._epaCode}</span>
                       : <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
-                  <td>{comp.quantity}</td>
-                  <td>{UNIT_LABELS[comp.unit] || comp.unit}</td>
                   <td>
-                    <button className="btn btn-danger" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
-                      onClick={() => handleRemove(i)}>✕</button>
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="number" min="0" step="any"
+                          value={editQty} onChange={e => setEditQty(e.target.value)}
+                          style={{ width: 80, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : comp.quantity}
+                  </td>
+                  <td>
+                    {editable && editingIndex === i
+                      ? <select className="form-control" value={editUnit}
+                          onChange={e => setEditUnit(e.target.value)}
+                          style={{ width: 80, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }}>
+                          {UNITS.map(u => <option key={u} value={u}>{UNIT_LABELS[u]}</option>)}
+                        </select>
+                      : UNIT_LABELS[comp.unit] || comp.unit}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {editable && editingIndex === i ? (
+                      <>
+                        <button className="btn btn-primary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', marginRight: 4 }}
+                          onClick={() => handleSaveEdit(i)}>✓</button>
+                        <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', marginRight: 4 }}
+                          onClick={handleCancelEdit}>✕</button>
+                      </>
+                    ) : (
+                      <>
+                        {editable && (
+                          <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', marginRight: 4 }}
+                            onClick={() => handleStartEdit(i)}>✎</button>
+                        )}
+                        <button className="btn btn-danger" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+                          onClick={() => handleRemove(i)}>✕</button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

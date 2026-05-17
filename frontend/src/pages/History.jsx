@@ -60,6 +60,24 @@ function MixtureRow({ m, onDelete, onPdf }) {
           {m.customer_name && <span><strong>{m.customer_name}</strong>{m.customer_location_name ? ` · ${m.customer_location_name}` : ''} · </span>}
           {m.components?.length ?? 0} component{m.components?.length !== 1 ? 's' : ''} ·
           Created {new Date(m.created_at).toLocaleDateString()}
+          {m.days_remaining_to_ship != null && (
+            <>
+              {' · '}
+              <span style={{
+                fontWeight: 700,
+                color: m.days_remaining_to_ship <= 0 ? '#dc2626'
+                  : m.days_remaining_to_ship <= 5 ? '#d97706'
+                  : '#16a34a',
+              }}>
+                {m.days_remaining_to_ship <= 0
+                  ? `⚠️ OVERDUE by ${Math.abs(m.days_remaining_to_ship)}d`
+                  : `📅 ${m.days_remaining_to_ship}d to ship`}
+              </span>
+            </>
+          )}
+          {m.shipment_size_unit && m.shipment_size_qty && (
+            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit}</>
+          )}
           {latestDet && (
             <>
               {' · '}
@@ -175,8 +193,8 @@ export default function History() {
   return (
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ color: '#14532d' }}>Determination History</h1>
-        <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+        <h1 style={{ color: '#14532d' }}>Profile History</h1>
+        <Link to="/determine" className="btn btn-primary">+ New Profile</Link>
       </div>
 
       {!loading && items.length > 0 && (
@@ -215,8 +233,8 @@ export default function History() {
       {!loading && items.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No determinations yet.</p>
-          <Link to="/determine" className="btn btn-primary">Start Your First Determination</Link>
+          <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles yet.</p>
+          <Link to="/determine" className="btn btn-primary">Start Your First Profile</Link>
         </div>
       )}
 
