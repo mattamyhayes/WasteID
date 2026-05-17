@@ -315,10 +315,10 @@ export const localMixtures = {
   create(payload) {
     const store = loadStore()
     const id = store.nextId.mixture++
-    const profileId = `PID-${id.toString().padStart(5, '0')}`
+    const transactionId = `PID-${id.toString().padStart(5, '0')}`
     const mixture = {
       id,
-      transaction_id: profileId,
+      transaction_id: transactionId,
       name: payload.name,
       is_discarded: payload.is_discarded !== false,
       discard_reason: payload.discard_reason || '',
@@ -900,6 +900,10 @@ export { localJourney } from './journeyStore.js'
 // --------------------------------------------------------------- Local Orders
 const ORDERS_STORAGE_KEY = 'wasteid_orders_v1'
 
+function generateOrderId(num) {
+  return `OID-${num.toString().padStart(5, '0')}`
+}
+
 function emptyOrderStore() {
   return { orders: [], journeys: [], nextId: { order: 1, journey: 1 }, seeded: false }
 }
@@ -953,7 +957,7 @@ function seedOrderStore() {
   for (let i = 0; i < SEED_ORDERS.length; i++) {
     const entry = SEED_ORDERS[i]
     const orderId = store.nextId.order++
-    const orderIdStr = `OID-${orderId.toString().padStart(5, '0')}`
+    const orderIdStr = generateOrderId(orderId)
     const createdDate = new Date(baseDate.getTime() - (SEED_ORDERS.length - i) * 86400000)
     const now = createdDate.toISOString()
     store.orders.push({
@@ -1049,7 +1053,7 @@ export const localOrders = {
   create(payload) {
     const store = loadOrderStore()
     const id = store.nextId.order++
-    const orderIdStr = `OID-${id.toString().padStart(5, '0')}`
+    const orderIdStr = generateOrderId(id)
     const now = new Date().toISOString()
     const order = {
       id,
