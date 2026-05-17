@@ -4,11 +4,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
-                           ShipperSerializer, EPAManifestSerializer)
+                           ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -626,3 +626,43 @@ class EPAManifestViewSet(viewsets.ModelViewSet):
         response = HttpResponse(buffer.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="EPA_8700-22_{safe_tracking}.pdf"'
         return response
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.select_related('generator').prefetch_related(
+        'profiles', 'potential_shippers', 'journey_records').all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get('status', '')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        owner = self.request.query_params.get('owner', '')
+        if owner:
+            qs = qs.filter(owner_name__icontains=owner)
+        return qs
+
+    def perform_create(self, serializer):
+        order = serializer.save()
+        Journey.objects.create(order=order, stage='open', notes='Order created')
+
+    @action(detail=True, methods=['post'])
+    def submit_to_bid(self, request, pk=None):
+        order = self.get_object()
+        order.status = 'in_quote'
+        order.save()
+        Journey.objects.create(order=order, stage='in_quote', notes='Submitted to bid')
+        return Response(OrderSerializer(order).data)
+
+
+class JourneyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Journey.objects.select_related('order').all()
+    serializer_class = JourneySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        order_id = self.request.query_params.get('order', '')
+        if order_id:
+            qs = qs.filter(order_id=order_id)
+        return qs

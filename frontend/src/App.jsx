@@ -8,6 +8,7 @@ import Customers from './pages/Customers'
 import AddCustomer from './pages/AddCustomer'
 import Shippers from './pages/Shippers'
 import EPAForm from './pages/EPAForm'
+import Orders from './pages/Orders'
 import ComingSoon from './pages/ComingSoon'
 
 export default function App() {
@@ -26,7 +27,7 @@ export default function App() {
           <Route path="/customers/new" element={<AddCustomer />} />
           <Route path="/shippers" element={<Shippers />} />
           <Route path="/epa-form" element={<EPAForm />} />
-          <Route path="/orders" element={<ComingSoon title="Orders" />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/admin" element={<ComingSoon title="Admin" />} />
           <Route path="/shipping" element={<ComingSoon title="Shipping" />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />

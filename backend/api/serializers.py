@@ -1,7 +1,8 @@
 from rest_framework import serializers
 import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
-                     Customer, CustomerLocation, Shipper, EPAManifest)
+                     Customer, CustomerLocation, Shipper, EPAManifest,
+                     Order, Journey)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -115,3 +116,28 @@ class EPAManifestSerializer(serializers.ModelSerializer):
         model = EPAManifest
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+
+class JourneySerializer(serializers.ModelSerializer):
+    stage_display = serializers.CharField(source='get_stage_display', read_only=True)
+
+    class Meta:
+        model = Journey
+        fields = '__all__'
+        read_only_fields = ['timestamp']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    journey_records = JourneySerializer(many=True, read_only=True)
+    generator_name = serializers.CharField(source='generator.name', read_only=True, default='')
+    profile_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Mixture.objects.all(), source='profiles', required=False)
+    shipper_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Shipper.objects.all(), source='potential_shippers', required=False)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'order_id', 'owner_name', 'generator', 'generator_name',
+                  'status', 'profiles', 'potential_shippers', 'profile_ids', 'shipper_ids',
+                  'notes', 'created_at', 'updated_at', 'journey_records']
+        read_only_fields = ['order_id', 'created_at', 'updated_at']
