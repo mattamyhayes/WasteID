@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import Home from './pages/Home'
 import NewDetermination from './pages/NewDetermination'
 import DeterminationResults from './pages/DeterminationResults'
@@ -9,12 +10,13 @@ import AddCustomer from './pages/AddCustomer'
 import Shippers from './pages/Shippers'
 import EPAForm from './pages/EPAForm'
 import ComingSoon from './pages/ComingSoon'
+import Journey from './pages/Journey'
 
 export default function App() {
   return (
     <BrowserRouter basename="/WasteID">
       <Navbar />
-      <main style={{ minHeight: 'calc(100vh - var(--navbar-height))', background: '#f5f7f5' }}>
+      <main style={{ minHeight: 'calc(100vh - var(--navbar-height) - 60px)', background: '#f5f7f5' }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/determine" element={<NewDetermination />} />
@@ -26,6 +28,7 @@ export default function App() {
           <Route path="/customers/new" element={<AddCustomer />} />
           <Route path="/shippers" element={<Shippers />} />
           <Route path="/epa-form" element={<EPAForm />} />
+          <Route path="/journey" element={<Journey />} />
           <Route path="/orders" element={<ComingSoon title="Orders" />} />
           <Route path="/admin" element={<ComingSoon title="Admin" />} />
           <Route path="/shipping" element={<ComingSoon title="Shipping" />} />
@@ -33,6 +36,7 @@ export default function App() {
           <Route path="/marketplace" element={<ComingSoon title="Marketplace" />} />
         </Routes>
       </main>
+      <Footer />
     </BrowserRouter>
   )
 }

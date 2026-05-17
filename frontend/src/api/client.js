@@ -1,6 +1,7 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests } from '../lib/localStore.js'
+import { localJourney } from '../lib/journeyStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -158,4 +159,22 @@ export const manifests = {
   exportPdf: (id) => useLocalMixtures
     ? localManifests.exportPdf(id)
     : client.get(`/manifests/${id}/export_pdf/`, { responseType: 'blob' }),
+}
+
+export const journey = {
+  list: () => useLocalMixtures
+    ? localJourney.list()
+    : client.get('/journey/'),
+  get: (id) => useLocalMixtures
+    ? localJourney.get(id)
+    : client.get(`/journey/${id}/`),
+  create: (data) => useLocalMixtures
+    ? localJourney.create(data)
+    : client.post('/journey/', data),
+  update: (id, data) => useLocalMixtures
+    ? localJourney.update(id, data)
+    : client.patch(`/journey/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? localJourney.delete(id)
+    : client.delete(`/journey/${id}/`),
 }

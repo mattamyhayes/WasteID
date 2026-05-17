@@ -872,3 +872,6 @@ export const localManifests = {
     return ok({})
   },
 }
+
+// Re-export journey store
+export { localJourney } from './journeyStore.js'
