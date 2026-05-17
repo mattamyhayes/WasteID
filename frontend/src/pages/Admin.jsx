@@ -31,7 +31,7 @@ export default function Admin() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+      <div className="admin-links-grid">
         {adminLinks.map(({ to, title, description, icon }) => (
           <Link
             key={to}
@@ -42,7 +42,6 @@ export default function Admin() {
               flexDirection: 'column',
               gap: '0.75rem',
               color: '#14532d',
-              border: '1px solid #dcfce7',
             }}
           >
             <div style={{ fontSize: '2rem' }}>{icon}</div>
