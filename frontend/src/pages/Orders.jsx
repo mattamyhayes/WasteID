@@ -10,6 +10,7 @@ const STATUS_TILES = [
 ]
 
 const WORKFLOW_STEPS = ['1. Select Profiles', '2. Add Shippers', '3. Review & Save']
+const STATUS_OPTIONS = STATUS_TILES.map(tile => ({ value: tile.key, label: tile.label }))
 
 function StatusTile({ tile, count, active, onClick }) {
   return (
@@ -35,7 +36,17 @@ function StatusTile({ tile, count, active, onClick }) {
   )
 }
 
-function OrderTable({ orderList, sortCol, sortDir, onSort, ownerFilter, setOwnerFilter }) {
+function OrderTable({
+  orderList,
+  sortCol,
+  sortDir,
+  onSort,
+  ownerFilter,
+  setOwnerFilter,
+  selectedRowId,
+  onSelectRow,
+  onEditOrder,
+}) {
   const owners = useMemo(() => {
     const s = new Set()
     orderList.forEach(o => { if (o.owner_name) s.add(o.owner_name) })
@@ -112,19 +123,39 @@ function OrderTable({ orderList, sortCol, sortDir, onSort, ownerFilter, setOwner
                 <th style={thStyle} onClick={() => onSort('generator_name')}>Generator{renderSortArrow('generator_name')}</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Profiles</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Notes</th>
+                <th style={{ ...thStyle, cursor: 'default' }}>Edit</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map(o => (
                 <tr key={o.id}
+                  onClick={() => onSelectRow(o.id)}
+                  style={{ cursor: 'pointer', background: selectedRowId === o.id ? '#ecfdf5' : undefined }}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
-                  onMouseLeave={e => e.currentTarget.style.background = ''}>
+                  onMouseLeave={e => e.currentTarget.style.background = selectedRowId === o.id ? '#ecfdf5' : ''}>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{o.order_id}</td>
                   <td style={tdStyle}>{new Date(o.created_at).toLocaleDateString()}</td>
                   <td style={tdStyle}>{o.owner_name || '—'}</td>
                   <td style={tdStyle}>{o.generator_name || '—'}</td>
                   <td style={tdStyle}>{(o.profile_names || []).join(', ') || '—'}</td>
                   <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.notes || '—'}</td>
+                  <td style={tdStyle}>
+                    {selectedRowId === o.id && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.2rem 0.45rem', lineHeight: 1 }}
+                        aria-label={`Edit order ${o.order_id}`}
+                        title="Edit selected order"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditOrder(o)
+                        }}
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -135,7 +166,7 @@ function OrderTable({ orderList, sortCol, sortDir, onSort, ownerFilter, setOwner
   )
 }
 
-function NewOrderWorkflow({ onCancel, onSave }) {
+function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
   const [step, setStep] = useState(0)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -152,10 +183,20 @@ function NewOrderWorkflow({ onCancel, onSave }) {
   // Order metadata
   const [ownerName, setOwnerName] = useState('')
   const [notes, setNotes] = useState('')
+  const [status, setStatus] = useState(initialOrder?.status || 'open')
 
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (!initialOrder) return
+    setOwnerName(initialOrder.owner_name || '')
+    setNotes(initialOrder.notes || '')
+    setStatus(initialOrder.status || 'open')
+    setSelectedProfileIds(initialOrder.profile_ids || [])
+    setSelectedShipperIds(initialOrder.shipper_ids || [])
+  }, [initialOrder])
 
   const loadData = async () => {
     try {
@@ -171,6 +212,22 @@ function NewOrderWorkflow({ onCancel, onSave }) {
       setError('Failed to load data.')
     }
   }
+
+  useEffect(() => {
+    if (!initialOrder) return
+    if (allProfiles.length > 0 && (!initialOrder.profile_ids || initialOrder.profile_ids.length === 0) && Array.isArray(initialOrder.profile_names)) {
+      const mappedProfileIds = allProfiles
+        .filter(p => initialOrder.profile_names.includes(p.name))
+        .map(p => p.id)
+      setSelectedProfileIds(mappedProfileIds)
+    }
+    if (allShippers.length > 0 && (!initialOrder.shipper_ids || initialOrder.shipper_ids.length === 0) && Array.isArray(initialOrder.shipper_names)) {
+      const mappedShipperIds = allShippers
+        .filter(s => initialOrder.shipper_names.includes(s.company_name))
+        .map(s => s.id)
+      setSelectedShipperIds(mappedShipperIds)
+    }
+  }, [initialOrder, allProfiles, allShippers])
 
   // All profiles are shown (the app does not currently have a "closed" status for profiles)
   const filteredProfiles = useMemo(() => {
@@ -208,6 +265,7 @@ function NewOrderWorkflow({ onCancel, onSave }) {
     try {
       const selectedProfiles = allProfiles.filter(p => selectedProfileIds.includes(p.id))
       const selectedShippers = allShippers.filter(s => selectedShipperIds.includes(s.id))
+      const finalStatus = submitToBid ? 'in_quote' : status
       const payload = {
         owner_name: ownerName,
         profile_ids: selectedProfileIds,
@@ -216,15 +274,22 @@ function NewOrderWorkflow({ onCancel, onSave }) {
         shipper_names: selectedShippers.map(s => s.company_name),
         generator_name: selectedProfiles[0]?.customer_name || '',
         notes,
-        status: submitToBid ? 'in_quote' : 'open',
+        status: finalStatus,
       }
-      const res = await ordersApi.create(payload)
-      if (submitToBid && res.data && res.data.id) {
-        await ordersApi.submitToBid(res.data.id)
+      if (initialOrder?.id) {
+        await ordersApi.update(initialOrder.id, payload)
+        if (submitToBid) {
+          await ordersApi.submitToBid(initialOrder.id)
+        }
+      } else {
+        const res = await ordersApi.create(payload)
+        if (submitToBid && res.data && res.data.id) {
+          await ordersApi.submitToBid(res.data.id)
+        }
       }
       onSave()
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Failed to create order.')
+      setError(e?.response?.data?.detail || `Failed to ${initialOrder?.id ? 'update' : 'create'} order.`)
     } finally {
       setSubmitting(false)
     }
@@ -233,7 +298,7 @@ function NewOrderWorkflow({ onCancel, onSave }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ color: '#14532d' }}>New Order</h1>
+        <h1 style={{ color: '#14532d' }}>{initialOrder ? 'Edit Order' : 'New Order'}</h1>
         <button className="btn btn-secondary" onClick={onCancel}>← Back to Dashboard</button>
       </div>
 
@@ -405,10 +470,19 @@ function NewOrderWorkflow({ onCancel, onSave }) {
               placeholder="Optional notes for this order…" />
           </div>
 
+          <div className="form-group" style={{ marginBottom: '1rem', maxWidth: 420 }}>
+            <label>Order Status</label>
+            <select className="form-control" value={status} onChange={e => setStatus(e.target.value)}>
+              {STATUS_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={() => setStep(1)}>← Back</button>
             <button className="btn btn-primary" onClick={() => handleSave(false)} disabled={submitting}>
-              {submitting ? 'Saving…' : '💾 Save Order (Open)'}
+              {submitting ? 'Saving…' : `💾 ${initialOrder ? 'Save Changes' : 'Save Order'}`}
             </button>
             <button className="btn btn-primary" onClick={() => handleSave(true)} disabled={submitting}
               style={{ background: '#d97706' }}>
@@ -429,6 +503,8 @@ export default function Orders() {
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
   const [ownerFilter, setOwnerFilter] = useState('')
+  const [selectedOrderId, setSelectedOrderId] = useState(null)
+  const [editingOrder, setEditingOrder] = useState(null)
 
   const loadOrders = async () => {
     setLoading(true)
@@ -469,14 +545,17 @@ export default function Orders() {
     setShowNewOrder(false)
     setActiveStatus(prev => prev === key ? null : key)
     setOwnerFilter('')
+    setSelectedOrderId(null)
+    setEditingOrder(null)
   }
 
   if (showNewOrder) {
-    return (
+      return (
       <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 960 }}>
         <NewOrderWorkflow
-          onCancel={() => setShowNewOrder(false)}
-          onSave={() => { setShowNewOrder(false); loadOrders() }}
+          initialOrder={editingOrder}
+          onCancel={() => { setShowNewOrder(false); setEditingOrder(null) }}
+          onSave={() => { setShowNewOrder(false); setEditingOrder(null); loadOrders() }}
         />
       </div>
     )
@@ -486,7 +565,7 @@ export default function Orders() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Orders Dashboard</h1>
-        <button className="btn btn-primary" onClick={() => { setShowNewOrder(true); setActiveStatus(null) }}>
+        <button className="btn btn-primary" onClick={() => { setEditingOrder(null); setShowNewOrder(true); setActiveStatus(null) }}>
           + Create New Order
         </button>
       </div>
@@ -517,6 +596,12 @@ export default function Orders() {
               onSort={handleSort}
               ownerFilter={ownerFilter}
               setOwnerFilter={setOwnerFilter}
+              selectedRowId={selectedOrderId}
+              onSelectRow={setSelectedOrderId}
+              onEditOrder={(order) => {
+                setEditingOrder(order)
+                setShowNewOrder(true)
+              }}
             />
           )}
 

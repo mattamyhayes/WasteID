@@ -127,6 +127,14 @@ export default function NewDetermination() {
   const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
   const locationsForCustomer = selectedCustomer?.locations || []
 
+  useEffect(() => {
+    if (!customerId) {
+      setEpaGeneratorStatus('')
+      return
+    }
+    setEpaGeneratorStatus(selectedCustomer?.epa_generator_status || '')
+  }, [customerId, selectedCustomer?.epa_generator_status])
+
   const validateStep = () => {
     if (step === 0) {
       if (!name.trim()) { setError('Please enter a mixture name.'); return false }
