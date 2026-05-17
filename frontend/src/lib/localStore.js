@@ -271,7 +271,7 @@ function safeParseJsonArray(s) {
   }
 }
 
-const EPA_STATUS_HOLD_DAYS = { VSQG: 10, SQG: 30, LQG: 60 }
+import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from './shipByUtils.js'
 
 function hydrateMixture(rawMixture, store) {
   const components = store.components
@@ -281,24 +281,14 @@ function hydrateMixture(rawMixture, store) {
     .filter(d => d.mixture === rawMixture.id)
     .map(hydrateDetermination)
   const holdDays = EPA_STATUS_HOLD_DAYS[rawMixture.epa_generator_status] ?? null
-  let shipByDate = null
-  let daysRemainingToShip = null
-  if (holdDays != null && rawMixture.generation_date) {
-    const genDate = new Date(rawMixture.generation_date + 'T00:00:00')
-    const shipDate = new Date(genDate)
-    shipDate.setDate(shipDate.getDate() + holdDays)
-    shipByDate = shipDate.toISOString().split('T')[0]
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    daysRemainingToShip = Math.ceil((shipDate - today) / (1000 * 60 * 60 * 24))
-  }
+  const info = calcShipByInfo(rawMixture.epa_generator_status, rawMixture.generation_date)
   return {
     ...rawMixture,
     components,
     determinations,
     hold_days: holdDays,
-    ship_by_date: shipByDate,
-    days_remaining_to_ship: daysRemainingToShip,
+    ship_by_date: info?.shipByDate ?? null,
+    days_remaining_to_ship: info?.daysRemaining ?? null,
   }
 }
 
