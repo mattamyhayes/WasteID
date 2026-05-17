@@ -4,11 +4,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Journey
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
-                           ShipperSerializer, EPAManifestSerializer, JourneySerializer)
+                           ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -658,3 +658,31 @@ class JourneyViewSet(viewsets.ModelViewSet):
         if stage:
             qs = qs.filter(stage=stage)
         return qs
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.select_related('generator').prefetch_related(
+        'profiles', 'potential_shippers', 'journey_records').all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get('status', '')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        owner = self.request.query_params.get('owner', '')
+        if owner:
+            qs = qs.filter(owner_name__icontains=owner)
+        return qs
+
+    def perform_create(self, serializer):
+        order = serializer.save()
+        OrderJourney.objects.create(order=order, stage='open', notes='Order created')
+
+    @action(detail=True, methods=['post'])
+    def submit_to_bid(self, request, pk=None):
+        order = self.get_object()
+        order.status = 'in_quote'
+        order.save()
+        OrderJourney.objects.create(order=order, stage='in_quote', notes='Submitted to bid')
+        return Response(OrderSerializer(order).data)

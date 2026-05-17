@@ -75,8 +75,12 @@ class Chemical(models.Model):
         ordering = ['name']
 
 
-def _generate_transaction_id():
-    return f"TX-{uuid.uuid4().hex[:10].upper()}"
+def _generate_profile_id():
+    return f"PID-{uuid.uuid4().hex[:8].upper()}"
+
+
+def _generate_order_id():
+    return f"OID-{uuid.uuid4().hex[:8].upper()}"
 
 
 class Mixture(models.Model):
@@ -87,7 +91,7 @@ class Mixture(models.Model):
     ]
 
     name = models.CharField(max_length=200, default='Unnamed Mixture')
-    transaction_id = models.CharField(max_length=32, unique=True, default=_generate_transaction_id)
+    transaction_id = models.CharField(max_length=32, unique=True, default=_generate_profile_id)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
     customer_location = models.ForeignKey(CustomerLocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -287,9 +291,6 @@ class Journey(models.Model):
     entered_at = models.DateTimeField(help_text='Date/time the item entered this stage')
     completed_at = models.DateTimeField(null=True, blank=True, help_text='Date/time the item completed this stage')
     duration_seconds = models.FloatField(null=True, blank=True, help_text='Time spent in this stage in seconds')
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['mixture', 'entered_at']
@@ -303,3 +304,52 @@ class Journey(models.Model):
 
     def __str__(self):
         return f"{self.mixture.transaction_id} - {self.get_stage_display()}"
+
+
+class Order(models.Model):
+    """Work order that groups profiles for bidding and shipping."""
+    STATUS_CHOICES = [
+        ('open', 'Open Order'),
+        ('in_quote', 'Waiting for Bid'),
+        ('waiting_signature', 'Waiting for Customer Signature'),
+        ('rejected_transport', 'Rejected by Transport'),
+        ('rejected_tldr', 'Rejected by TLDR'),
+    ]
+
+    order_id = models.CharField(max_length=32, unique=True, default=_generate_order_id)
+    owner_name = models.CharField(max_length=200, blank=True, help_text='Person who created this order')
+    generator = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='open')
+    profiles = models.ManyToManyField(Mixture, blank=True, related_name='orders')
+    potential_shippers = models.ManyToManyField(Shipper, blank=True, related_name='orders')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.get_status_display()}"
+
+
+class OrderJourney(models.Model):
+    """Tracks the lifecycle stages of an order."""
+    STAGE_CHOICES = [
+        ('open', 'Open'),
+        ('in_quote', 'In Quote'),
+        ('waiting_signature', 'Waiting for Customer Signature'),
+        ('rejected_transport', 'Rejected by Transport'),
+        ('rejected_tldr', 'Rejected by TLDR'),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='journey_records')
+    stage = models.CharField(max_length=30, choices=STAGE_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Journey {self.order.order_id} → {self.get_stage_display()} at {self.timestamp}"

@@ -2,6 +2,7 @@ import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests } from '../lib/localStore.js'
 import { localJourney } from '../lib/journeyStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests, localOrders } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -180,4 +181,25 @@ export const journey = {
   delete: (id) => useLocalMixtures
     ? localJourney.delete(id)
     : client.delete(`/journey/${id}/`),
+}
+
+export const orders = {
+  list: (status) => useLocalMixtures
+    ? localOrders.list(status)
+    : client.get('/orders/', { params: status ? { status } : {} }),
+  get: (id) => useLocalMixtures
+    ? localOrders.get(id)
+    : client.get(`/orders/${id}/`),
+  create: (data) => useLocalMixtures
+    ? localOrders.create(data)
+    : client.post('/orders/', data),
+  update: (id, data) => useLocalMixtures
+    ? localOrders.update(id, data)
+    : client.patch(`/orders/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? localOrders.delete(id)
+    : client.delete(`/orders/${id}/`),
+  submitToBid: (id) => useLocalMixtures
+    ? localOrders.submitToBid(id)
+    : client.post(`/orders/${id}/submit_to_bid/`),
 }

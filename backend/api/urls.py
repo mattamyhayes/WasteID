@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (ChemicalViewSet, MixtureViewSet, MixtureComponentViewSet,
                     WasteDeterminationViewSet, CustomerViewSet, CustomerLocationViewSet,
-                    ShipperViewSet, EPAManifestViewSet, JourneyViewSet)
+                    ShipperViewSet, EPAManifestViewSet, OrderViewSet, JourneyViewSet)
 
 router = DefaultRouter()
 router.register(r'chemicals', ChemicalViewSet)
@@ -13,6 +13,7 @@ router.register(r'customers', CustomerViewSet)
 router.register(r'customer-locations', CustomerLocationViewSet)
 router.register(r'shippers', ShipperViewSet)
 router.register(r'manifests', EPAManifestViewSet)
+router.register(r'orders', OrderViewSet)
 router.register(r'journeys', JourneyViewSet)
 
 urlpatterns = [
