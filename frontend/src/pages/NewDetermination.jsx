@@ -123,6 +123,7 @@ export default function NewDetermination() {
     return () => { cancelled = true }
   }, [])
 
+  // Location options come from the selected customer's nested `locations` payload.
   const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
   const locationsForCustomer = selectedCustomer?.locations || []
 

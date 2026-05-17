@@ -10,6 +10,9 @@ const UNIT_LABELS = {
 /**
  * Build/edit mixture components.
  * Set `editable` to true when components should support inline quantity/unit edits.
+ * @param {Array} components
+ * @param {Function} onChange
+ * @param {boolean} [editable=false]
  */
 export default function MixtureBuilder({ components, onChange, editable = false }) {
   const [qty, setQty] = useState('')

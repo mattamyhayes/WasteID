@@ -7,7 +7,10 @@ export const EPA_STATUS_HOLD_DAYS = { VSQG: 10, SQG: 30, LQG: 60 }
  * Calculate ship-by date info given EPA status and generation date.
  * @param {string} epaGeneratorStatus - 'VSQG', 'SQG', or 'LQG'
  * @param {string} generationDate - ISO date string (YYYY-MM-DD)
- * @returns {{ shipByDate: string, daysRemaining: number, holdDays: number } | null}
+ * @returns {Object|null}
+ * @property {string} shipByDate
+ * @property {number} daysRemaining
+ * @property {number} holdDays
  */
 export function calcShipByInfo(epaGeneratorStatus, generationDate) {
   const holdDays = EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? null
