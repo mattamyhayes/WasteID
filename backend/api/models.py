@@ -75,12 +75,16 @@ class Chemical(models.Model):
         ordering = ['name']
 
 
+def _generate_prefixed_id(prefix):
+    return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+
 def _generate_profile_id():
-    return f"PID-{uuid.uuid4().hex[:8].upper()}"
+    return _generate_prefixed_id("PID")
 
 
 def _generate_order_id():
-    return f"OID-{uuid.uuid4().hex[:8].upper()}"
+    return _generate_prefixed_id("OID")
 
 
 class Mixture(models.Model):

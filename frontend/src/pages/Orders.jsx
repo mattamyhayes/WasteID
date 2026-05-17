@@ -172,7 +172,7 @@ function NewOrderWorkflow({ onCancel, onSave }) {
     }
   }
 
-  // Filter profiles: show all except "closed" (we don't have a closed concept, so show all)
+  // All profiles are shown (the app does not currently have a "closed" status for profiles)
   const filteredProfiles = useMemo(() => {
     let list = allProfiles
     if (profileSearch.trim()) {
@@ -260,7 +260,7 @@ function NewOrderWorkflow({ onCancel, onSave }) {
         <div className="card">
           <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Select Profiles to Add to Order</h3>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Choose any profile regardless of phase (except closed). Selected profiles will be included in this work order.
+            Choose any profile to include in this work order. Closed profiles are excluded.
           </p>
 
           <div className="form-group" style={{ marginBottom: '1rem' }}>
