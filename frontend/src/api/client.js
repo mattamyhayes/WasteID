@@ -86,6 +86,9 @@ export const mixtures = {
   removeComponent: (componentId) => useLocalMixtures
     ? localMixtures.removeComponent(componentId)
     : client.delete(`/components/${componentId}/`),
+  setReviewStatus: (mixtureId, reviewStatus) => useLocalMixtures
+    ? localMixtures.setReviewStatus(mixtureId, reviewStatus)
+    : client.post(`/mixtures/${mixtureId}/set_review_status/`, { review_status: reviewStatus }),
 }
 
 export const customers = {

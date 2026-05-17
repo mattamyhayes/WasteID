@@ -1,0 +1,357 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { mixtures } from '../api/client'
+import HazardBadge from '../components/HazardBadge'
+
+const TILES = [
+  { key: 'pending_review', label: 'Pending Initial Review', icon: '📋', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
+  { key: 'rejected', label: 'Rejected', icon: '❌', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
+  { key: 'approved', label: 'Approved (Last 20 Days)', icon: '✅', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+]
+
+const NO_PICKUP_SORT_VALUE = 999
+
+function daysRemaining(pickupByDate) {
+  if (!pickupByDate) return null
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const pickup = new Date(pickupByDate + 'T00:00:00')
+  const diff = Math.ceil((pickup - now) / (1000 * 60 * 60 * 24))
+  return diff
+}
+
+function holdTimeColor(daysLeft) {
+  if (daysLeft === null) return {}
+  if (daysLeft <= 3) return { background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }
+  if (daysLeft <= 7) return { background: '#fef9c3', color: '#854d0e', fontWeight: 700 }
+  return { background: '#dcfce7', color: '#15803d', fontWeight: 600 }
+}
+
+export default function Review() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeTile, setActiveTile] = useState(null)
+  const [sortCol, setSortCol] = useState('created_at')
+  const [sortDir, setSortDir] = useState('desc')
+  const [actionLoading, setActionLoading] = useState(null)
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await mixtures.list()
+      const all = res.data.results || res.data
+      setItems(all)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  // Filter profiles that have at least one determination (i.e. completed the workflow)
+  const profilesWithDetermination = useMemo(() => {
+    return items.filter(m => m.determinations && m.determinations.length > 0)
+  }, [items])
+
+  const tileCounts = useMemo(() => {
+    const twentyDaysAgo = new Date()
+    twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
+
+    return {
+      pending_review: profilesWithDetermination.filter(m => m.review_status === 'pending_review').length,
+      rejected: profilesWithDetermination.filter(m => m.review_status === 'rejected').length,
+      approved: profilesWithDetermination.filter(m => {
+        if (m.review_status !== 'approved') return false
+        const updatedAt = new Date(m.updated_at)
+        return updatedAt >= twentyDaysAgo
+      }).length,
+    }
+  }, [profilesWithDetermination])
+
+  const filteredProfiles = useMemo(() => {
+    if (!activeTile) return []
+    const twentyDaysAgo = new Date()
+    twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
+
+    return profilesWithDetermination.filter(m => {
+      if (activeTile === 'approved') {
+        if (m.review_status !== 'approved') return false
+        const updatedAt = new Date(m.updated_at)
+        return updatedAt >= twentyDaysAgo
+      }
+      return m.review_status === activeTile
+    })
+  }, [profilesWithDetermination, activeTile])
+
+  const sortedProfiles = useMemo(() => {
+    const arr = [...filteredProfiles]
+    arr.sort((a, b) => {
+      let va, vb
+      switch (sortCol) {
+        case 'name':
+          va = (a.name || '').toLowerCase()
+          vb = (b.name || '').toLowerCase()
+          break
+        case 'customer_name':
+          va = (a.customer_name || '').toLowerCase()
+          vb = (b.customer_name || '').toLowerCase()
+          break
+        case 'created_at':
+          va = a.created_at || ''
+          vb = b.created_at || ''
+          break
+        case 'hold_time':
+          va = daysRemaining(a.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
+          vb = daysRemaining(b.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
+          break
+        case 'hazardous':
+          va = a.determinations?.[a.determinations.length - 1]?.is_hazardous_waste ? 1 : 0
+          vb = b.determinations?.[b.determinations.length - 1]?.is_hazardous_waste ? 1 : 0
+          break
+        case 'waste_codes': {
+          const parseWasteCodes = (det) => {
+            try { return JSON.parse(det?.waste_codes || '[]').join(', ') } catch { return '' }
+          }
+          va = parseWasteCodes(a.determinations?.[a.determinations.length - 1])
+          vb = parseWasteCodes(b.determinations?.[b.determinations.length - 1])
+          break
+        }
+        default:
+          va = a.id
+          vb = b.id
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+    return arr
+  }, [filteredProfiles, sortCol, sortDir])
+
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
+
+  const handleSetStatus = async (mixtureId, newStatus) => {
+    setActionLoading(mixtureId)
+    try {
+      await mixtures.setReviewStatus(mixtureId, newStatus)
+      await load()
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'Failed to update review status.')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const sortIndicator = (col) => {
+    if (sortCol !== col) return ' ↕'
+    return sortDir === 'asc' ? ' ↑' : ' ↓'
+  }
+
+  const thStyle = {
+    cursor: 'pointer',
+    userSelect: 'none',
+    whiteSpace: 'nowrap',
+    fontSize: '0.88rem',
+  }
+
+  return (
+    <div className="container" style={{ padding: '2rem 1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <h1 style={{ color: '#14532d' }}>Profile Review</h1>
+        <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+      </div>
+
+      {loading && <p style={{ color: '#6b7280' }}>Loading…</p>}
+
+      {!loading && (
+        <>
+          {/* Tiles */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            {TILES.map(tile => (
+              <button
+                key={tile.key}
+                onClick={() => setActiveTile(activeTile === tile.key ? null : tile.key)}
+                style={{
+                  background: activeTile === tile.key ? tile.bg : '#fff',
+                  border: `2px solid ${activeTile === tile.key ? tile.border : '#e5e7eb'}`,
+                  borderRadius: 12,
+                  padding: '1.25rem 1.5rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s',
+                  boxShadow: activeTile === tile.key ? `0 4px 12px ${tile.border}40` : '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>{tile.icon}</span>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: tile.color }}>{tile.label}</span>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: tile.color }}>
+                  {tileCounts[tile.key]}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Table */}
+          {activeTile && (
+            <div className="card" style={{ overflow: 'auto' }}>
+              <h3 style={{ color: '#14532d', marginBottom: '1rem' }}>
+                {TILES.find(t => t.key === activeTile)?.label} ({sortedProfiles.length})
+              </h3>
+              {sortedProfiles.length === 0 ? (
+                <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>
+                  No profiles in this category.
+                </p>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style={thStyle} onClick={() => handleSort('name')}>
+                          Profile Name{sortIndicator('name')}
+                        </th>
+                        <th style={thStyle} onClick={() => handleSort('customer_name')}>
+                          Generator{sortIndicator('customer_name')}
+                        </th>
+                        <th style={thStyle} onClick={() => handleSort('created_at')}>
+                          Created{sortIndicator('created_at')}
+                        </th>
+                        <th style={thStyle} onClick={() => handleSort('hazardous')}>
+                          Status{sortIndicator('hazardous')}
+                        </th>
+                        <th style={thStyle} onClick={() => handleSort('waste_codes')}>
+                          Waste Codes{sortIndicator('waste_codes')}
+                        </th>
+                        <th style={thStyle} onClick={() => handleSort('hold_time')}>
+                          Hold Time Remaining{sortIndicator('hold_time')}
+                        </th>
+                        <th style={{ fontSize: '0.88rem' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedProfiles.map(m => {
+                        const latestDet = m.determinations?.[m.determinations.length - 1]
+                        const isHazardous = latestDet?.is_hazardous_waste
+                        let wasteCodes = latestDet?.waste_codes_list || []
+                        if (wasteCodes.length === 0 && latestDet?.waste_codes) {
+                          try { wasteCodes = JSON.parse(latestDet.waste_codes) } catch { wasteCodes = [] }
+                        }
+                        const daysLeft = daysRemaining(m.pickup_by_date)
+                        const holdStyle = holdTimeColor(daysLeft)
+
+                        return (
+                          <tr key={m.id}>
+                            <td>
+                              <Link to={`/results/${latestDet?.id}`} style={{ color: '#166534', fontWeight: 600 }}>
+                                {m.name}
+                              </Link>
+                              {m.transaction_id && (
+                                <div style={{ fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
+                                  {m.transaction_id}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ fontSize: '0.9rem' }}>{m.customer_name || '—'}</td>
+                            <td style={{ fontSize: '0.88rem', color: '#6b7280' }}>
+                              {new Date(m.created_at).toLocaleDateString()}
+                            </td>
+                            <td>
+                              <span className={`badge ${isHazardous ? 'badge-hazardous' : 'badge-safe'}`}>
+                                {isHazardous ? '⚠️ Hazardous' : '✅ Safe'}
+                              </span>
+                            </td>
+                            <td>
+                              {wasteCodes.length > 0
+                                ? wasteCodes.map(code => <HazardBadge key={code} code={code} />)
+                                : <span style={{ color: '#9ca3af' }}>None</span>}
+                            </td>
+                            <td>
+                              {daysLeft !== null ? (
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.2rem 0.6rem',
+                                  borderRadius: 6,
+                                  fontSize: '0.88rem',
+                                  ...holdStyle,
+                                }}>
+                                  {daysLeft} day{daysLeft !== 1 ? 's' : ''}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#9ca3af', fontSize: '0.88rem' }}>—</span>
+                              )}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                <Link to={`/results/${latestDet?.id}`} className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}>
+                                  View
+                                </Link>
+                                {activeTile === 'pending_review' && (
+                                  <>
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                      disabled={actionLoading === m.id}
+                                      onClick={() => handleSetStatus(m.id, 'approved')}
+                                    >
+                                      {actionLoading === m.id ? '…' : '✅ Approve'}
+                                    </button>
+                                    <button
+                                      className="btn btn-danger"
+                                      style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                      disabled={actionLoading === m.id}
+                                      onClick={() => handleSetStatus(m.id, 'rejected')}
+                                    >
+                                      {actionLoading === m.id ? '…' : '❌ Reject'}
+                                    </button>
+                                  </>
+                                )}
+                                {activeTile === 'rejected' && (
+                                  <button
+                                    className="btn btn-primary"
+                                    style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                    disabled={actionLoading === m.id}
+                                    onClick={() => handleSetStatus(m.id, 'pending_review')}
+                                  >
+                                    {actionLoading === m.id ? '…' : '🔄 Back to Review'}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!activeTile && profilesWithDetermination.length > 0 && (
+            <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+              <p style={{ color: '#6b7280', fontSize: '1.05rem' }}>
+                Select a category above to view profiles for review.
+              </p>
+            </div>
+          )}
+
+          {!activeTile && profilesWithDetermination.length === 0 && (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles available for review.</p>
+              <Link to="/determine" className="btn btn-primary">Start a New Determination</Link>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

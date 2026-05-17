@@ -188,7 +188,7 @@ export default function NewDetermination() {
         reviewer_name: reviewerName.trim(),
         reviewer_sign_off_date: reviewerDate,
       })
-      navigate(`/results/${detRes.data.determination_id}`)
+      navigate('/review')
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred. Please try again.')
     } finally {

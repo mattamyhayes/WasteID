@@ -80,6 +80,12 @@ def _generate_transaction_id():
 
 
 class Mixture(models.Model):
+    REVIEW_STATUS_CHOICES = [
+        ('pending_review', 'Pending Initial Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
     name = models.CharField(max_length=200, default='Unnamed Mixture')
     transaction_id = models.CharField(max_length=32, unique=True, default=_generate_transaction_id)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
@@ -91,6 +97,10 @@ class Mixture(models.Model):
 
     process_description = models.TextField(blank=True)
     notes = models.TextField(blank=True)
+
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, blank=True, default='', help_text='Review workflow status')
+    pickup_by_date = models.DateField(null=True, blank=True, help_text='Date by which waste must be picked up from generator')
+    hold_time_days = models.IntegerField(null=True, blank=True, help_text='Total hold time in days from generation to required pickup')
 
     def __str__(self):
         return f"{self.transaction_id}: {self.name}"

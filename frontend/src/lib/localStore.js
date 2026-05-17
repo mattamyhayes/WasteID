@@ -322,6 +322,9 @@ export const localMixtures = {
       discard_reason: payload.discard_reason || '',
       process_description: payload.process_description || '',
       notes: payload.notes || '',
+      review_status: payload.review_status || '',
+      pickup_by_date: payload.pickup_by_date || null,
+      hold_time_days: payload.hold_time_days || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -404,6 +407,8 @@ export const localMixtures = {
       reviewer_sign_off_date: reviewerInfo.reviewer_sign_off_date || null,
     }
     store.determinations.push(det)
+    // Mark mixture as pending review after determination
+    m.review_status = 'pending_review'
     saveStore(store)
     return ok({ determination_id: det.id, determination: hydrateDetermination(det) })
   },
@@ -456,6 +461,19 @@ export const localMixtures = {
     // export and the on-screen report (which can be printed to PDF via
     // the browser).
     return reject('PDF report generation is only available when the backend is deployed. Use CSV export or print this page to PDF.', 501)
+  },
+
+  setReviewStatus(mixtureId, reviewStatus) {
+    const store = loadStore()
+    const m = store.mixtures.find(x => x.id === Number(mixtureId))
+    if (!m) return reject('Mixture not found.', 404)
+    if (!['pending_review', 'approved', 'rejected'].includes(reviewStatus)) {
+      return reject('Invalid review status.', 400)
+    }
+    m.review_status = reviewStatus
+    m.updated_at = new Date().toISOString()
+    saveStore(store)
+    return ok({ id: m.id, review_status: m.review_status })
   },
 }
 
