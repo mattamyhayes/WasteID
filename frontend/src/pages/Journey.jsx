@@ -11,16 +11,19 @@ const PHASE_DATE_KEY = {
   Disposal: 'disposal_date',
 }
 
+function getPhaseEntryDate(item, phase) {
+  const dateKey = PHASE_DATE_KEY[phase]
+  return item[dateKey] ? new Date(item[dateKey]) : new Date(item.created_at)
+}
+
 function computePhaseStats(items) {
   const now = new Date()
   return JOURNEY_PHASES.map(phase => {
     const inPhase = items.filter(i => i.phase === phase)
-    const dateKey = PHASE_DATE_KEY[phase]
     let avgDays = 0
     if (inPhase.length > 0) {
       const totalMs = inPhase.reduce((sum, item) => {
-        const entered = item[dateKey] ? new Date(item[dateKey]) : new Date(item.created_at)
-        return sum + (now - entered)
+        return sum + (now - getPhaseEntryDate(item, phase))
       }, 0)
       avgDays = Math.round(totalMs / inPhase.length / (1000 * 60 * 60 * 24))
     }
@@ -126,8 +129,6 @@ export default function Journey() {
     [items, activePhase]
   )
 
-  const dateKey = PHASE_DATE_KEY[activePhase]
-
   return (
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>Journey</h1>
@@ -185,9 +186,7 @@ export default function Journey() {
                   </thead>
                   <tbody>
                     {phaseItems.map(item => {
-                      const entered = item[dateKey]
-                        ? new Date(item[dateKey])
-                        : new Date(item.created_at)
+                      const entered = getPhaseEntryDate(item, activePhase)
                       const daysIn = Math.round((new Date() - entered) / (1000 * 60 * 60 * 24))
                       return (
                         <tr key={item.id}>
