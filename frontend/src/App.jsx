@@ -9,6 +9,7 @@ import AddCustomer from './pages/AddCustomer'
 import Shippers from './pages/Shippers'
 import EPAForm from './pages/EPAForm'
 import ComingSoon from './pages/ComingSoon'
+import Shipping from './pages/Shipping'
 
 export default function App() {
   return (
@@ -28,7 +29,7 @@ export default function App() {
           <Route path="/epa-form" element={<EPAForm />} />
           <Route path="/orders" element={<ComingSoon title="Orders" />} />
           <Route path="/admin" element={<ComingSoon title="Admin" />} />
-          <Route path="/shipping" element={<ComingSoon title="Shipping" />} />
+          <Route path="/shipping" element={<Shipping />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
           <Route path="/marketplace" element={<ComingSoon title="Marketplace" />} />
         </Routes>
