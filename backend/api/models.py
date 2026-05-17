@@ -94,6 +94,30 @@ class Mixture(models.Model):
         ('rejected', 'Rejected'),
     ]
 
+    SHIPMENT_SIZE_UNIT_CHOICES = [
+        ('gallons', 'Gallons'),
+        ('cyb', 'CYB'),
+        ('bulk', 'Bulk'),
+    ]
+
+    SHIPMENT_SIZE_QTY_CHOICES = [
+        (5, '5'),
+        (15, '15'),
+        (30, '30'),
+        (55, '55'),
+    ]
+
+    EPA_GENERATOR_STATUS_CHOICES = [
+        ('VSQG', 'VSQG – Very Small Quantity Generator'),
+        ('SQG', 'SQG – Small Quantity Generator'),
+        ('LQG', 'LQG – Large Quantity Generator'),
+    ]
+
+    EPA_STATUS_HOLD_DAYS = {
+        'VSQG': 10,
+        'SQG': 30,
+        'LQG': 60,
+    }
     name = models.CharField(max_length=200, default='Unnamed Mixture')
     transaction_id = models.CharField(max_length=32, unique=True, default=_generate_profile_id)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
@@ -103,12 +127,37 @@ class Mixture(models.Model):
     is_discarded = models.BooleanField(default=True)
     discard_reason = models.CharField(max_length=50, blank=True)
 
+    shipment_size_unit = models.CharField(max_length=10, choices=SHIPMENT_SIZE_UNIT_CHOICES, blank=True)
+    shipment_size_qty = models.IntegerField(null=True, blank=True, choices=SHIPMENT_SIZE_QTY_CHOICES)
+    epa_generator_status = models.CharField(max_length=4, choices=EPA_GENERATOR_STATUS_CHOICES, blank=True)
+    generation_date = models.DateField(null=True, blank=True, help_text='Date the waste was generated')
+
     process_description = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, blank=True, default='', help_text='Review workflow status')
     pickup_by_date = models.DateField(null=True, blank=True, help_text='Date by which waste must be picked up from generator')
     hold_time_days = models.IntegerField(null=True, blank=True, help_text='Total hold time in days from generation to required pickup')
+
+    @property
+    def hold_days(self):
+        return self.EPA_STATUS_HOLD_DAYS.get(self.epa_generator_status)
+
+    @property
+    def ship_by_date(self):
+        from datetime import timedelta
+        days = self.hold_days
+        if days is not None and self.generation_date:
+            return self.generation_date + timedelta(days=days)
+        return None
+
+    @property
+    def days_remaining_to_ship(self):
+        from datetime import date
+        sbd = self.ship_by_date
+        if sbd:
+            return (sbd - date.today()).days
+        return None
 
     def __str__(self):
         return f"{self.transaction_id}: {self.name}"

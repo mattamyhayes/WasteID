@@ -271,6 +271,8 @@ function safeParseJsonArray(s) {
   }
 }
 
+const EPA_STATUS_HOLD_DAYS = { VSQG: 10, SQG: 30, LQG: 60 }
+
 function hydrateMixture(rawMixture, store) {
   const components = store.components
     .filter(c => c.mixture === rawMixture.id)
@@ -278,10 +280,25 @@ function hydrateMixture(rawMixture, store) {
   const determinations = store.determinations
     .filter(d => d.mixture === rawMixture.id)
     .map(hydrateDetermination)
+  const holdDays = EPA_STATUS_HOLD_DAYS[rawMixture.epa_generator_status] ?? null
+  let shipByDate = null
+  let daysRemainingToShip = null
+  if (holdDays != null && rawMixture.generation_date) {
+    const genDate = new Date(rawMixture.generation_date + 'T00:00:00')
+    const shipDate = new Date(genDate)
+    shipDate.setDate(shipDate.getDate() + holdDays)
+    shipByDate = shipDate.toISOString().split('T')[0]
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    daysRemainingToShip = Math.ceil((shipDate - today) / (1000 * 60 * 60 * 24))
+  }
   return {
     ...rawMixture,
     components,
     determinations,
+    hold_days: holdDays,
+    ship_by_date: shipByDate,
+    days_remaining_to_ship: daysRemainingToShip,
   }
 }
 
@@ -329,6 +346,10 @@ export const localMixtures = {
       hold_time_days: payload.hold_time_days || null,
       produced_date: payload.produced_date || null,
       profile_started_at: payload.profile_started_at || new Date().toISOString(),
+      shipment_size_unit: payload.shipment_size_unit || '',
+      shipment_size_qty: payload.shipment_size_qty ?? null,
+      epa_generator_status: payload.epa_generator_status || '',
+      generation_date: payload.generation_date || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

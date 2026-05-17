@@ -60,6 +60,24 @@ function MixtureRow({ m, onDelete, onPdf }) {
           {m.customer_name && <span><strong>{m.customer_name}</strong>{m.customer_location_name ? ` · ${m.customer_location_name}` : ''} · </span>}
           {m.components?.length ?? 0} component{m.components?.length !== 1 ? 's' : ''} ·
           Created {new Date(m.created_at).toLocaleDateString()}
+          {m.days_remaining_to_ship != null && (
+            <>
+              {' · '}
+              <span style={{
+                fontWeight: 700,
+                color: m.days_remaining_to_ship <= 0 ? '#dc2626'
+                  : m.days_remaining_to_ship <= 5 ? '#d97706'
+                  : '#16a34a',
+              }}>
+                {m.days_remaining_to_ship <= 0
+                  ? `⚠️ OVERDUE by ${Math.abs(m.days_remaining_to_ship)}d`
+                  : `📅 ${m.days_remaining_to_ship}d to ship`}
+              </span>
+            </>
+          )}
+          {m.shipment_size_unit && m.shipment_size_qty && (
+            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit}</>
+          )}
           {latestDet && (
             <>
               {' · '}
