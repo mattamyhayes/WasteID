@@ -9,6 +9,8 @@ const TILES = [
   { key: 'approved', label: 'Approved (Last 20 Days)', icon: '✅', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
 ]
 
+const NO_PICKUP_SORT_VALUE = 999
+
 function daysRemaining(pickupByDate) {
   if (!pickupByDate) return null
   const now = new Date()
@@ -99,17 +101,21 @@ export default function Review() {
           vb = b.created_at || ''
           break
         case 'hold_time':
-          va = daysRemaining(a.pickup_by_date) ?? 999
-          vb = daysRemaining(b.pickup_by_date) ?? 999
+          va = daysRemaining(a.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
+          vb = daysRemaining(b.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
           break
         case 'hazardous':
           va = a.determinations?.[a.determinations.length - 1]?.is_hazardous_waste ? 1 : 0
           vb = b.determinations?.[b.determinations.length - 1]?.is_hazardous_waste ? 1 : 0
           break
-        case 'waste_codes':
-          va = JSON.parse(a.determinations?.[a.determinations.length - 1]?.waste_codes || '[]').join(', ')
-          vb = JSON.parse(b.determinations?.[b.determinations.length - 1]?.waste_codes || '[]').join(', ')
+        case 'waste_codes': {
+          const parseWasteCodes = (det) => {
+            try { return JSON.parse(det?.waste_codes || '[]').join(', ') } catch { return '' }
+          }
+          va = parseWasteCodes(a.determinations?.[a.determinations.length - 1])
+          vb = parseWasteCodes(b.determinations?.[b.determinations.length - 1])
           break
+        }
         default:
           va = a.id
           vb = b.id
@@ -233,7 +239,10 @@ export default function Review() {
                       {sortedProfiles.map(m => {
                         const latestDet = m.determinations?.[m.determinations.length - 1]
                         const isHazardous = latestDet?.is_hazardous_waste
-                        const wasteCodes = latestDet?.waste_codes_list || JSON.parse(latestDet?.waste_codes || '[]')
+                        let wasteCodes = latestDet?.waste_codes_list || []
+                        if (wasteCodes.length === 0 && latestDet?.waste_codes) {
+                          try { wasteCodes = JSON.parse(latestDet.waste_codes) } catch { wasteCodes = [] }
+                        }
                         const daysLeft = daysRemaining(m.pickup_by_date)
                         const holdStyle = holdTimeColor(daysLeft)
 
