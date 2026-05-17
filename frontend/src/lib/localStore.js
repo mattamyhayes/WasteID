@@ -325,6 +325,8 @@ export const localMixtures = {
       review_status: payload.review_status || '',
       pickup_by_date: payload.pickup_by_date || null,
       hold_time_days: payload.hold_time_days || null,
+      produced_date: payload.produced_date || null,
+      profile_started_at: payload.profile_started_at || new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
