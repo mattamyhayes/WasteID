@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
 import { mixtures, customers as customersApi } from '../api/client'
+import { EPA_STATUS_HOLD_DAYS, calcShipByInfo, parseLocalDate } from '../lib/shipByUtils'
 
 const DISCARD_REASONS = [
   { value: 'spent', label: 'Spent material (used and no longer useful)' },
@@ -26,8 +27,6 @@ const EPA_GENERATOR_STATUSES = [
   { value: 'SQG', label: 'SQG – Small Quantity Generator' },
   { value: 'LQG', label: 'LQG – Large Quantity Generator' },
 ]
-
-const EPA_STATUS_HOLD_DAYS = { VSQG: 10, SQG: 30, LQG: 60 }
 
 const STEPS = ['1. Waste Profile', '2. Review & Sign-Off']
 
@@ -72,19 +71,10 @@ export default function NewDetermination() {
 
   // Compute ship-by date and days remaining
   const holdDays = EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? null
-  const shipByInfo = useMemo(() => {
-    if (holdDays == null || !generationDate) return null
-    const genDate = new Date(generationDate + 'T00:00:00')
-    const shipDate = new Date(genDate)
-    shipDate.setDate(shipDate.getDate() + holdDays)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const daysRemaining = Math.ceil((shipDate - today) / (1000 * 60 * 60 * 24))
-    return {
-      shipByDate: shipDate.toISOString().split('T')[0],
-      daysRemaining,
-    }
-  }, [holdDays, generationDate])
+  const shipByInfo = useMemo(
+    () => calcShipByInfo(epaGeneratorStatus, generationDate),
+    [epaGeneratorStatus, generationDate]
+  )
 
   // Reset all state on mount
   useEffect(() => {
