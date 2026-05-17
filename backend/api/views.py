@@ -90,9 +90,23 @@ class MixtureViewSet(viewsets.ModelViewSet):
             reviewer_sign_off_date=request.data.get('reviewer_sign_off_date') or None,
         )
 
+        # After determination, mark profile as pending review
+        mixture.review_status = 'pending_review'
+        mixture.save(update_fields=['review_status'])
+
         result['determination_id'] = det.id
         result['mixture_id'] = mixture.id
         return Response(result)
+
+    @action(detail=True, methods=['post'])
+    def set_review_status(self, request, pk=None):
+        mixture = self.get_object()
+        new_status = request.data.get('review_status', '')
+        if new_status not in ('pending_review', 'approved', 'rejected'):
+            return Response({'detail': 'Invalid review status.'}, status=status.HTTP_400_BAD_REQUEST)
+        mixture.review_status = new_status
+        mixture.save(update_fields=['review_status'])
+        return Response({'id': mixture.id, 'review_status': mixture.review_status})
 
     @action(detail=True, methods=['get'])
     def report_pdf(self, request, pk=None):

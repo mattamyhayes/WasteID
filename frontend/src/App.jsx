@@ -9,6 +9,7 @@ import AddCustomer from './pages/AddCustomer'
 import Shippers from './pages/Shippers'
 import EPAForm from './pages/EPAForm'
 import ComingSoon from './pages/ComingSoon'
+import Review from './pages/Review'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/determine" element={<NewDetermination />} />
           <Route path="/results/:id" element={<DeterminationResults />} />
           <Route path="/history" element={<History />} />
+          <Route path="/review" element={<Review />} />
           <Route path="/generators" element={<Customers />} />
           <Route path="/generators/new" element={<AddCustomer />} />
           <Route path="/customers" element={<Customers />} />
