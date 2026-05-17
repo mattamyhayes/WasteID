@@ -1,16 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { mixtures as mixturesApi } from '../api/client'
-
-/**
- * Compute a ship-by date from the determination created_at date.
- * RCRA regulations generally require shipment within 90 days of accumulation
- * start for large-quantity generators. We use the determination date as proxy.
- */
-function computeShipByDate(createdAt) {
-  const d = new Date(createdAt)
-  d.setDate(d.getDate() + 90)
-  return d
-}
+import { calcShipByInfo, parseLocalDate } from '../lib/shipByUtils'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -85,7 +75,10 @@ export default function Shipping() {
       if (!latestDet) continue
       // A "signed" order is one where a reviewer has signed off (name provided)
       if (!latestDet.reviewer_name) continue
-      const shipByDate = computeShipByDate(latestDet.created_at)
+      const shipByInfo = calcShipByInfo(m.epa_generator_status, m.generation_date)
+      const shipByDate = shipByInfo?.shipByDate
+        ? parseLocalDate(shipByInfo.shipByDate)
+        : new Date(latestDet.created_at)
       const reviewComplete = !!(latestDet.reviewer_name && latestDet.reviewer_sign_off_date)
       orders.push({
         id: m.id,

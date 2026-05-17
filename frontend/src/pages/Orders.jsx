@@ -260,7 +260,7 @@ function NewOrderWorkflow({ onCancel, onSave }) {
         <div className="card">
           <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Select Profiles to Add to Order</h3>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Choose any profile to include in this work order. Closed profiles are excluded.
+            Choose any profile to include in this work order.
           </p>
 
           <div className="form-group" style={{ marginBottom: '1rem' }}>

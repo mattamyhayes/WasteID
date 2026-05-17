@@ -7,6 +7,10 @@ const UNIT_LABELS = {
   g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
 }
 
+/**
+ * Build/edit mixture components.
+ * Set `editable` to true when components should support inline quantity/unit edits.
+ */
 export default function MixtureBuilder({ components, onChange, editable = false }) {
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('kg')
