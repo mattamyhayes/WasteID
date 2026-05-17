@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
-                     Customer, CustomerLocation, Shipper, EPAManifest)
+                     Customer, CustomerLocation, Shipper, EPAManifest, Journey)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -115,3 +115,14 @@ class EPAManifestSerializer(serializers.ModelSerializer):
         model = EPAManifest
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+
+class JourneySerializer(serializers.ModelSerializer):
+    stage_display = serializers.CharField(source='get_stage_display', read_only=True)
+    mixture_transaction_id = serializers.CharField(source='mixture.transaction_id', read_only=True)
+    customer_name = serializers.CharField(source='customer.name', read_only=True, default='')
+
+    class Meta:
+        model = Journey
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'duration_seconds']

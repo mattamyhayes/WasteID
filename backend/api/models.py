@@ -263,3 +263,43 @@ class EPAManifest(models.Model):
 
     def __str__(self):
         return f"Manifest {self.manifest_tracking_number or '(draft)'} - {self.generator_name}"
+
+
+class Journey(models.Model):
+    """Tracks each stage of the customer workflow for executive journey-map reporting."""
+    STAGE_CHOICES = [
+        ('produced', 'Produced'),
+        ('profile', 'Profile'),
+        ('prof_review', 'Prof Review'),
+        ('quote', 'Quote'),
+        ('order', 'Order'),
+        ('signed', 'Signed'),
+        ('ship_accept', 'Ship Accept'),
+        ('picked_up', 'Picked Up'),
+        ('transit', 'Transit'),
+        ('delivered', 'Delivered'),
+        ('disposed', 'Disposed'),
+    ]
+
+    mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='journey_stages')
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='journey_stages')
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    entered_at = models.DateTimeField(help_text='Date/time the item entered this stage')
+    completed_at = models.DateTimeField(null=True, blank=True, help_text='Date/time the item completed this stage')
+    duration_seconds = models.FloatField(null=True, blank=True, help_text='Time spent in this stage in seconds')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['mixture', 'entered_at']
+        verbose_name_plural = 'journeys'
+
+    def save(self, *args, **kwargs):
+        if self.entered_at and self.completed_at:
+            delta = self.completed_at - self.entered_at
+            self.duration_seconds = delta.total_seconds()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.mixture.transaction_id} - {self.get_stage_display()}"

@@ -4,11 +4,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Journey
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
-                           ShipperSerializer, EPAManifestSerializer)
+                           ShipperSerializer, EPAManifestSerializer, JourneySerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -640,3 +640,21 @@ class EPAManifestViewSet(viewsets.ModelViewSet):
         response = HttpResponse(buffer.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="EPA_8700-22_{safe_tracking}.pdf"'
         return response
+
+
+class JourneyViewSet(viewsets.ModelViewSet):
+    queryset = Journey.objects.select_related('mixture', 'customer').all()
+    serializer_class = JourneySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mixture_id = self.request.query_params.get('mixture', '')
+        customer_id = self.request.query_params.get('customer', '')
+        stage = self.request.query_params.get('stage', '')
+        if mixture_id:
+            qs = qs.filter(mixture_id=mixture_id)
+        if customer_id:
+            qs = qs.filter(customer_id=customer_id)
+        if stage:
+            qs = qs.filter(stage=stage)
+        return qs
