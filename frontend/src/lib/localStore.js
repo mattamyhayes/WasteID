@@ -322,6 +322,8 @@ export const localMixtures = {
       discard_reason: payload.discard_reason || '',
       process_description: payload.process_description || '',
       notes: payload.notes || '',
+      produced_date: payload.produced_date || null,
+      profile_started_at: payload.profile_started_at || new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

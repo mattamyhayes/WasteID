@@ -231,6 +231,35 @@ export default function DeterminationResults() {
         </div>
       )}
 
+      {/* Journey */}
+      <div className="card" style={{ marginBottom: '1.25rem' }}>
+        <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Journey</h3>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Milestone</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Produced Date</td>
+                <td>{mixture.produced_date
+                  ? new Date(mixture.produced_date + 'T00:00:00').toLocaleDateString()
+                  : '—'}</td>
+              </tr>
+              <tr>
+                <td>Profile Started</td>
+                <td>{mixture.profile_started_at
+                  ? new Date(mixture.profile_started_at).toLocaleString()
+                  : '—'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Components Table */}
       <div className="card">
         <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Components ({mixture.components.length})</h3>

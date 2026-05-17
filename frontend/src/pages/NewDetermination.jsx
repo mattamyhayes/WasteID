@@ -29,6 +29,7 @@ export default function NewDetermination() {
   const [name, setName] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [locationId, setLocationId] = useState('')
+  const [producedDate, setProducedDate] = useState('')
   const [isDiscarded, setIsDiscarded] = useState(true)
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
@@ -63,6 +64,7 @@ export default function NewDetermination() {
     setName('')
     setCustomerId('')
     setLocationId('')
+    setProducedDate('')
     setIsDiscarded(true)
     setDiscardReason('spent')
     setProcessDesc('')
@@ -106,6 +108,7 @@ export default function NewDetermination() {
       if (locationsForCustomer.length > 0 && !locationId) {
         setError('Please select a generator location.'); return false
       }
+      if (!producedDate) { setError('Please enter a produced date.'); return false }
     }
     if (step === 1 && components.length === 0) { setError('Add at least one component to the mixture.'); return false }
     if (step === 3) {
@@ -132,6 +135,8 @@ export default function NewDetermination() {
         process_description: processDesc,
         customer: customerId ? Number(customerId) : null,
         customer_location: locationId ? Number(locationId) : null,
+        produced_date: producedDate || null,
+        profile_started_at: new Date().toISOString(),
       }
       if (mixtureId) {
         // Step 1 already submitted earlier; just update it on edits.
@@ -198,7 +203,7 @@ export default function NewDetermination() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Waste Determination</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Profile</h1>
 
       {/* Transaction ID banner once issued */}
       {transactionId && (
@@ -242,7 +247,7 @@ export default function NewDetermination() {
           </div>
 
           <div className="form-group">
-            <label>Generator Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
+            <label>Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
             <select className="form-control" value={locationId}
               onChange={e => setLocationId(e.target.value)}
               disabled={!customerId || locationsForCustomer.length === 0}>
@@ -262,6 +267,12 @@ export default function NewDetermination() {
                 <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
               </small>
             )}
+          </div>
+
+          <div className="form-group">
+            <label>Produced Date *</label>
+            <input type="date" className="form-control" value={producedDate}
+              onChange={e => setProducedDate(e.target.value)} />
           </div>
 
           <div className="form-group">
