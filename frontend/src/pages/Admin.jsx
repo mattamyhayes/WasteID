@@ -36,14 +36,13 @@ export default function Admin() {
           <Link
             key={to}
             to={to}
-            className="card"
+            className="card admin-link-card"
             style={{
               display: 'flex',
               flexDirection: 'column',
               gap: '0.75rem',
               color: '#14532d',
               border: '1px solid #dcfce7',
-              transition: 'transform 0.15s, box-shadow 0.15s',
             }}
           >
             <div style={{ fontSize: '2rem' }}>{icon}</div>
