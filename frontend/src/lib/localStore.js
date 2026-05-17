@@ -12,13 +12,21 @@ import { determineHazardousWaste } from './determination.js'
 
 const STORAGE_KEY = 'wasteid_local_store_v2'
 const CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v2'
+const LEGACY_STORAGE_KEY = 'wasteid_local_store_v1'
+const LEGACY_CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v1'
 
 function randomHex(length = 8) {
-  let out = ''
-  while (out.length < length) {
-    out += Math.floor(Math.random() * 0xFFFFFFFF).toString(16).toUpperCase().padStart(8, '0')
+  const alphabet = '0123456789ABCDEF'
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(length)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, b => alphabet[b % 16]).join('')
   }
-  return out.slice(0, length)
+  let out = ''
+  for (let i = 0; i < length; i++) {
+    out += alphabet[Math.floor(Math.random() * 16)]
+  }
+  return out
 }
 
 function generatePrefixedId(prefix, existingValues = new Set()) {
@@ -51,7 +59,22 @@ function emptyCustomerStore() {
 function loadStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
-    if (!raw) return seedMixtureStore()
+    if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          mixtures: legacy.mixtures || [],
+          components: legacy.components || [],
+          determinations: legacy.determinations || [],
+          nextId: legacy.nextId || { mixture: 1, component: 1, determination: 1 },
+          seeded: true,
+        }
+        saveStore(migrated)
+        return migrated
+      }
+      return seedMixtureStore()
+    }
     const parsed = JSON.parse(raw)
     const store = {
       mixtures: parsed.mixtures || [],
@@ -156,6 +179,21 @@ function loadCustomerStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(CUSTOMERS_STORAGE_KEY) : null
     if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_CUSTOMERS_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          customers: (legacy.customers || []).map(c => ({
+            ...c,
+            epa_generator_status: c.epa_generator_status || '',
+          })),
+          locations: legacy.locations || [],
+          nextId: legacy.nextId || { customer: 1, location: 1 },
+          seeded: true,
+        }
+        saveCustomerStore(migrated)
+        return migrated
+      }
       const store = seedCustomerStore()
       return store
     }
@@ -245,7 +283,7 @@ function seedMixtureStore() {
     const id = store.nextId.mixture++
     const transaction_id = generatePrefixedId('PID', profileIdSet)
     profileIdSet.add(transaction_id)
-    const location = customerStore.locations.find(l => l.customer === profile.customer.id)
+    const location = customerStore.locations.find(l => l.customer === profile.customer.id) || null
     const generatedAt = new Date(now.getTime() - profile.generation_offset_days * 86400000)
     const dateOnly = generatedAt.toISOString().slice(0, 10)
     const createdAt = generatedAt.toISOString()
@@ -300,7 +338,9 @@ function seedMixtureStore() {
     }
 
     const determinationId = store.nextId.determination++
-    const isHazardous = wasteCodes.length > 0 || id % 2 === 0
+    // Demo spread: force alternating hazardous/non-hazardous outcomes so tiles
+    // and review workflows always have mixed data even when waste codes are sparse.
+    const isHazardous = wasteCodes.length > 0 || (id % 2 === 0) // alternate profiles as hazardous for demo-state coverage
     store.determinations.push({
       id: determinationId,
       mixture: id,
@@ -1048,6 +1088,7 @@ export const localManifests = {
 export { localJourney } from './journeyStore.js'
 // --------------------------------------------------------------- Local Orders
 const ORDERS_STORAGE_KEY = 'wasteid_orders_v2'
+const LEGACY_ORDERS_STORAGE_KEY = 'wasteid_orders_v1'
 
 function emptyOrderStore() {
   return { orders: [], journeys: [], nextId: { order: 1, journey: 1 }, seeded: false }
@@ -1124,7 +1165,21 @@ function seedOrderStore() {
 function loadOrderStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null
-    if (!raw) return seedOrderStore()
+    if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_ORDERS_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          orders: legacy.orders || [],
+          journeys: legacy.journeys || [],
+          nextId: legacy.nextId || { order: 1, journey: 1 },
+          seeded: true,
+        }
+        saveOrderStore(migrated)
+        return migrated
+      }
+      return seedOrderStore()
+    }
     const parsed = JSON.parse(raw)
     const store = {
       orders: parsed.orders || [],

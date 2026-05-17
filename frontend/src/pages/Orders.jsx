@@ -131,7 +131,9 @@ function OrderTable({
                 <tr key={o.id}
                   onClick={() => onSelectRow(o.id)}
                   style={{ cursor: 'pointer', background: selectedRowId === o.id ? '#ecfdf5' : undefined }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
+                  onMouseEnter={e => {
+                    if (selectedRowId !== o.id) e.currentTarget.style.background = '#f0fdf4'
+                  }}
                   onMouseLeave={e => e.currentTarget.style.background = selectedRowId === o.id ? '#ecfdf5' : ''}>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{o.order_id}</td>
                   <td style={tdStyle}>{new Date(o.created_at).toLocaleDateString()}</td>
@@ -152,7 +154,7 @@ function OrderTable({
                           onEditOrder(o)
                         }}
                       >
-                        ✏️
+                        Edit
                       </button>
                     )}
                   </td>
@@ -189,15 +191,6 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
     loadData()
   }, [])
 
-  useEffect(() => {
-    if (!initialOrder) return
-    setOwnerName(initialOrder.owner_name || '')
-    setNotes(initialOrder.notes || '')
-    setStatus(initialOrder.status || 'open')
-    setSelectedProfileIds(initialOrder.profile_ids || [])
-    setSelectedShipperIds(initialOrder.shipper_ids || [])
-  }, [initialOrder])
-
   const loadData = async () => {
     try {
       const [profileRes, shipperRes] = await Promise.all([
@@ -215,17 +208,27 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
 
   useEffect(() => {
     if (!initialOrder) return
-    if (allProfiles.length > 0 && (!initialOrder.profile_ids || initialOrder.profile_ids.length === 0) && Array.isArray(initialOrder.profile_names)) {
-      const mappedProfileIds = allProfiles
-        .filter(p => initialOrder.profile_names.includes(p.name))
-        .map(p => p.id)
-      setSelectedProfileIds(mappedProfileIds)
+    setOwnerName(initialOrder.owner_name || '')
+    setNotes(initialOrder.notes || '')
+    setStatus(initialOrder.status || 'open')
+
+    const profileIds = Array.isArray(initialOrder.profile_ids) ? initialOrder.profile_ids : []
+    const shipperIds = Array.isArray(initialOrder.shipper_ids) ? initialOrder.shipper_ids : []
+
+    if (profileIds.length > 0) {
+      setSelectedProfileIds(profileIds)
+    } else if (allProfiles.length > 0 && Array.isArray(initialOrder.profile_names)) {
+      setSelectedProfileIds(
+        allProfiles.filter(p => initialOrder.profile_names.includes(p.name)).map(p => p.id)
+      )
     }
-    if (allShippers.length > 0 && (!initialOrder.shipper_ids || initialOrder.shipper_ids.length === 0) && Array.isArray(initialOrder.shipper_names)) {
-      const mappedShipperIds = allShippers
-        .filter(s => initialOrder.shipper_names.includes(s.company_name))
-        .map(s => s.id)
-      setSelectedShipperIds(mappedShipperIds)
+
+    if (shipperIds.length > 0) {
+      setSelectedShipperIds(shipperIds)
+    } else if (allShippers.length > 0 && Array.isArray(initialOrder.shipper_names)) {
+      setSelectedShipperIds(
+        allShippers.filter(s => initialOrder.shipper_names.includes(s.company_name)).map(s => s.id)
+      )
     }
   }, [initialOrder, allProfiles, allShippers])
 
@@ -550,7 +553,7 @@ export default function Orders() {
   }
 
   if (showNewOrder) {
-      return (
+    return (
       <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 960 }}>
         <NewOrderWorkflow
           initialOrder={editingOrder}
