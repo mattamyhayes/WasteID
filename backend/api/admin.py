@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Journey
 
 
 class CustomerLocationInline(admin.TabularInline):
@@ -56,3 +56,11 @@ class EPAManifestAdmin(admin.ModelAdmin):
     list_display = ['manifest_tracking_number', 'generator_name', 'status', 'created_at']
     list_filter = ['status']
     search_fields = ['manifest_tracking_number', 'generator_name']
+
+
+@admin.register(Journey)
+class JourneyAdmin(admin.ModelAdmin):
+    list_display = ['mixture', 'customer', 'stage', 'entered_at', 'completed_at', 'duration_seconds']
+    list_filter = ['stage', 'customer']
+    search_fields = ['mixture__transaction_id', 'customer__name']
+    readonly_fields = ['duration_seconds', 'created_at', 'updated_at']
