@@ -63,4 +63,4 @@ class JourneyAdmin(admin.ModelAdmin):
     list_display = ['mixture', 'customer', 'stage', 'entered_at', 'completed_at', 'duration_seconds']
     list_filter = ['stage', 'customer']
     search_fields = ['mixture__transaction_id', 'customer__name']
-    readonly_fields = ['duration_seconds', 'created_at', 'updated_at']
+    readonly_fields = ['duration_seconds']

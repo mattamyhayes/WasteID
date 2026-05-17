@@ -1,6 +1,5 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests } from '../lib/localStore.js'
 import { localJourney } from '../lib/journeyStore.js'
 import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests, localOrders } from '../lib/localStore.js'
 
