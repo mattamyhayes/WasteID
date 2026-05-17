@@ -14,6 +14,7 @@ import ComingSoon from './pages/ComingSoon'
 import Review from './pages/Review'
 import Journey from './pages/Journey'
 import Shipping from './pages/Shipping'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -34,7 +35,7 @@ export default function App() {
           <Route path="/epa-form" element={<EPAForm />} />
           <Route path="/journey" element={<Journey />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/admin" element={<ComingSoon title="Admin" />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
           <Route path="/marketplace" element={<ComingSoon title="Marketplace" />} />
