@@ -1,5 +1,6 @@
 :root {
   --navbar-height: 60px;
+  --admin-card-min-width: 220px;
 }
 
 body {
@@ -48,7 +49,7 @@ input, select, textarea {
 
 .admin-links-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--admin-card-min-width), 1fr));
   gap: 1rem;
 }
 

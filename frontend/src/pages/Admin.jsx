@@ -27,7 +27,7 @@ export default function Admin() {
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>Admin</h1>
         <p style={{ color: '#6b7280', maxWidth: 680 }}>
-          Use these admin shortcuts to manage setup pages. More admin links can be added here over time.
+          Use these shortcuts to manage admin setup pages. Additional admin links can be added here over time.
         </p>
       </div>
 
