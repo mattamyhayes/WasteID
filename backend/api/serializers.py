@@ -64,6 +64,9 @@ class MixtureSerializer(serializers.ModelSerializer):
     determinations = WasteDeterminationSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True, default='')
     customer_location_name = serializers.CharField(source='customer_location.name', read_only=True, default='')
+    ship_by_date = serializers.DateField(read_only=True)
+    days_remaining_to_ship = serializers.IntegerField(read_only=True)
+    hold_days = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Mixture

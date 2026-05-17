@@ -126,6 +126,11 @@ export default function EPAForm() {
             isHazardous: d.is_hazardous_waste,
             wasteCodes: d.waste_codes_list || JSON.parse(d.waste_codes || '[]'),
             createdAt: d.created_at,
+            daysRemainingToShip: m.days_remaining_to_ship,
+            shipByDate: m.ship_by_date,
+            epaGeneratorStatus: m.epa_generator_status,
+            shipmentSizeUnit: m.shipment_size_unit,
+            shipmentSizeQty: m.shipment_size_qty,
           })
         }
       }
@@ -486,6 +491,21 @@ export default function EPAForm() {
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>
                     Waste Codes: {det.wasteCodes.length > 0 ? det.wasteCodes.join(', ') : 'None'} · {new Date(det.createdAt).toLocaleDateString()}
+                    {det.daysRemainingToShip != null && (
+                      <span style={{
+                        marginLeft: '0.5rem', fontWeight: 700,
+                        color: det.daysRemainingToShip <= 0 ? '#dc2626'
+                          : det.daysRemainingToShip <= 5 ? '#d97706'
+                          : '#16a34a',
+                      }}>
+                        {det.daysRemainingToShip <= 0
+                          ? `⚠️ OVERDUE by ${Math.abs(det.daysRemainingToShip)}d`
+                          : `📅 ${det.daysRemainingToShip}d to ship`}
+                      </span>
+                    )}
+                    {det.shipmentSizeUnit && det.shipmentSizeQty && (
+                      <> · {det.shipmentSizeQty} {det.shipmentSizeUnit}</>
+                    )}
                   </div>
                 </div>
               </label>
