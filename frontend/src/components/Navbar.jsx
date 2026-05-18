@@ -5,16 +5,13 @@ export const navLinks = [
   { to: '/', label: 'Home', icon: '🏠' },
   { to: '/determine', label: 'New Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
-  { to: '/generators', label: 'Generators', icon: '🏭' },
-  { to: '/journey', label: 'Journey', icon: '🗺️' },
   { to: '/orders', label: 'Orders', icon: '📦' },
-  { to: '/admin', label: 'Admin', icon: '⚙️' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
   { to: '/scheduling', label: 'Scheduling', icon: '📅' },
   { to: '/marketplace', label: 'Marketplace', icon: '🛒' },
-  { to: '/shippers', label: 'Shippers', icon: '🚢' },
-  { to: '/epa-form', label: 'EPA Form', icon: '📋' },
+  { to: '/journey', label: 'Journey', icon: '🗺️' },
   { to: '/history', label: 'History', icon: '📂' },
+  { to: '/admin', label: 'Admin', icon: '⚙️' },
 ]
 
 export default function Navbar() {
