@@ -192,7 +192,7 @@ export default function Admin() {
       </div>
 
       <div className="admin-links-grid">
-        {adminLinks.map(({ to, title, description, icon }) => (
+        {adminLinks.map(({ to, title, icon }) => (
           <Link
             key={to}
             to={to}
@@ -200,18 +200,13 @@ export default function Admin() {
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem',
+              alignItems: 'center',
+              gap: '0.5rem',
               color: '#14532d',
             }}
           >
             <div style={{ fontSize: '2rem' }}>{icon}</div>
-            <div>
-              <h2 style={{ fontSize: '1.1rem', marginBottom: '0.35rem' }}>{title}</h2>
-              <p style={{ color: '#6b7280', fontSize: '0.92rem' }}>{description}</p>
-            </div>
-            <span style={{ marginTop: 'auto', fontWeight: 600, color: '#166534' }}>
-              Open →
-            </span>
+            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{title}</h2>
           </Link>
         ))}
       </div>
