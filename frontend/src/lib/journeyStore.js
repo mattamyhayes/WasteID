@@ -26,15 +26,15 @@ function emptyStore() {
 
 // Helper: create a date N days ago from a reference date
 function daysAgo(days, from = new Date()) {
-  const d = new Date(from)
-  d.setDate(d.getDate() - days)
-  return d.toISOString()
+  const date = new Date(from)
+  date.setDate(date.getDate() - days)
+  return date.toISOString()
 }
 
 function daysAfter(days, fromIso) {
-  const d = new Date(fromIso)
-  d.setDate(d.getDate() + days)
-  return d.toISOString()
+  const date = new Date(fromIso)
+  date.setDate(date.getDate() + days)
+  return date.toISOString()
 }
 
 const SEED_ITEMS = [

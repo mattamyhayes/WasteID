@@ -18,8 +18,8 @@ function getPhaseEntryDate(item, phase) {
 
 function parseDate(value) {
   if (!value) return null
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? null : d
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 function dayDiff(fromDate, toDate) {
