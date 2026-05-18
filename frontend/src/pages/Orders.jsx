@@ -9,7 +9,6 @@ const STATUS_TILES = [
   { key: 'rejected_tldr', label: 'Rejected by TLDR', icon: '❌', color: '#be123c' },
 ]
 
-const WORKFLOW_STEPS = ['1. Select Profiles', '2. Add Shippers', '3. Review & Save']
 const STATUS_OPTIONS = STATUS_TILES.map(tile => ({ value: tile.key, label: tile.label }))
 
 function StatusTile({ tile, count, active, onClick }) {
@@ -113,8 +112,8 @@ function OrderTable({
           No orders match this filter.
         </div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="card table-wrap" style={{ padding: 0 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
                 <th style={thStyle} onClick={() => onSort('order_id')}>Order ID{renderSortArrow('order_id')}</th>
@@ -169,20 +168,16 @@ function OrderTable({
 }
 
 function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
-  const [step, setStep] = useState(0)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Step 1: Profile selection
   const [allProfiles, setAllProfiles] = useState([])
   const [selectedProfileIds, setSelectedProfileIds] = useState([])
   const [profileSearch, setProfileSearch] = useState('')
 
-  // Step 2: Shipper selection
   const [allShippers, setAllShippers] = useState([])
   const [selectedShipperIds, setSelectedShipperIds] = useState([])
 
-  // Order metadata
   const [ownerName, setOwnerName] = useState('')
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState(initialOrder?.status || 'open')
@@ -232,8 +227,8 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
     }
   }, [initialOrder, allProfiles, allShippers])
 
-  // All profiles are shown (the app does not currently have a "closed" status for profiles)
   const filteredProfiles = useMemo(() => {
+    // All profiles are shown (the app does not currently have a "closed" status for profiles)
     let list = allProfiles
     if (profileSearch.trim()) {
       const q = profileSearch.trim().toLowerCase()
@@ -302,178 +297,21 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>{initialOrder ? 'Edit Order' : 'New Order'}</h1>
-        <button className="btn btn-secondary" onClick={onCancel}>← Back to Dashboard</button>
-      </div>
-
-      {/* Step indicator */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {WORKFLOW_STEPS.map((label, i) => (
-          <div key={i} style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 8,
-            background: i === step ? '#14532d' : i < step ? '#bbf7d0' : '#f3f4f6',
-            color: i === step ? '#fff' : i < step ? '#14532d' : '#6b7280',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-          }}>
-            {label}
-          </div>
-        ))}
+        <button className="btn btn-secondary" onClick={onCancel}>← Back to Orders Dashboard</button>
       </div>
 
       {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
 
-      {/* Step 1: Select Profiles */}
-      {step === 0 && (
-        <div className="card">
-          <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Select Profiles to Add to Order</h3>
-          <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Choose any profile to include in this work order.
-          </p>
-
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
+      {/* Order Details */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Order Details</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Order Owner Name</label>
             <input className="form-control" value={ownerName} onChange={e => setOwnerName(e.target.value)}
-              placeholder="Enter your name" style={{ maxWidth: 400 }} />
+              placeholder="Enter your name" />
           </div>
-
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label>Search Profiles</label>
-            <input className="form-control" value={profileSearch} onChange={e => setProfileSearch(e.target.value)}
-              placeholder="Search by name, ID, or generator…" style={{ maxWidth: 400 }} />
-          </div>
-
-          {filteredProfiles.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No profiles found. Create profiles first via the New Profile page.</p>
-          ) : (
-            <div style={{ maxHeight: 400, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-              {filteredProfiles.map(p => {
-                const selected = selectedProfileIds.includes(p.id)
-                return (
-                  <div key={p.id}
-                    onClick={() => toggleProfile(p.id)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      cursor: 'pointer',
-                      background: selected ? '#f0fdf4' : '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                    }}>
-                    <input type="checkbox" checked={selected} readOnly style={{ accentColor: '#14532d' }} />
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>
-                        {p.transaction_id && <span style={{ fontFamily: 'monospace' }}>{p.transaction_id}</span>}
-                        {p.customer_name && <span> · {p.customer_name}</span>}
-                        {p.components && <span> · {p.components.length} component{p.components.length !== 1 ? 's' : ''}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
-            <button className="btn btn-primary" onClick={() => {
-              if (selectedProfileIds.length === 0) { setError('Select at least one profile.'); return }
-              setError(''); setStep(1)
-            }}>
-              Next: Add Shippers →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Add Shippers */}
-      {step === 1 && (
-        <div className="card">
-          <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Select Potential Shippers</h3>
-          <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Choose shippers who may transport this order. You can skip this step if shippers are not yet known.
-          </p>
-
-          {allShippers.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No shippers available. Add shippers via the Shippers page.</p>
-          ) : (
-            <div style={{ maxHeight: 400, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-              {allShippers.map(s => {
-                const selected = selectedShipperIds.includes(s.id)
-                return (
-                  <div key={s.id}
-                    onClick={() => toggleShipper(s.id)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      cursor: 'pointer',
-                      background: selected ? '#f0fdf4' : '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                    }}>
-                    <input type="checkbox" checked={selected} readOnly style={{ accentColor: '#14532d' }} />
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{s.company_name}</div>
-                      <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>
-                        {s.epa_id && <span style={{ fontFamily: 'monospace' }}>{s.epa_id}</span>}
-                        {s.city && <span> · {s.city}, {s.state}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(0)}>← Back</button>
-            <button className="btn btn-primary" onClick={() => { setError(''); setStep(2) }}>
-              Next: Review →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Review & Save */}
-      {step === 2 && (
-        <div className="card">
-          <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Review & Save Order</h3>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <strong>Owner:</strong> {ownerName || '(not set)'}
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <strong>Selected Profiles ({selectedProfileIds.length}):</strong>
-            <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>
-              {allProfiles.filter(p => selectedProfileIds.includes(p.id)).map(p => (
-                <li key={p.id}>{p.name} <span style={{ color: '#6b7280', fontFamily: 'monospace', fontSize: '0.85rem' }}>({p.transaction_id})</span></li>
-              ))}
-            </ul>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <strong>Potential Shippers ({selectedShipperIds.length}):</strong>
-            {selectedShipperIds.length === 0 ? (
-              <p style={{ color: '#6b7280', margin: '0.25rem 0' }}>None selected</p>
-            ) : (
-              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>
-                {allShippers.filter(s => selectedShipperIds.includes(s.id)).map(s => (
-                  <li key={s.id}>{s.company_name}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label>Notes</label>
-            <textarea className="form-control" rows={3} value={notes} onChange={e => setNotes(e.target.value)}
-              placeholder="Optional notes for this order…" />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '1rem', maxWidth: 420 }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Order Status</label>
             <select className="form-control" value={status} onChange={e => setStatus(e.target.value)}>
               {STATUS_OPTIONS.map(option => (
@@ -481,19 +319,120 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
               ))}
             </select>
           </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(1)}>← Back</button>
-            <button className="btn btn-primary" onClick={() => handleSave(false)} disabled={submitting}>
-              {submitting ? 'Saving…' : `💾 ${initialOrder ? 'Save Changes' : 'Save Order'}`}
-            </button>
-            <button className="btn btn-primary" onClick={() => handleSave(true)} disabled={submitting}
-              style={{ background: '#d97706' }}>
-              {submitting ? 'Submitting…' : '📤 Submit to Bid'}
-            </button>
-          </div>
         </div>
-      )}
+        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
+          <label>Notes</label>
+          <textarea className="form-control" rows={3} value={notes} onChange={e => setNotes(e.target.value)}
+            placeholder="Optional notes for this order…" />
+        </div>
+      </div>
+
+      {/* Profile Selection */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3 style={{ color: '#166534', marginBottom: '0.5rem' }}>
+          Profiles{' '}
+          {selectedProfileIds.length > 0 && (
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#16a34a' }}>
+              ({selectedProfileIds.length} selected)
+            </span>
+          )}
+        </h3>
+        <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+          Choose one or more profiles to include in this order.
+        </p>
+        <input className="form-control" value={profileSearch} onChange={e => setProfileSearch(e.target.value)}
+          placeholder="Search by name, ID, or generator…" style={{ marginBottom: '0.75rem' }} />
+        {filteredProfiles.length === 0 ? (
+          <p style={{ color: '#6b7280' }}>No profiles found. Create profiles first via the New Profile page.</p>
+        ) : (
+          <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+            {filteredProfiles.map(p => {
+              const selected = selectedProfileIds.includes(p.id)
+              return (
+                <div key={p.id}
+                  onClick={() => toggleProfile(p.id)}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    background: selected ? '#f0fdf4' : '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                  }}>
+                  <input type="checkbox" checked={selected} readOnly style={{ accentColor: '#14532d', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600 }}>{p.name}</div>
+                    <div style={{ fontSize: '0.82rem', color: '#6b7280', wordBreak: 'break-word' }}>
+                      {p.transaction_id && <span style={{ fontFamily: 'monospace' }}>{p.transaction_id}</span>}
+                      {p.customer_name && <span> · {p.customer_name}</span>}
+                      {p.components && <span> · {p.components.length} component{p.components.length !== 1 ? 's' : ''}</span>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Shipper Selection */}
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ color: '#166534', marginBottom: '0.5rem' }}>
+          Potential Shippers{' '}
+          {selectedShipperIds.length > 0 && (
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#16a34a' }}>
+              ({selectedShipperIds.length} selected)
+            </span>
+          )}
+        </h3>
+        <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+          Choose shippers who may transport this order. Optional — skip if not yet known.
+        </p>
+        {allShippers.length === 0 ? (
+          <p style={{ color: '#6b7280' }}>No shippers available. Add shippers via the Shippers page.</p>
+        ) : (
+          <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+            {allShippers.map(s => {
+              const selected = selectedShipperIds.includes(s.id)
+              return (
+                <div key={s.id}
+                  onClick={() => toggleShipper(s.id)}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    background: selected ? '#f0fdf4' : '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                  }}>
+                  <input type="checkbox" checked={selected} readOnly style={{ accentColor: '#14532d', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600 }}>{s.company_name}</div>
+                    <div style={{ fontSize: '0.82rem', color: '#6b7280', wordBreak: 'break-word' }}>
+                      {s.epa_id && <span style={{ fontFamily: 'monospace' }}>{s.epa_id}</span>}
+                      {s.city && <span> · {s.city}, {s.state}</span>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Save Actions */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <button className="btn btn-secondary" onClick={onCancel}>← Back to Orders Dashboard</button>
+        <button className="btn btn-primary" onClick={() => handleSave(false)} disabled={submitting}>
+          {submitting ? 'Saving…' : `💾 ${initialOrder ? 'Save Changes' : 'Save Order'}`}
+        </button>
+        <button className="btn btn-primary" onClick={() => handleSave(true)} disabled={submitting}
+          style={{ background: '#d97706' }}>
+          {submitting ? 'Submitting…' : '📤 Submit to Bid'}
+        </button>
+      </div>
     </div>
   )
 }
