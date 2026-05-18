@@ -30,7 +30,7 @@ function holdTimeColor(daysLeft) {
 export default function Review() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTile, setActiveTile] = useState(null)
+  const [activeTile, setActiveTile] = useState('pending_review')
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
   const [actionLoading, setActionLoading] = useState(null)

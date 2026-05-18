@@ -594,6 +594,8 @@ export default function Reports() {
         ))}
       </div>
 
+      <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '1.5rem' }} />
+
       {/* Tab content */}
       {activeTab === 'profiles' && (
         <ProfilesTab
