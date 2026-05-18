@@ -8,6 +8,18 @@ export const JOURNEY_PHASES = ['Profile', 'Quote', 'Order', 'Shipping', 'Disposa
 
 function ok(data) { return Promise.resolve({ data }) }
 
+function generatePrefixedId(prefix) {
+  return `${prefix}-${Math.random().toString(16).slice(2, 10).toUpperCase()}`
+}
+
+function generateProfileId() {
+  return generatePrefixedId('PID')
+}
+
+function generateOrderId() {
+  return generatePrefixedId('OID')
+}
+
 function emptyStore() {
   return { items: [], nextId: 1, seeded: false }
 }
@@ -19,126 +31,174 @@ function daysAgo(days, from = new Date()) {
   return d.toISOString()
 }
 
+function daysAfter(days, fromIso) {
+  const d = new Date(fromIso)
+  d.setDate(d.getDate() + days)
+  return d.toISOString()
+}
+
 const SEED_ITEMS = [
   {
     name: 'Cascade Auto Body – Waste Paint Solvents',
     customer: 'Cascade Auto Body & Paint',
     phase: 'Disposal',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(45),
     quote_date: daysAgo(38),
     order_date: daysAgo(30),
     shipping_date: daysAgo(20),
     disposal_date: daysAgo(5),
+    generation_date: daysAgo(44),
+    pickup_by_date: daysAgo(14),
   },
   {
     name: 'Pacific NW Printing – Ink Waste',
     customer: 'Pacific Northwest Printing Co.',
     phase: 'Shipping',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(30),
     quote_date: daysAgo(24),
     order_date: daysAgo(18),
     shipping_date: daysAgo(7),
     disposal_date: null,
+    generation_date: daysAgo(20),
+    pickup_by_date: daysAgo(2),
   },
   {
     name: 'TechClean Labs – Acetone Residues',
     customer: 'TechClean Labs',
     phase: 'Shipping',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(28),
     quote_date: daysAgo(22),
     order_date: daysAgo(15),
     shipping_date: daysAgo(4),
     disposal_date: null,
+    generation_date: daysAgo(17),
+    pickup_by_date: daysAfter(13, daysAgo(17)),
   },
   {
     name: 'Columbia Steel – Pickling Acid',
     customer: 'Columbia Steel Fabricators',
     phase: 'Order',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(20),
     quote_date: daysAgo(14),
     order_date: daysAgo(6),
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(7),
+    pickup_by_date: daysAfter(23, daysAgo(7)),
   },
   {
     name: 'Valley Medical – Xylene Waste',
     customer: 'Valley Medical Center',
     phase: 'Order',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(18),
     quote_date: daysAgo(12),
     order_date: daysAgo(3),
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(4),
+    pickup_by_date: daysAfter(26, daysAgo(4)),
   },
   {
     name: 'Cascade Auto Body – Thinners Batch 2',
     customer: 'Cascade Auto Body & Paint',
     phase: 'Quote',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(12),
     quote_date: daysAgo(5),
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(9),
+    pickup_by_date: daysAfter(21, daysAgo(9)),
   },
   {
     name: 'Summit Plating – Chrome Bath',
     customer: 'Summit Plating Works',
     phase: 'Quote',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(10),
     quote_date: daysAgo(3),
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(8),
+    pickup_by_date: daysAfter(22, daysAgo(8)),
   },
   {
     name: 'Pacific NW Printing – Solvent Blend',
     customer: 'Pacific Northwest Printing Co.',
     phase: 'Quote',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(8),
     quote_date: daysAgo(2),
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(7),
+    pickup_by_date: daysAfter(23, daysAgo(7)),
   },
   {
     name: 'Green Valley Farms – Pesticide Containers',
     customer: 'Green Valley Farms',
     phase: 'Profile',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(3),
     quote_date: null,
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(2),
+    pickup_by_date: daysAfter(28, daysAgo(2)),
   },
   {
     name: 'Cascade Auto Body – Used Oil',
     customer: 'Cascade Auto Body & Paint',
     phase: 'Profile',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(1),
     quote_date: null,
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(1),
+    pickup_by_date: daysAfter(29, daysAgo(1)),
   },
   {
     name: 'TechClean Labs – Methanol Rinse',
     customer: 'TechClean Labs',
     phase: 'Profile',
+    profile_id: generateProfileId(),
     profile_date: daysAgo(2),
     quote_date: null,
     order_date: null,
     shipping_date: null,
     disposal_date: null,
+    generation_date: daysAgo(2),
+    pickup_by_date: daysAfter(28, daysAgo(2)),
   },
   {
     name: 'Columbia Steel – Degreaser Waste',
     customer: 'Columbia Steel Fabricators',
     phase: 'Disposal',
+    profile_id: generateProfileId(),
+    order_id: generateOrderId(),
     profile_date: daysAgo(60),
     quote_date: daysAgo(52),
     order_date: daysAgo(44),
     shipping_date: daysAgo(30),
     disposal_date: daysAgo(10),
+    generation_date: daysAgo(59),
+    pickup_by_date: daysAgo(29),
   },
 ]
 
@@ -148,6 +208,8 @@ function seedStore() {
   for (const entry of SEED_ITEMS) {
     store.items.push({
       id: store.nextId++,
+      profile_id: entry.profile_id,
+      order_id: entry.order_id || null,
       name: entry.name,
       customer: entry.customer,
       phase: entry.phase,
@@ -156,6 +218,8 @@ function seedStore() {
       order_date: entry.order_date,
       shipping_date: entry.shipping_date,
       disposal_date: entry.disposal_date,
+      generation_date: entry.generation_date || null,
+      pickup_by_date: entry.pickup_by_date || null,
       created_at: entry.profile_date || now,
       updated_at: now,
     })
@@ -212,6 +276,8 @@ export const localJourney = {
     const now = new Date().toISOString()
     const item = {
       id: store.nextId++,
+      profile_id: payload.profile_id || generateProfileId(),
+      order_id: payload.order_id || (['Order', 'Shipping', 'Disposal'].includes(payload.phase) ? generateOrderId() : null),
       name: payload.name || '',
       customer: payload.customer || '',
       phase: payload.phase || 'Profile',
@@ -220,6 +286,8 @@ export const localJourney = {
       order_date: payload.order_date || null,
       shipping_date: payload.shipping_date || null,
       disposal_date: payload.disposal_date || null,
+      generation_date: payload.generation_date || null,
+      pickup_by_date: payload.pickup_by_date || null,
       created_at: now,
       updated_at: now,
     }

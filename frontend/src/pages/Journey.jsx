@@ -16,6 +16,51 @@ function getPhaseEntryDate(item, phase) {
   return item[dateKey] ? new Date(item[dateKey]) : new Date(item.created_at)
 }
 
+function parseDate(value) {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function dayDiff(fromDate, toDate) {
+  const from = new Date(fromDate)
+  const to = new Date(toDate)
+  from.setHours(0, 0, 0, 0)
+  to.setHours(0, 0, 0, 0)
+  return Math.round((to - from) / (1000 * 60 * 60 * 24))
+}
+
+function getJourneyIdentifier(item) {
+  const orderId = typeof item.order_id === 'string' ? item.order_id : ''
+  if (orderId.startsWith('OID')) return orderId
+
+  const profileCandidates = [
+    item.profile_id,
+    item.mixture_transaction_id,
+    item.transaction_id,
+  ]
+  for (const candidate of profileCandidates) {
+    if (typeof candidate === 'string' && candidate.startsWith('PID')) return candidate
+  }
+
+  if (item.id != null) return `PID-LOCAL-${String(item.id).padStart(4, '0')}`
+  return 'PID-UNKNOWN'
+}
+
+function getPickupRemainingText(item) {
+  const generationDate = parseDate(item.generation_date)
+  const pickupDate = parseDate(item.pickup_by_date || item.ship_by_date)
+  if (!generationDate || !pickupDate) return 'N/A'
+
+  const totalDays = dayDiff(generationDate, pickupDate)
+  const remainingDays = dayDiff(new Date(), pickupDate)
+
+  if (remainingDays < 0) {
+    return `${Math.abs(remainingDays)}d overdue (${totalDays}d total window)`
+  }
+  return `${remainingDays}d left (${totalDays}d total window)`
+}
+
 function computePhaseStats(items) {
   const now = new Date()
   return JOURNEY_PHASES.map(phase => {
@@ -182,12 +227,15 @@ export default function Journey() {
                       <th>Customer</th>
                       <th>Entered Phase</th>
                       <th>Days in Phase</th>
+                      <th>EPA Pickup Time Remaining</th>
                     </tr>
                   </thead>
                   <tbody>
                     {phaseItems.map(item => {
                       const entered = getPhaseEntryDate(item, activePhase)
                       const daysIn = Math.round((new Date() - entered) / (1000 * 60 * 60 * 24))
+                      const journeyId = getJourneyIdentifier(item)
+                      const pickupRemainingText = getPickupRemainingText(item)
                       return (
                         <tr key={item.id}>
                           <td>
@@ -201,7 +249,7 @@ export default function Journey() {
                                 padding: '0.1rem 0.4rem',
                               }}
                             >
-                              #{item.id}
+                              {journeyId}
                             </span>
                           </td>
                           <td style={{ fontWeight: 600 }}>{item.name}</td>
@@ -216,6 +264,7 @@ export default function Journey() {
                               {daysIn}d
                             </span>
                           </td>
+                          <td style={{ color: '#374151', fontWeight: 600 }}>{pickupRemainingText}</td>
                         </tr>
                       )
                     })}

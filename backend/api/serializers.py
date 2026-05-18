@@ -125,6 +125,9 @@ class JourneySerializer(serializers.ModelSerializer):
     stage_display = serializers.CharField(source='get_stage_display', read_only=True)
     mixture_transaction_id = serializers.CharField(source='mixture.transaction_id', read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True, default='')
+    generation_date = serializers.DateField(source='mixture.generation_date', read_only=True)
+    pickup_by_date = serializers.DateField(source='mixture.pickup_by_date', read_only=True)
+    ship_by_date = serializers.DateField(source='mixture.ship_by_date', read_only=True)
 
     class Meta:
         model = Journey
