@@ -30,6 +30,8 @@ const INITIAL_USERS = [
   { id: 3, name: 'Carol Davis', email: 'carol@example.com', role: 'Analyst', status: 'Inactive' },
 ]
 
+let nextUserId = INITIAL_USERS.length + 1
+
 function UserManagement() {
   const [users, setUsers] = useState(INITIAL_USERS)
   const [showForm, setShowForm] = useState(false)
@@ -59,7 +61,7 @@ function UserManagement() {
     if (editingUser) {
       setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...form } : u))
     } else {
-      setUsers(prev => [...prev, { id: Date.now(), ...form }])
+      setUsers(prev => [...prev, { id: nextUserId++, ...form }])
     }
     setShowForm(false)
     setEditingUser(null)
