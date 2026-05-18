@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { journey } from '../api/client'
+import { journey, mixtures as mixturesApi } from '../api/client'
 import { JOURNEY_PHASES } from '../lib/journeyStore'
 
 // Map phase name → date field key
@@ -159,8 +159,32 @@ export default function Journey() {
     async function load() {
       setLoading(true)
       try {
-        const res = await journey.list()
-        setItems(res.data.results || res.data)
+        const [journeyRes, mixturesRes] = await Promise.all([
+          journey.list(),
+          mixturesApi.list(),
+        ])
+        // Non-Profile journey items (Quote, Order, Shipping, Disposal)
+        const journeyItems = (journeyRes.data.results || journeyRes.data).filter(
+          i => i.phase !== 'Profile'
+        )
+        // Map actual submitted profiles (mixtures) into the journey item shape
+        const profileItems = (mixturesRes.data.results || mixturesRes.data || []).map(m => ({
+          id: `profile-${m.id}`,
+          profile_id: m.transaction_id,
+          order_id: null,
+          name: m.name,
+          customer: m.customer_name,
+          phase: 'Profile',
+          profile_date: m.profile_started_at || m.created_at,
+          quote_date: null,
+          order_date: null,
+          shipping_date: null,
+          disposal_date: null,
+          generation_date: m.generation_date,
+          pickup_by_date: m.ship_by_date,
+          created_at: m.created_at,
+        }))
+        setItems([...profileItems, ...journeyItems])
       } finally {
         setLoading(false)
       }
