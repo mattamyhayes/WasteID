@@ -501,7 +501,7 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
 export default function Orders() {
   const [allOrders, setAllOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeStatus, setActiveStatus] = useState(null)
+  const [activeStatus, setActiveStatus] = useState('open')
   const [showNewOrder, setShowNewOrder] = useState(false)
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
