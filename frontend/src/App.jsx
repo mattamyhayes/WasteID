@@ -12,6 +12,7 @@ import EPAForm from './pages/EPAForm'
 import Orders from './pages/Orders'
 import ComingSoon from './pages/ComingSoon'
 import Review from './pages/Review'
+import ReviewSignOff from './pages/ReviewSignOff'
 import Journey from './pages/Journey'
 import Shipping from './pages/Shipping'
 import Admin from './pages/Admin'
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/history" element={<History />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/review" element={<Review />} />
+          <Route path="/review/:id/signoff" element={<ReviewSignOff />} />
           <Route path="/generators" element={<Customers />} />
           <Route path="/generators/new" element={<AddCustomer />} />
           <Route path="/customers" element={<Customers />} />
