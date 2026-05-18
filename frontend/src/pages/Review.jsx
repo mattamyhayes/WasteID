@@ -48,7 +48,7 @@ export default function Review() {
 
   useEffect(() => { load() }, [])
 
-  // Filter profiles that have at least one determination (i.e. completed the workflow)
+  // Filter profiles that have at least one determination (for approved/rejected)
   const profilesWithDetermination = useMemo(() => {
     return items.filter(m => m.determinations && m.determinations.length > 0)
   }, [items])
@@ -58,7 +58,7 @@ export default function Review() {
     twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
 
     return {
-      pending_review: profilesWithDetermination.filter(m => m.review_status === 'pending_review').length,
+      pending_review: items.filter(m => m.review_status === 'pending_review').length,
       rejected: profilesWithDetermination.filter(m => m.review_status === 'rejected').length,
       approved: profilesWithDetermination.filter(m => {
         if (m.review_status !== 'approved') return false
@@ -66,12 +66,16 @@ export default function Review() {
         return updatedAt >= twentyDaysAgo
       }).length,
     }
-  }, [profilesWithDetermination])
+  }, [items, profilesWithDetermination])
 
   const filteredProfiles = useMemo(() => {
     if (!activeTile) return []
     const twentyDaysAgo = new Date()
     twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
+
+    if (activeTile === 'pending_review') {
+      return items.filter(m => m.review_status === 'pending_review')
+    }
 
     return profilesWithDetermination.filter(m => {
       if (activeTile === 'approved') {
@@ -81,7 +85,7 @@ export default function Review() {
       }
       return m.review_status === activeTile
     })
-  }, [profilesWithDetermination, activeTile])
+  }, [items, profilesWithDetermination, activeTile])
 
   const sortedProfiles = useMemo(() => {
     const arr = [...filteredProfiles]
@@ -164,7 +168,7 @@ export default function Review() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Profile Review</h1>
-        <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+        <Link to="/determine" className="btn btn-primary">+ New Profile</Link>
       </div>
 
       {loading && <p style={{ color: '#6b7280' }}>Loading…</p>}
@@ -249,9 +253,13 @@ export default function Review() {
                         return (
                           <tr key={m.id}>
                             <td>
-                              <Link to={`/results/${latestDet?.id}`} style={{ color: '#166534', fontWeight: 600 }}>
-                                {m.name}
-                              </Link>
+                              {latestDet ? (
+                                <Link to={`/results/${latestDet.id}`} style={{ color: '#166534', fontWeight: 600 }}>
+                                  {m.name}
+                                </Link>
+                              ) : (
+                                <span style={{ fontWeight: 600 }}>{m.name}</span>
+                              )}
                               {m.transaction_id && (
                                 <div style={{ fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
                                   {m.transaction_id}
@@ -263,14 +271,20 @@ export default function Review() {
                               {new Date(m.created_at).toLocaleDateString()}
                             </td>
                             <td>
-                              <span className={`badge ${isHazardous ? 'badge-hazardous' : 'badge-safe'}`}>
-                                {isHazardous ? '⚠️ Hazardous' : '✅ Safe'}
-                              </span>
+                              {latestDet ? (
+                                <span className={`badge ${isHazardous ? 'badge-hazardous' : 'badge-safe'}`}>
+                                  {isHazardous ? '⚠️ Hazardous' : '✅ Safe'}
+                                </span>
+                              ) : (
+                                <span className="badge" style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a' }}>
+                                  ⏳ Pending
+                                </span>
+                              )}
                             </td>
                             <td>
                               {wasteCodes.length > 0
                                 ? wasteCodes.map(code => <HazardBadge key={code} code={code} />)
-                                : <span style={{ color: '#9ca3af' }}>None</span>}
+                                : <span style={{ color: '#9ca3af' }}>—</span>}
                             </td>
                             <td>
                               {daysLeft !== null ? (
@@ -289,27 +303,40 @@ export default function Review() {
                             </td>
                             <td>
                               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                <Link to={`/results/${latestDet?.id}`} className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}>
-                                  View
-                                </Link>
+                                {latestDet && (
+                                  <Link to={`/results/${latestDet.id}`} className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}>
+                                    View
+                                  </Link>
+                                )}
                                 {activeTile === 'pending_review' && (
                                   <>
-                                    <button
+                                    <Link
+                                      to={`/review/${m.id}/signoff`}
                                       className="btn btn-primary"
                                       style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
-                                      disabled={actionLoading === m.id}
-                                      onClick={() => handleSetStatus(m.id, 'approved')}
                                     >
-                                      {actionLoading === m.id ? '…' : '✅ Approve'}
-                                    </button>
-                                    <button
-                                      className="btn btn-danger"
-                                      style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
-                                      disabled={actionLoading === m.id}
-                                      onClick={() => handleSetStatus(m.id, 'rejected')}
-                                    >
-                                      {actionLoading === m.id ? '…' : '❌ Reject'}
-                                    </button>
+                                      Review
+                                    </Link>
+                                    {latestDet && (
+                                      <>
+                                        <button
+                                          className="btn btn-primary"
+                                          style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                          disabled={actionLoading === m.id}
+                                          onClick={() => handleSetStatus(m.id, 'approved')}
+                                        >
+                                          {actionLoading === m.id ? '…' : '✅ Approve'}
+                                        </button>
+                                        <button
+                                          className="btn btn-danger"
+                                          style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                          disabled={actionLoading === m.id}
+                                          onClick={() => handleSetStatus(m.id, 'rejected')}
+                                        >
+                                          {actionLoading === m.id ? '…' : '❌ Reject'}
+                                        </button>
+                                      </>
+                                    )}
                                   </>
                                 )}
                                 {activeTile === 'rejected' && (
@@ -334,7 +361,7 @@ export default function Review() {
             </div>
           )}
 
-          {!activeTile && profilesWithDetermination.length > 0 && (
+          {!activeTile && items.length > 0 && (
             <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
               <p style={{ color: '#6b7280', fontSize: '1.05rem' }}>
@@ -343,11 +370,11 @@ export default function Review() {
             </div>
           )}
 
-          {!activeTile && profilesWithDetermination.length === 0 && (
+          {!activeTile && items.length === 0 && (
             <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
               <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles available for review.</p>
-              <Link to="/determine" className="btn btn-primary">Start a New Determination</Link>
+              <Link to="/determine" className="btn btn-primary">Start a New Profile</Link>
             </div>
           )}
         </>
