@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { journey, mixtures as mixturesApi } from '../api/client'
 import { JOURNEY_PHASES } from '../lib/journeyStore'
+import { holdTimeColor, daysRemainingFromDate } from '../lib/shipByUtils'
 
 // Map phase name → date field key
 const PHASE_DATE_KEY = {
@@ -14,20 +15,6 @@ const PHASE_DATE_KEY = {
 function getPhaseEntryDate(item, phase) {
   const dateKey = PHASE_DATE_KEY[phase]
   return item[dateKey] ? new Date(item[dateKey]) : new Date(item.created_at)
-}
-
-function parseDate(value) {
-  if (!value) return null
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
-function dayDiff(fromDate, toDate) {
-  const from = new Date(fromDate)
-  const to = new Date(toDate)
-  from.setHours(0, 0, 0, 0)
-  to.setHours(0, 0, 0, 0)
-  return Math.round((to - from) / (1000 * 60 * 60 * 24))
 }
 
 function getJourneyIdentifier(item) {
@@ -45,20 +32,6 @@ function getJourneyIdentifier(item) {
 
   if (item.id != null) return `PID-LOCAL-${String(item.id).padStart(4, '0')}`
   return 'PID-UNKNOWN'
-}
-
-function getPickupRemainingText(item) {
-  const generationDate = parseDate(item.generation_date)
-  const pickupDate = parseDate(item.pickup_by_date || item.ship_by_date)
-  if (!generationDate || !pickupDate) return 'N/A'
-
-  const totalDays = dayDiff(generationDate, pickupDate)
-  const remainingDays = dayDiff(new Date(), pickupDate)
-
-  if (remainingDays < 0) {
-    return `${Math.abs(remainingDays)}d overdue (${totalDays}d total window)`
-  }
-  return `${remainingDays}d left (${totalDays}d total window)`
 }
 
 function computePhaseStats(items) {
@@ -259,7 +232,6 @@ export default function Journey() {
                       const entered = getPhaseEntryDate(item, activePhase)
                       const daysIn = Math.round((new Date() - entered) / (1000 * 60 * 60 * 24))
                       const journeyId = getJourneyIdentifier(item)
-                      const pickupRemainingText = getPickupRemainingText(item)
                       return (
                         <tr key={item.id}>
                           <td>
@@ -288,7 +260,27 @@ export default function Journey() {
                               {daysIn}d
                             </span>
                           </td>
-                          <td style={{ color: '#374151', fontWeight: 600 }}>{pickupRemainingText}</td>
+                          <td>
+                            {(() => {
+                              const pickupDateStr = item.pickup_by_date || item.ship_by_date || null
+                              const daysLeft = daysRemainingFromDate(pickupDateStr)
+                              if (daysLeft === null) {
+                                return <span style={{ color: '#9ca3af', fontSize: '0.88rem' }}>—</span>
+                              }
+                              const holdStyle = holdTimeColor(daysLeft)
+                              return (
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.2rem 0.6rem',
+                                  borderRadius: 6,
+                                  fontSize: '0.88rem',
+                                  ...holdStyle,
+                                }}>
+                                  {daysLeft} day{daysLeft !== 1 ? 's' : ''}
+                                </span>
+                              )
+                            })()}
+                          </td>
                         </tr>
                       )
                     })}
