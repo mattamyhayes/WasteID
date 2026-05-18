@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 export const navLinks = [
-  { to: '/marketplace', label: 'Marketplace', icon: '🛒', iconOnly: true },
+  { to: '/marketplace', label: 'Marketplace', icon: '🏬', iconOnly: true },
   { to: '/determine', label: 'New Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
   { to: '/orders', label: 'Orders', icon: '📦' },
