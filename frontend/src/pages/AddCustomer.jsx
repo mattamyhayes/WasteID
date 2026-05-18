@@ -72,6 +72,16 @@ export default function AddCustomer() {
             onChange={e => setForm({ ...form, name: e.target.value })}
             placeholder="e.g., Acme Manufacturing" />
         </div>
+        <div className="form-group">
+          <label>Generator EPA Status</label>
+          <select className="form-control" value={form.epa_generator_status}
+            onChange={e => setForm({ ...form, epa_generator_status: e.target.value })}>
+            <option value="">-- Select EPA status --</option>
+            <option value="VSQG">VSQG – Very Small Quantity Generator</option>
+            <option value="SQG">SQG – Small Quantity Generator</option>
+            <option value="LQG">LQG – Large Quantity Generator</option>
+          </select>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
             <label>Contact Name</label>
@@ -87,16 +97,6 @@ export default function AddCustomer() {
             <label>Contact Phone</label>
             <input className="form-control" value={form.contact_phone}
               onChange={e => setForm({ ...form, contact_phone: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label>Generator EPA Status</label>
-            <select className="form-control" value={form.epa_generator_status}
-              onChange={e => setForm({ ...form, epa_generator_status: e.target.value })}>
-              <option value="">-- Select EPA status --</option>
-              <option value="VSQG">VSQG – Very Small Quantity Generator</option>
-              <option value="SQG">SQG – Small Quantity Generator</option>
-              <option value="LQG">LQG – Large Quantity Generator</option>
-            </select>
           </div>
           <div className="form-group">
             <label>Billing Address</label>
