@@ -15,6 +15,7 @@ import Review from './pages/Review'
 import Journey from './pages/Journey'
 import Shipping from './pages/Shipping'
 import Admin from './pages/Admin'
+import Reports from './pages/Reports'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/determine" element={<NewDetermination />} />
           <Route path="/results/:id" element={<DeterminationResults />} />
           <Route path="/history" element={<History />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/review" element={<Review />} />
           <Route path="/generators" element={<Customers />} />
           <Route path="/generators/new" element={<AddCustomer />} />

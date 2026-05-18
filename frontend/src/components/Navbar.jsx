@@ -2,15 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 export const navLinks = [
-  { to: '/', label: 'Home', icon: '🏠' },
+  { to: '/marketplace', label: 'Marketplace', icon: '🛒', iconOnly: true },
   { to: '/determine', label: 'New Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
   { to: '/orders', label: 'Orders', icon: '📦' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
   { to: '/scheduling', label: 'Scheduling', icon: '📅' },
-  { to: '/marketplace', label: 'Marketplace', icon: '🛒' },
   { to: '/journey', label: 'Journey', icon: '🗺️' },
-  { to: '/history', label: 'History', icon: '📂' },
+  { to: '/reports', label: 'Reports', icon: '📂' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },
 ]
 
@@ -56,11 +55,13 @@ export default function Navbar() {
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
       <div className={`nav-links${open ? ' open' : ''}`}>
-        {navLinks.map(({ to, label }) => (
+        {navLinks.map(({ to, label, icon, iconOnly }) => (
           <Link
             key={to}
             to={to}
             onClick={() => setOpen(false)}
+            aria-label={iconOnly ? label : undefined}
+            title={iconOnly ? label : undefined}
             style={{
               padding: '0.4rem 0.9rem',
               borderRadius: 6,
@@ -71,7 +72,7 @@ export default function Navbar() {
               transition: 'background 0.15s, color 0.15s',
             }}
           >
-            {label}
+            {iconOnly ? icon : label}
           </Link>
         ))}
       </div>

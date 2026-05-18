@@ -8,8 +8,7 @@ const features = [
   { icon: '📄', title: 'PDF & CSV Export', desc: 'Generate professional determination reports and download your mixture data instantly.' },
 ]
 
-// All nav links except Home for the mobile quick-nav
-const mobileNavLinks = navLinks.filter(l => l.to !== '/')
+const mobileNavLinks = navLinks.filter(l => !l.iconOnly)
 
 export default function Home() {
   return (
