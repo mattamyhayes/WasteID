@@ -228,6 +228,7 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
   }, [initialOrder, allProfiles, allShippers])
 
   const filteredProfiles = useMemo(() => {
+    // All profiles are shown (the app does not currently have a "closed" status for profiles)
     let list = allProfiles
     if (profileSearch.trim()) {
       const q = profileSearch.trim().toLowerCase()
@@ -296,7 +297,7 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>{initialOrder ? 'Edit Order' : 'New Order'}</h1>
-        <button className="btn btn-secondary" onClick={onCancel}>← Back to Dashboard</button>
+        <button className="btn btn-secondary" onClick={onCancel}>← Back to Orders Dashboard</button>
       </div>
 
       {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -423,7 +424,7 @@ function NewOrderWorkflow({ onCancel, onSave, initialOrder = null }) {
 
       {/* Save Actions */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <button className="btn btn-secondary" onClick={onCancel}>← Cancel</button>
+        <button className="btn btn-secondary" onClick={onCancel}>← Back to Orders Dashboard</button>
         <button className="btn btn-primary" onClick={() => handleSave(false)} disabled={submitting}>
           {submitting ? 'Saving…' : `💾 ${initialOrder ? 'Save Changes' : 'Save Order'}`}
         </button>
