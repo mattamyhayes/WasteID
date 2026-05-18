@@ -32,3 +32,28 @@ export function calcShipByInfo(epaGeneratorStatus, generationDate) {
 export function parseLocalDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
 }
+
+/**
+ * Returns inline style for a days-remaining badge, matching the Review page color scheme.
+ * @param {number|null} daysLeft
+ * @returns {Object}
+ */
+export function holdTimeColor(daysLeft) {
+  if (daysLeft === null || daysLeft === undefined) return {}
+  if (daysLeft <= 3) return { background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }
+  if (daysLeft <= 7) return { background: '#fef9c3', color: '#854d0e', fontWeight: 700 }
+  return { background: '#dcfce7', color: '#15803d', fontWeight: 600 }
+}
+
+/**
+ * Compute days remaining until a pickup/ship-by date from today.
+ * @param {string|null} dateStr - ISO date string (YYYY-MM-DD)
+ * @returns {number|null}
+ */
+export function daysRemainingFromDate(dateStr) {
+  if (!dateStr) return null
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr + 'T00:00:00')
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24))
+}

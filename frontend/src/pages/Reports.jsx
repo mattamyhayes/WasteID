@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { mixtures, orders as ordersApi } from '../api/client'
-import { calcShipByInfo, parseLocalDate } from '../lib/shipByUtils'
+import { calcShipByInfo, parseLocalDate, holdTimeColor, daysRemainingFromDate } from '../lib/shipByUtils'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -47,6 +47,8 @@ function formatDate(d) {
 function MixtureRow({ m, onDelete, onPdf }) {
   const latestDet = m.determinations?.[m.determinations.length - 1]
   const isHazardous = latestDet?.is_hazardous_waste
+  const daysLeft = m.days_remaining_to_ship ?? calcShipByInfo(m.epa_generator_status, m.generation_date)?.daysRemaining ?? null
+  const holdStyle = holdTimeColor(daysLeft)
   return (
     <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
       <div style={{ flex: 1, minWidth: 200 }}>
@@ -66,26 +68,22 @@ function MixtureRow({ m, onDelete, onPdf }) {
             </span>
           )}
           {!latestDet && <span className="badge badge-warning">No determination yet</span>}
+          {daysLeft !== null && (
+            <span style={{
+              display: 'inline-block',
+              padding: '0.2rem 0.6rem',
+              borderRadius: 6,
+              fontSize: '0.88rem',
+              ...holdStyle,
+            }}>
+              {daysLeft} day{daysLeft !== 1 ? 's' : ''} to ship
+            </span>
+          )}
         </div>
         <div style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>
           {m.customer_name && <span><strong>{m.customer_name}</strong>{m.customer_location_name ? ` · ${m.customer_location_name}` : ''} · </span>}
           {m.components?.length ?? 0} component{m.components?.length !== 1 ? 's' : ''} ·
           Created {new Date(m.created_at).toLocaleDateString()}
-          {m.days_remaining_to_ship != null && (
-            <>
-              {' · '}
-              <span style={{
-                fontWeight: 700,
-                color: m.days_remaining_to_ship <= 0 ? '#dc2626'
-                  : m.days_remaining_to_ship <= 5 ? '#d97706'
-                  : '#16a34a',
-              }}>
-                {m.days_remaining_to_ship <= 0
-                  ? `⚠️ OVERDUE by ${Math.abs(m.days_remaining_to_ship)}d`
-                  : `📅 ${m.days_remaining_to_ship}d to ship`}
-              </span>
-            </>
-          )}
           {m.shipment_size_unit && m.shipment_size_qty && (
             <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit}</>
           )}
@@ -226,12 +224,14 @@ function ProfilesTab({ profileItems, loading, onDelete, onPdf }) {
 
 // ─── Orders tab ───────────────────────────────────────────────────────────────
 
-function OrdersTab() {
+function OrdersTab({ profileItems }) {
   const [orderList, setOrderList] = useState([])
   const [loading, setLoading] = useState(true)
   const [ownerFilter, setOwnerFilter] = useState('')
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
+
+  const NO_DAYS_SORT_VALUE = 9999
 
   useEffect(() => {
     async function load() {
@@ -246,6 +246,21 @@ function OrdersTab() {
     }
     load()
   }, [])
+
+  const profileMap = useMemo(
+    () => Object.fromEntries((profileItems || []).map(p => [p.id, p])),
+    [profileItems]
+  )
+
+  const getMinDaysRemaining = (o) => {
+    const ids = Array.isArray(o.profile_ids) ? o.profile_ids : []
+    const daysList = ids.map(id => {
+      const p = profileMap[id]
+      if (!p) return null
+      return p.days_remaining_to_ship ?? calcShipByInfo(p.epa_generator_status, p.generation_date)?.daysRemaining ?? null
+    }).filter(d => d !== null)
+    return daysList.length > 0 ? Math.min(...daysList) : null
+  }
 
   const owners = useMemo(() => {
     const s = new Set()
@@ -267,6 +282,10 @@ function OrdersTab() {
         case 'order_id': av = a.order_id; bv = b.order_id; break
         case 'owner_name': av = (a.owner_name || '').toLowerCase(); bv = (b.owner_name || '').toLowerCase(); break
         case 'generator_name': av = (a.generator_name || '').toLowerCase(); bv = (b.generator_name || '').toLowerCase(); break
+        case 'days_remaining':
+          av = getMinDaysRemaining(a) ?? NO_DAYS_SORT_VALUE
+          bv = getMinDaysRemaining(b) ?? NO_DAYS_SORT_VALUE
+          break
         default: av = a.created_at; bv = b.created_at
       }
       if (av < bv) return -1 * dir
@@ -274,7 +293,7 @@ function OrdersTab() {
       return 0
     })
     return arr
-  }, [filtered, sortCol, sortDir])
+  }, [filtered, sortCol, sortDir, profileMap])
 
   const handleSort = (col) => {
     if (sortCol === col) {
@@ -347,29 +366,49 @@ function OrdersTab() {
                 <th style={thStyle} onClick={() => handleSort('owner_name')}>Owner{renderArrow('owner_name')}</th>
                 <th style={thStyle} onClick={() => handleSort('generator_name')}>Generator{renderArrow('generator_name')}</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Profiles</th>
+                <th style={thStyle} onClick={() => handleSort('days_remaining')}>Days Remaining to Ship{renderArrow('days_remaining')}</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Status</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Notes</th>
               </tr>
             </thead>
             <tbody>
-              {sorted.map(o => (
-                <tr key={o.id}
-                  style={{ transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
-                  onMouseLeave={e => e.currentTarget.style.background = ''}>
-                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{o.order_id}</td>
-                  <td style={tdStyle}>{formatDate(o.created_at)}</td>
-                  <td style={tdStyle}>{o.owner_name || '—'}</td>
-                  <td style={tdStyle}>{o.generator_name || '—'}</td>
-                  <td style={tdStyle}>{(o.profile_names || []).join(', ') || '—'}</td>
-                  <td style={tdStyle}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: 4, background: '#f3f4f6', color: '#374151' }}>
-                      {STATUS_LABELS[o.status] || o.status || '—'}
-                    </span>
-                  </td>
-                  <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.notes || '—'}</td>
-                </tr>
-              ))}
+              {sorted.map(o => {
+                const minDays = getMinDaysRemaining(o)
+                const holdStyle = holdTimeColor(minDays)
+                return (
+                  <tr key={o.id}
+                    style={{ transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}>
+                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{o.order_id}</td>
+                    <td style={tdStyle}>{formatDate(o.created_at)}</td>
+                    <td style={tdStyle}>{o.owner_name || '—'}</td>
+                    <td style={tdStyle}>{o.generator_name || '—'}</td>
+                    <td style={tdStyle}>{(o.profile_names || []).join(', ') || '—'}</td>
+                    <td style={tdStyle}>
+                      {minDays !== null ? (
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: 6,
+                          fontSize: '0.88rem',
+                          ...holdStyle,
+                        }}>
+                          {minDays} day{minDays !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '0.88rem' }}>—</span>
+                      )}
+                    </td>
+                    <td style={tdStyle}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: 4, background: '#f3f4f6', color: '#374151' }}>
+                        {STATUS_LABELS[o.status] || o.status || '—'}
+                      </span>
+                    </td>
+                    <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.notes || '—'}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -380,15 +419,20 @@ function OrdersTab() {
 
 // ─── Shipments tab ────────────────────────────────────────────────────────────
 
-function ShipByBadge({ shipByDate }) {
-  const now = new Date()
-  const daysLeft = Math.ceil((shipByDate - now) / (1000 * 60 * 60 * 24))
-  let color = '#166534', bg = '#dcfce7', label = `${daysLeft} days left`
-  if (daysLeft < 0) { color = '#991b1b'; bg = '#fee2e2'; label = 'Overdue' }
-  else if (daysLeft <= 14) { color = '#92400e'; bg = '#fef3c7' }
+function DaysRemainingBadge({ daysLeft }) {
+  if (daysLeft === null || daysLeft === undefined) {
+    return <span style={{ color: '#9ca3af', fontSize: '0.88rem' }}>—</span>
+  }
+  const style = holdTimeColor(daysLeft)
   return (
-    <span style={{ fontSize: '0.8rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: 4, color, background: bg }}>
-      {label}
+    <span style={{
+      display: 'inline-block',
+      padding: '0.2rem 0.6rem',
+      borderRadius: 6,
+      fontSize: '0.88rem',
+      ...style,
+    }}>
+      {daysLeft} day{daysLeft !== 1 ? 's' : ''}
     </span>
   )
 }
@@ -420,6 +464,7 @@ function ShipmentsTab() {
       const shipByDate = shipByInfo?.shipByDate
         ? parseLocalDate(shipByInfo.shipByDate)
         : new Date(latestDet.created_at)
+      const daysLeft = m.days_remaining_to_ship ?? shipByInfo?.daysRemaining ?? null
       orders.push({
         id: m.id,
         name: m.name,
@@ -427,6 +472,7 @@ function ShipmentsTab() {
         customerName: m.customer_name || '—',
         locationName: m.customer_location_name || '',
         shipByDate,
+        daysLeft,
         reviewerName: latestDet.reviewer_name || '—',
         reviewDate: latestDet.reviewer_sign_off_date || null,
         reviewComplete: !!(latestDet.reviewer_name && latestDet.reviewer_sign_off_date),
@@ -468,6 +514,7 @@ function ShipmentsTab() {
             <th style={thStyle}>Waste Profile</th>
             <th style={thStyle}>Generator</th>
             <th style={thStyle}>Ship By Date</th>
+            <th style={thStyle}>Days Remaining to Ship</th>
             <th style={thStyle}>Status</th>
             <th style={thStyle}>Customer Approved</th>
             <th style={thStyle}>Reviewed By</th>
@@ -491,9 +538,9 @@ function ShipmentsTab() {
                 {order.customerName}
                 {order.locationName && <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>{order.locationName}</div>}
               </td>
+              <td style={tdStyle}>{formatDate(order.shipByDate)}</td>
               <td style={tdStyle}>
-                <div>{formatDate(order.shipByDate)}</div>
-                <ShipByBadge shipByDate={order.shipByDate} />
+                <DaysRemainingBadge daysLeft={order.daysLeft} />
               </td>
               <td style={tdStyle}>
                 <span className={`badge ${order.isHazardous ? 'badge-hazardous' : 'badge-safe'}`}>
@@ -605,7 +652,7 @@ export default function Reports() {
           onPdf={handlePdf}
         />
       )}
-      {activeTab === 'orders' && <OrdersTab />}
+      {activeTab === 'orders' && <OrdersTab profileItems={profileItems} />}
       {activeTab === 'shipments' && <ShipmentsTab />}
     </div>
   )
