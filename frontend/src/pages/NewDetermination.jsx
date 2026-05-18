@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
-import { mixtures, customers as customersApi, customerLocations as locationsApi } from '../api/client'
+import { mixtures, customers as customersApi } from '../api/client'
+import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 
 const DISCARD_REASONS = [
   { value: 'spent', label: 'Spent material (used and no longer useful)' },
@@ -13,49 +14,62 @@ const DISCARD_REASONS = [
   { value: 'other', label: 'Other discarded material' },
 ]
 
-const STEPS = ['1. Mixture Info', '2. Components', '3. Properties', '4. Review & Sign-Off']
+const SHIPMENT_SIZE_UNITS = [
+  { value: 'gallons', label: 'Gallons' },
+  { value: 'cyb', label: 'CYB' },
+  { value: 'bulk', label: 'Bulk' },
+]
+
+const SHIPMENT_SIZE_QTYS = [5, 15, 30, 55]
+
+const EPA_GENERATOR_STATUSES = [
+  { value: 'VSQG', label: 'VSQG – Very Small Quantity Generator' },
+  { value: 'SQG', label: 'SQG – Small Quantity Generator' },
+  { value: 'LQG', label: 'LQG – Large Quantity Generator' },
+]
 
 export default function NewDetermination() {
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Mixture record (created after Step 1)
+  // Mixture record
   const [mixtureId, setMixtureId] = useState(null)
   const [transactionId, setTransactionId] = useState('')
 
-  // Step 1
+  // Waste Profile
   const [name, setName] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [locationId, setLocationId] = useState('')
   const [isDiscarded, setIsDiscarded] = useState(true)
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
-
-  // Step 2
   const [components, setComponents] = useState([])
-
-  // Step 3
   const [flashPoint, setFlashPoint] = useState('')
   const [ph, setPh] = useState('')
   const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
-  // Step 4: Reviewer sign-off
-  const [reviewerName, setReviewerName] = useState('')
-  const [reviewerDate, setReviewerDate] = useState('')
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
+  // Shipment & EPA fields
+  const [shipmentSizeUnit, setShipmentSizeUnit] = useState('')
+  const [shipmentSizeQty, setShipmentSizeQty] = useState('')
+  const [epaGeneratorStatus, setEpaGeneratorStatus] = useState('')
+  const [generationDate, setGenerationDate] = useState('')
 
   // Generator data
   const [customerList, setCustomerList] = useState([])
   const [customersLoading, setCustomersLoading] = useState(true)
   const [customersError, setCustomersError] = useState('')
 
-  // Reset all in-progress mixture state when starting a new determination so the
-  // user always begins with a fresh slate.
+  // Compute ship-by date and days remaining
+  const holdDays = EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? null
+  const shipByInfo = useMemo(
+    () => calcShipByInfo(epaGeneratorStatus, generationDate),
+    [epaGeneratorStatus, generationDate]
+  )
+
+  // Reset all state on mount
   useEffect(() => {
-    setStep(0)
     setError('')
     setSubmitting(false)
     setMixtureId(null)
@@ -71,12 +85,13 @@ export default function NewDetermination() {
     setPh('')
     setIsReactive(false)
     setNotes('')
-    setReviewerName('')
-    setReviewerDate('')
-    setDisclaimerAccepted(false)
+    setShipmentSizeUnit('')
+    setShipmentSizeQty('')
+    setEpaGeneratorStatus('')
+    setGenerationDate('')
   }, [])
 
-  // Load generators (and their locations) once
+  // Load generators once
   useEffect(() => {
     let cancelled = false
     async function loadCustomers() {
@@ -96,32 +111,32 @@ export default function NewDetermination() {
     return () => { cancelled = true }
   }, [])
 
+  // Location options come from the selected customer's nested `locations` payload.
   const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
   const locationsForCustomer = selectedCustomer?.locations || []
 
-  const validateStep = () => {
-    if (step === 0) {
-      if (!name.trim()) { setError('Please enter a mixture name.'); return false }
-      if (!customerId) { setError('Please select a generator.'); return false }
-      if (locationsForCustomer.length > 0 && !locationId) {
-        setError('Please select a generator location.'); return false
-      }
+  useEffect(() => {
+    if (!customerId) {
+      setEpaGeneratorStatus('')
+      return
     }
-    if (step === 1 && components.length === 0) { setError('Add at least one component to the mixture.'); return false }
-    if (step === 3) {
-      if (!disclaimerAccepted) { setError('You must accept the legal disclaimer before proceeding.'); return false }
-      if (!reviewerName.trim()) { setError('Please enter your full name to sign off on this determination.'); return false }
-      if (!reviewerDate) { setError('Please enter the sign-off date.'); return false }
-      const today = new Date().toISOString().split('T')[0]
-      if (reviewerDate > today) { setError('Sign-off date cannot be in the future.'); return false }
+    setEpaGeneratorStatus(selectedCustomer?.epa_generator_status || '')
+  }, [customerId, selectedCustomer?.epa_generator_status])
+
+  const validate = () => {
+    if (!name.trim()) { setError('Please enter a mixture name.'); return false }
+    if (!customerId) { setError('Please select a generator.'); return false }
+    if (locationsForCustomer.length > 0 && !locationId) {
+      setError('Please select a generator location.'); return false
     }
+    if (components.length === 0) { setError('Add at least one component to the mixture.'); return false }
     setError('')
     return true
   }
 
-  // After step 1 is validated, persist the mixture and obtain a transaction ID.
-  const completeStep1 = async () => {
-    if (!validateStep()) return
+  // Save the profile and submit for review (no determination run yet)
+  const handleSubmitForReview = async () => {
+    if (!validate()) return
     setSubmitting(true)
     setError('')
     try {
@@ -130,44 +145,31 @@ export default function NewDetermination() {
         is_discarded: isDiscarded,
         discard_reason: isDiscarded ? discardReason : '',
         process_description: processDesc,
+        notes,
         customer: customerId ? Number(customerId) : null,
         customer_location: locationId ? Number(locationId) : null,
+        shipment_size_unit: shipmentSizeUnit,
+        shipment_size_qty: shipmentSizeQty ? Number(shipmentSizeQty) : null,
+        epa_generator_status: epaGeneratorStatus,
+        generation_date: generationDate || null,
+        draft_flash_point_c: flashPoint !== '' ? parseFloat(flashPoint) : null,
+        draft_ph: ph !== '' ? parseFloat(ph) : null,
+        draft_is_reactive: isReactive,
       }
-      if (mixtureId) {
-        // Step 1 already submitted earlier; just update it on edits.
-        const res = await mixtures.update(mixtureId, payload)
-        setTransactionId(res.data.transaction_id || transactionId)
+
+      let id = mixtureId
+      if (id) {
+        await mixtures.update(id, payload)
       } else {
         const res = await mixtures.create(payload)
-        setMixtureId(res.data.id)
+        id = res.data.id
+        setMixtureId(id)
         setTransactionId(res.data.transaction_id || '')
       }
-      setStep(1)
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Could not save mixture. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const next = () => {
-    if (step === 0) { completeStep1(); return }
-    if (validateStep()) setStep(s => s + 1)
-  }
-  const back = () => { setError(''); setStep(s => s - 1) }
-
-  const handleSubmit = async () => {
-    if (!validateStep()) return
-    if (!mixtureId) { setError('Mixture has not been initialized.'); return }
-    setSubmitting(true)
-    setError('')
-    try {
-      // Update notes on the existing mixture record
-      await mixtures.update(mixtureId, { notes })
 
       // Add components
       for (const comp of components) {
-        await mixtures.addComponent(mixtureId, {
+        await mixtures.addComponent(id, {
           chemical: comp.chemical,
           custom_name: comp.custom_name,
           quantity: comp.quantity,
@@ -178,19 +180,12 @@ export default function NewDetermination() {
         })
       }
 
-      // Run determination
-      const additionalProps = {}
-      if (flashPoint !== '') additionalProps.flash_point_c = parseFloat(flashPoint)
-      if (ph !== '') additionalProps.ph = parseFloat(ph)
-      if (isReactive) additionalProps.is_reactive = true
+      // Mark as pending review
+      await mixtures.setReviewStatus(id, 'pending_review')
 
-      const detRes = await mixtures.determine(mixtureId, additionalProps, {
-        reviewer_name: reviewerName.trim(),
-        reviewer_sign_off_date: reviewerDate,
-      })
-      navigate(`/results/${detRes.data.determination_id}`)
-    } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred. Please try again.')
+      navigate('/review')
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Could not save profile. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -198,7 +193,47 @@ export default function NewDetermination() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Waste Determination</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Profile</h1>
+
+      {/* Days Remaining Banner */}
+      {shipByInfo && (
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderRadius: 10,
+          marginBottom: '1rem',
+          background: shipByInfo.daysRemaining <= 0 ? '#fef2f2'
+            : shipByInfo.daysRemaining <= 5 ? '#fffbeb'
+            : '#f0fdf4',
+          border: `2px solid ${shipByInfo.daysRemaining <= 0 ? '#dc2626'
+            : shipByInfo.daysRemaining <= 5 ? '#f59e0b'
+            : '#16a34a'}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '2rem' }}>
+            {shipByInfo.daysRemaining <= 0 ? '🚨' : shipByInfo.daysRemaining <= 5 ? '⏰' : '📅'}
+          </span>
+          <div>
+            <div style={{
+              fontSize: '1.3rem',
+              fontWeight: 800,
+              color: shipByInfo.daysRemaining <= 0 ? '#b91c1c'
+                : shipByInfo.daysRemaining <= 5 ? '#92400e'
+                : '#15803d',
+            }}>
+              {shipByInfo.daysRemaining <= 0
+                ? `OVERDUE — shipment was due ${Math.abs(shipByInfo.daysRemaining)} day(s) ago`
+                : `${shipByInfo.daysRemaining} day(s) remaining to ship`}
+            </div>
+            <div style={{ fontSize: '0.88rem', color: '#6b7280', marginTop: 2 }}>
+              Ship by: <strong>{new Date(shipByInfo.shipByDate + 'T00:00:00').toLocaleDateString()}</strong>
+              {' · '}{epaGeneratorStatus} allows {holdDays} days from generation
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Transaction ID banner once issued */}
       {transactionId && (
@@ -207,21 +242,12 @@ export default function NewDetermination() {
         </div>
       )}
 
-      {/* Progress */}
-      <div className="wizard-steps">
-        {STEPS.map((label, i) => (
-          <div key={label} className={`wizard-step ${i === step ? 'active' : i < step ? 'done' : ''}`}>
-            {i < step ? '✓ ' : ''}{label}
-          </div>
-        ))}
-      </div>
-
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Step 1: Mixture Info */}
-      {step === 0 && (
+      {/* Waste Profile */}
+      <>
         <div className="card">
-          <h2 style={{ marginBottom: '1.25rem', color: '#166534' }}>Mixture Information</h2>
+          <h2 style={{ marginBottom: '1.25rem', color: '#166534' }}>Generator Information</h2>
 
           <div className="form-group">
             <label>Generator *</label>
@@ -235,7 +261,7 @@ export default function NewDetermination() {
               ))}
             </select>
             <small style={{ color: '#6b7280' }}>
-              Don’t see your generator?{' '}
+              Don't see your generator?{' '}
               <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
               {' '}first, then return here.
             </small>
@@ -269,7 +295,55 @@ export default function NewDetermination() {
             <input className="form-control" value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
           </div>
+
           <div className="form-group">
+            <label>Generation Date</label>
+            <input className="form-control" type="date" value={generationDate}
+              onChange={e => setGenerationDate(e.target.value)} />
+            <small style={{ color: '#6b7280' }}>Date the waste was generated. Used to calculate the ship-by deadline.</small>
+          </div>
+
+          <div className="form-group">
+            <label>Generator EPA Status</label>
+            <select className="form-control" value={epaGeneratorStatus}
+              onChange={e => setEpaGeneratorStatus(e.target.value)}>
+              <option value="">-- Select EPA status --</option>
+              {EPA_GENERATOR_STATUSES.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            {epaGeneratorStatus && (
+              <small style={{ color: '#166534', fontWeight: 600 }}>
+                {epaGeneratorStatus} can hold waste for up to {holdDays} days.
+              </small>
+            )}
+          </div>
+
+          <h3 style={{ color: '#166534', marginTop: '1.25rem', marginBottom: '0.75rem', fontSize: '1rem' }}>Shipment Size</h3>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+              <label>Size Unit</label>
+              <select className="form-control" value={shipmentSizeUnit}
+                onChange={e => setShipmentSizeUnit(e.target.value)}>
+                <option value="">-- Select unit --</option>
+                {SHIPMENT_SIZE_UNITS.map(u => (
+                  <option key={u.value} value={u.value}>{u.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+              <label>Quantity</label>
+              <select className="form-control" value={shipmentSizeQty}
+                onChange={e => setShipmentSizeQty(e.target.value)}>
+                <option value="">-- Select quantity --</option>
+                {SHIPMENT_SIZE_QTYS.map(q => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '1rem' }}>
             <label>Is this material being discarded?</label>
             <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.4rem' }}>
               {[true, false].map(val => (
@@ -296,22 +370,19 @@ export default function NewDetermination() {
               placeholder="Describe the process that generated this waste…" />
           </div>
         </div>
-      )}
 
-      {/* Step 2: Components */}
-      {step === 1 && (
-        <div className="card">
+        {/* Components section */}
+        <div className="card" style={{ marginTop: '1.25rem' }}>
           <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
           <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
             Search the EPA chemical database or enter custom chemical names with quantities.
+            You can edit component quantities and percentages after adding them.
           </p>
-          <MixtureBuilder components={components} onChange={setComponents} />
+          <MixtureBuilder components={components} onChange={setComponents} editable />
         </div>
-      )}
 
-      {/* Step 3: Additional Properties */}
-      {step === 2 && (
-        <div className="card">
+        {/* Additional Properties section */}
+        <div className="card" style={{ marginTop: '1.25rem' }}>
           <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Additional Properties</h2>
           <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
             Provide measured mixture properties to improve accuracy. Leave blank if unknown.
@@ -343,123 +414,13 @@ export default function NewDetermination() {
               placeholder="Any additional observations or context…" />
           </div>
         </div>
-      )}
+      </>
 
-      {/* Step 4: Review & Sign-Off */}
-      {step === 3 && (
-        <div className="card">
-          <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Review & Sign-Off</h2>
-          <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: 8 }}>
-            {transactionId && <><strong>Transaction ID:</strong> {transactionId}<br /></>}
-            <strong>Generator:</strong> {selectedCustomer?.name || '—'}<br />
-            <strong>Location:</strong> {locationsForCustomer.find(l => String(l.id) === String(locationId))?.name || '—'}<br />
-            <strong>Mixture:</strong> {name}<br />
-            <strong>Discarded:</strong> {isDiscarded ? `Yes (${discardReason})` : 'No'}<br />
-            {processDesc && <><strong>Process:</strong> {processDesc}<br /></>}
-            {notes && <><strong>Notes:</strong> {notes}<br /></>}
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <strong>Components ({components.length}):</strong>
-            <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
-              {components.map((c, i) => (
-                <li key={i}>{c._displayName || c.custom_name}: {c.quantity} {c.unit}</li>
-              ))}
-            </ul>
-          </div>
-          {(flashPoint !== '' || ph !== '' || isReactive) && (
-            <div style={{ marginBottom: '1rem' }}>
-              <strong>Measured Properties:</strong>
-              {flashPoint !== '' && <div>Flash point: {flashPoint}°C</div>}
-              {ph !== '' && <div>pH: {ph}</div>}
-              {isReactive && <div>Reactive: Yes</div>}
-            </div>
-          )}
-
-          {/* Legal Disclaimer & Sign-Off */}
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1.25rem',
-            background: '#fffbeb',
-            border: '2px solid #f59e0b',
-            borderRadius: 10,
-          }}>
-            <h3 style={{ color: '#92400e', marginBottom: '0.75rem', fontSize: '1.05rem' }}>⚖️ Legal Disclaimer & Sign-Off</h3>
-            <div style={{
-              padding: '1rem',
-              background: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              fontSize: '0.88rem',
-              lineHeight: 1.6,
-              color: '#374151',
-              marginBottom: '1rem',
-              maxHeight: '180px',
-              overflowY: 'auto',
-            }}>
-              <p style={{ marginBottom: '0.5rem' }}>
-                By signing below, I certify that I have fully reviewed all inputs and outputs of this waste determination report,
-                including but not limited to the mixture composition, chemical components, measured properties, and all determination
-                results and recommendations generated by this system.
-              </p>
-              <p style={{ marginBottom: '0.5rem' }}>
-                I understand that this tool provides a preliminary hazardous waste determination based on the information provided
-                and applicable RCRA regulations. I acknowledge that the accuracy of the determination depends on the completeness
-                and accuracy of the data entered.
-              </p>
-              <p style={{ marginBottom: '0.5rem' }}>
-                I accept full responsibility for verifying the accuracy of this determination and for ensuring compliance with all
-                applicable federal, state, and local environmental regulations. I understand that this determination does not
-                constitute legal advice and that I should consult with qualified environmental professionals and applicable
-                laboratory testing as needed.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                I further certify that I am authorized to make this determination on behalf of the generator and that all
-                information provided is true, accurate, and complete to the best of my knowledge.
-              </p>
-            </div>
-
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <input type="checkbox" id="disclaimerAccept" checked={disclaimerAccepted}
-                onChange={e => setDisclaimerAccepted(e.target.checked)}
-                style={{ width: 20, height: 20, flexShrink: 0 }} />
-              <label htmlFor="disclaimerAccept" style={{ marginBottom: 0, fontWeight: 600, color: '#92400e', fontSize: '0.92rem' }}>
-                I have read and agree to the above disclaimer. I accept full responsibility for the inputs and outputs of this determination.
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Full Name *</label>
-                <input className="form-control" value={reviewerName}
-                  onChange={e => setReviewerName(e.target.value)}
-                  placeholder="Enter your full name"
-                  disabled={!disclaimerAccepted} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Date *</label>
-                <input className="form-control" type="date" value={reviewerDate}
-                  onChange={e => setReviewerDate(e.target.value)}
-                  disabled={!disclaimerAccepted} />
-              </div>
-            </div>
-          </div>
-
-          <div className="alert alert-info" style={{ fontSize: '0.88rem', marginTop: '1rem' }}>
-            Clicking <strong>Run Determination</strong> will analyze this mixture against all applicable RCRA criteria and generate a full determination report.
-          </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-        <button className="btn btn-secondary" onClick={back} disabled={step === 0 || submitting}>← Back</button>
-        {step < 3
-          ? <button className="btn btn-primary" onClick={next} disabled={submitting}>
-              {submitting && step === 0 ? 'Saving…' : 'Next →'}
-            </button>
-          : <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Running…' : '🔬 Run Determination'}
-            </button>}
+      {/* Submit */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+        <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting}>
+          {submitting ? 'Saving…' : '📋 Submit for Review'}
+        </button>
       </div>
     </div>
   )

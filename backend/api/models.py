@@ -4,10 +4,17 @@ import uuid
 
 
 class Customer(models.Model):
+    EPA_GENERATOR_STATUS_CHOICES = [
+        ('VSQG', 'VSQG – Very Small Quantity Generator'),
+        ('SQG', 'SQG – Small Quantity Generator'),
+        ('LQG', 'LQG – Large Quantity Generator'),
+    ]
+
     name = models.CharField(max_length=200, unique=True)
     contact_name = models.CharField(max_length=200, blank=True)
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=50, blank=True)
+    epa_generator_status = models.CharField(max_length=4, choices=EPA_GENERATOR_STATUS_CHOICES, blank=True)
     billing_address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -75,13 +82,51 @@ class Chemical(models.Model):
         ordering = ['name']
 
 
-def _generate_transaction_id():
-    return f"TX-{uuid.uuid4().hex[:10].upper()}"
+def _generate_prefixed_id(prefix):
+    return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+
+def _generate_profile_id():
+    return _generate_prefixed_id("PID")
+
+
+def _generate_order_id():
+    return _generate_prefixed_id("OID")
 
 
 class Mixture(models.Model):
+    REVIEW_STATUS_CHOICES = [
+        ('pending_review', 'Pending Initial Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    SHIPMENT_SIZE_UNIT_CHOICES = [
+        ('gallons', 'Gallons'),
+        ('cyb', 'CYB'),
+        ('bulk', 'Bulk'),
+    ]
+
+    SHIPMENT_SIZE_QTY_CHOICES = [
+        (5, '5'),
+        (15, '15'),
+        (30, '30'),
+        (55, '55'),
+    ]
+
+    EPA_GENERATOR_STATUS_CHOICES = [
+        ('VSQG', 'VSQG – Very Small Quantity Generator'),
+        ('SQG', 'SQG – Small Quantity Generator'),
+        ('LQG', 'LQG – Large Quantity Generator'),
+    ]
+
+    EPA_STATUS_HOLD_DAYS = {
+        'VSQG': 10,
+        'SQG': 30,
+        'LQG': 60,
+    }
     name = models.CharField(max_length=200, default='Unnamed Mixture')
-    transaction_id = models.CharField(max_length=32, unique=True, default=_generate_transaction_id)
+    transaction_id = models.CharField(max_length=32, unique=True, default=_generate_profile_id)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
     customer_location = models.ForeignKey(CustomerLocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='mixtures')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -89,8 +134,37 @@ class Mixture(models.Model):
     is_discarded = models.BooleanField(default=True)
     discard_reason = models.CharField(max_length=50, blank=True)
 
+    shipment_size_unit = models.CharField(max_length=10, choices=SHIPMENT_SIZE_UNIT_CHOICES, blank=True)
+    shipment_size_qty = models.IntegerField(null=True, blank=True, choices=SHIPMENT_SIZE_QTY_CHOICES)
+    epa_generator_status = models.CharField(max_length=4, choices=EPA_GENERATOR_STATUS_CHOICES, blank=True)
+    generation_date = models.DateField(null=True, blank=True, help_text='Date the waste was generated')
+
     process_description = models.TextField(blank=True)
     notes = models.TextField(blank=True)
+
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, blank=True, default='', help_text='Review workflow status')
+    pickup_by_date = models.DateField(null=True, blank=True, help_text='Date by which waste must be picked up from generator')
+    hold_time_days = models.IntegerField(null=True, blank=True, help_text='Total hold time in days from generation to required pickup')
+
+    @property
+    def hold_days(self):
+        return self.EPA_STATUS_HOLD_DAYS.get(self.epa_generator_status)
+
+    @property
+    def ship_by_date(self):
+        from datetime import timedelta
+        days = self.hold_days
+        if days is not None and self.generation_date:
+            return self.generation_date + timedelta(days=days)
+        return None
+
+    @property
+    def days_remaining_to_ship(self):
+        from datetime import date
+        sbd = self.ship_by_date
+        if sbd:
+            return (sbd - date.today()).days
+        return None
 
     def __str__(self):
         return f"{self.transaction_id}: {self.name}"
@@ -253,3 +327,89 @@ class EPAManifest(models.Model):
 
     def __str__(self):
         return f"Manifest {self.manifest_tracking_number or '(draft)'} - {self.generator_name}"
+
+
+class Journey(models.Model):
+    """Tracks each stage of the customer workflow for executive journey-map reporting."""
+    STAGE_CHOICES = [
+        ('produced', 'Produced'),
+        ('profile', 'Profile'),
+        ('prof_review', 'Prof Review'),
+        ('quote', 'Quote'),
+        ('order', 'Order'),
+        ('signed', 'Signed'),
+        ('ship_accept', 'Ship Accept'),
+        ('picked_up', 'Picked Up'),
+        ('transit', 'Transit'),
+        ('delivered', 'Delivered'),
+        ('disposed', 'Disposed'),
+    ]
+
+    mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='journey_stages')
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='journey_stages')
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    entered_at = models.DateTimeField(help_text='Date/time the item entered this stage')
+    completed_at = models.DateTimeField(null=True, blank=True, help_text='Date/time the item completed this stage')
+    duration_seconds = models.FloatField(null=True, blank=True, help_text='Time spent in this stage in seconds')
+
+    class Meta:
+        ordering = ['mixture', 'entered_at']
+        verbose_name_plural = 'journeys'
+
+    def save(self, *args, **kwargs):
+        if self.entered_at and self.completed_at:
+            delta = self.completed_at - self.entered_at
+            self.duration_seconds = delta.total_seconds()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.mixture.transaction_id} - {self.get_stage_display()}"
+
+
+class Order(models.Model):
+    """Work order that groups profiles for bidding and shipping."""
+    STATUS_CHOICES = [
+        ('open', 'Open Order'),
+        ('in_quote', 'Waiting for Bid'),
+        ('waiting_signature', 'Waiting for Customer Signature'),
+        ('rejected_transport', 'Rejected by Transport'),
+        ('rejected_tldr', 'Rejected by TLDR'),
+    ]
+
+    order_id = models.CharField(max_length=32, unique=True, default=_generate_order_id)
+    owner_name = models.CharField(max_length=200, blank=True, help_text='Person who created this order')
+    generator = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='open')
+    profiles = models.ManyToManyField(Mixture, blank=True, related_name='orders')
+    potential_shippers = models.ManyToManyField(Shipper, blank=True, related_name='orders')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.get_status_display()}"
+
+
+class OrderJourney(models.Model):
+    """Tracks the lifecycle stages of an order."""
+    STAGE_CHOICES = [
+        ('open', 'Open'),
+        ('in_quote', 'In Quote'),
+        ('waiting_signature', 'Waiting for Customer Signature'),
+        ('rejected_transport', 'Rejected by Transport'),
+        ('rejected_tldr', 'Rejected by TLDR'),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='journey_records')
+    stage = models.CharField(max_length=30, choices=STAGE_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Journey {self.order.order_id} → {self.get_stage_display()} at {self.timestamp}"

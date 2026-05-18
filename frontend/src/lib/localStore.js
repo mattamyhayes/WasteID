@@ -10,8 +10,32 @@
 import localChemicals from '../data/chemicals.json'
 import { determineHazardousWaste } from './determination.js'
 
-const STORAGE_KEY = 'wasteid_local_store_v1'
-const CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v1'
+const STORAGE_KEY = 'wasteid_local_store_v2'
+const CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v2'
+const LEGACY_STORAGE_KEY = 'wasteid_local_store_v1'
+const LEGACY_CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v1'
+
+function randomHex(length = 8) {
+  const alphabet = '0123456789ABCDEF'
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(length)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, b => alphabet[b % 16]).join('')
+  }
+  let out = ''
+  for (let i = 0; i < length; i++) {
+    out += alphabet[Math.floor(Math.random() * 16)]
+  }
+  return out
+}
+
+function generatePrefixedId(prefix, existingValues = new Set()) {
+  let candidate = `${prefix}-${randomHex(8)}`
+  while (existingValues.has(candidate)) {
+    candidate = `${prefix}-${randomHex(8)}`
+  }
+  return candidate
+}
 
 function emptyStore() {
   return {
@@ -19,6 +43,7 @@ function emptyStore() {
     components: [],
     determinations: [],
     nextId: { mixture: 1, component: 1, determination: 1 },
+    seeded: false,
   }
 }
 
@@ -34,16 +59,34 @@ function emptyCustomerStore() {
 function loadStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
-    if (!raw) return emptyStore()
+    if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          mixtures: legacy.mixtures || [],
+          components: legacy.components || [],
+          determinations: legacy.determinations || [],
+          nextId: legacy.nextId || { mixture: 1, component: 1, determination: 1 },
+          seeded: true,
+        }
+        saveStore(migrated)
+        return migrated
+      }
+      return seedMixtureStore()
+    }
     const parsed = JSON.parse(raw)
-    return {
+    const store = {
       mixtures: parsed.mixtures || [],
       components: parsed.components || [],
       determinations: parsed.determinations || [],
       nextId: parsed.nextId || { mixture: 1, component: 1, determination: 1 },
+      seeded: parsed.seeded || false,
     }
+    if (!store.seeded) return seedMixtureStore()
+    return store
   } catch {
-    return emptyStore()
+    return seedMixtureStore()
   }
 }
 
@@ -65,6 +108,7 @@ const SEED_CUSTOMERS = [
     contact_name: 'Marcus Reilly',
     contact_email: 'marcus.reilly@cascadeautobody.com',
     contact_phone: '(503) 555-0142',
+    epa_generator_status: 'SQG',
     billing_address: '1820 NW Industrial St, Portland, OR 97209',
     notes: 'Auto body shop chain. Generates waste paint, solvents, thinners, and used oil from collision repair operations.',
     locations: [
@@ -78,6 +122,7 @@ const SEED_CUSTOMERS = [
     contact_name: 'Jenna Whitcomb',
     contact_email: 'jwhitcomb@pnwprinting.com',
     contact_phone: '(206) 555-0188',
+    epa_generator_status: 'LQG',
     billing_address: '900 4th Ave, Seattle, WA 98104',
     notes: 'Commercial printer. Generates waste inks, photographic fixers, isopropyl alcohol, and press-cleaning solvents.',
     locations: [
@@ -91,6 +136,7 @@ const SEED_CUSTOMERS = [
     contact_name: 'Dr. Priya Natarajan',
     contact_email: 'p.natarajan@evergreenpharma.com',
     contact_phone: '(425) 555-0117',
+    epa_generator_status: 'LQG',
     billing_address: '15500 NE 38th St, Redmond, WA 98052',
     notes: 'Pharmaceutical research and manufacturing. Generates P-listed and U-listed pharmaceutical waste, lab solvents, and reactive intermediates.',
     locations: [
@@ -104,6 +150,7 @@ const SEED_CUSTOMERS = [
     contact_name: 'Hank Brennan',
     contact_email: 'hbrennan@sawtoothmining.com',
     contact_phone: '(208) 555-0163',
+    epa_generator_status: 'SQG',
     billing_address: '500 W Bannock St, Boise, ID 83702',
     notes: 'Mining and ore processing. Generates corrosive acids, cyanide solutions, heavy-metal sludges, and reactive reagents.',
     locations: [
@@ -117,6 +164,7 @@ const SEED_CUSTOMERS = [
     contact_name: 'Sarah Kowalski, RN',
     contact_email: 'skowalski@nlhospitals.org',
     contact_phone: '(907) 555-0199',
+    epa_generator_status: 'VSQG',
     billing_address: '3260 Providence Dr, Anchorage, AK 99508',
     notes: 'Regional hospital network. Generates chemotherapy waste, formaldehyde, xylene, mercury-containing devices, and expired pharmaceuticals.',
     locations: [
@@ -131,6 +179,21 @@ function loadCustomerStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(CUSTOMERS_STORAGE_KEY) : null
     if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_CUSTOMERS_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          customers: (legacy.customers || []).map(c => ({
+            ...c,
+            epa_generator_status: c.epa_generator_status || '',
+          })),
+          locations: legacy.locations || [],
+          nextId: legacy.nextId || { customer: 1, location: 1 },
+          seeded: true,
+        }
+        saveCustomerStore(migrated)
+        return migrated
+      }
       const store = seedCustomerStore()
       return store
     }
@@ -161,6 +224,7 @@ function seedCustomerStore() {
       contact_name: entry.contact_name,
       contact_email: entry.contact_email,
       contact_phone: entry.contact_phone,
+      epa_generator_status: entry.epa_generator_status || '',
       billing_address: entry.billing_address,
       notes: entry.notes,
       created_at: now,
@@ -200,6 +264,113 @@ function hydrateCustomer(customer, store) {
     .filter(l => l.customer === customer.id)
     .map(l => ({ ...l }))
   return { ...customer, locations }
+}
+
+function seedMixtureStore() {
+  const store = emptyStore()
+  const customerStore = loadCustomerStore()
+  const now = new Date()
+  const seededProfiles = Array.from({ length: 20 }, (_, i) => ({
+    name: `Demo Profile ${i + 1}`,
+    review_status: i % 5 === 0 ? 'rejected' : i % 3 === 0 ? 'approved' : 'pending_review',
+    customer: customerStore.customers[i % customerStore.customers.length],
+    generation_offset_days: 55 - (i * 2),
+    component_count: 5 + (i % 6),
+  }))
+  const profileIdSet = new Set()
+
+  for (const profile of seededProfiles) {
+    const id = store.nextId.mixture++
+    const transaction_id = generatePrefixedId('PID', profileIdSet)
+    profileIdSet.add(transaction_id)
+    const location = customerStore.locations.find(l => l.customer === profile.customer.id) || null
+    const generatedAt = new Date(now.getTime() - profile.generation_offset_days * 86400000)
+    const dateOnly = generatedAt.toISOString().slice(0, 10)
+    const createdAt = generatedAt.toISOString()
+    const epaStatus = profile.customer.epa_generator_status || 'SQG'
+
+    store.mixtures.push({
+      id,
+      transaction_id,
+      name: profile.name,
+      customer: profile.customer.id,
+      customer_location: location?.id || null,
+      is_discarded: true,
+      discard_reason: 'spent',
+      process_description: `Demo waste stream for ${profile.customer.name}`,
+      notes: 'Prepopulated demo profile',
+      review_status: profile.review_status,
+      pickup_by_date: null,
+      hold_time_days: null,
+      produced_date: null,
+      profile_started_at: createdAt,
+      shipment_size_unit: 'gallons',
+      shipment_size_qty: [5, 15, 30, 55][id % 4],
+      epa_generator_status: epaStatus,
+      generation_date: dateOnly,
+      created_at: createdAt,
+      updated_at: createdAt,
+    })
+
+    const start = (id * 7) % localChemicals.length
+    const selectedChemicals = []
+    for (let c = 0; c < profile.component_count; c++) {
+      selectedChemicals.push(localChemicals[(start + c) % localChemicals.length])
+    }
+    const wasteCodes = []
+    for (const chem of selectedChemicals) {
+      const compId = store.nextId.component++
+      store.components.push({
+        id: compId,
+        mixture: id,
+        chemical: chem?.id || null,
+        custom_name: '',
+        quantity: Number((5 + ((compId % 8) * 2.5)).toFixed(2)),
+        unit: 'pct_weight',
+        override_flash_point_c: null,
+        override_ph: null,
+        override_is_reactive: false,
+        notes: '',
+      })
+      if (chem?.epa_waste_code && wasteCodes.length < 4) {
+        wasteCodes.push(chem.epa_waste_code)
+      }
+    }
+
+    const determinationId = store.nextId.determination++
+    // Demo spread: force alternating hazardous/non-hazardous outcomes so tiles
+    // and review workflows always have mixed data even when waste codes are sparse.
+    const isHazardous = wasteCodes.length > 0 || (id % 2 === 0) // alternate profiles as hazardous for demo-state coverage
+    store.determinations.push({
+      id: determinationId,
+      mixture: id,
+      created_at: createdAt,
+      is_solid_waste: true,
+      is_excluded: false,
+      is_listed_hazardous: wasteCodes.some(c => /^[PFKU]/.test(c)),
+      has_ignitability: wasteCodes.includes('D001'),
+      has_corrosivity: wasteCodes.includes('D002'),
+      has_reactivity: wasteCodes.includes('D003'),
+      has_toxicity: wasteCodes.some(c => /^D0/.test(c) && !['D001', 'D002', 'D003'].includes(c)),
+      is_hazardous_waste: isHazardous,
+      waste_codes: JSON.stringify(wasteCodes),
+      reasoning: JSON.stringify([
+        { step: 1, title: 'Solid Waste', result: 'Material is discarded', details: ['Generator indicated discarded material.'] },
+        { step: 2, title: 'Exclusions', result: 'No exclusion identified', details: ['No exclusion selected in demo profile.'] },
+        { step: 3, title: 'Listed Waste', result: wasteCodes.length ? 'Listed/characteristic codes present' : 'No listed codes identified', details: [`Codes: ${wasteCodes.join(', ') || 'None'}`] },
+        { step: 4, title: 'Characteristics', result: isHazardous ? 'Hazardous characteristics found' : 'No characteristic thresholds exceeded', details: ['Demo-generated profile result.'] },
+      ]),
+      recommendations: isHazardous
+        ? 'Manage as hazardous waste; use approved transport and manifesting.'
+        : 'Continue routine characterization; verify with lab data if needed.',
+      reviewer_name: `Demo Reviewer ${(id % 6) + 1}`,
+      reviewer_sign_off_date: dateOnly,
+    })
+  }
+
+  store.seeded = true
+  saveStore(store)
+  return store
 }
 
 function findChemical(chemicalId) {
@@ -271,6 +442,8 @@ function safeParseJsonArray(s) {
   }
 }
 
+import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from './shipByUtils.js'
+
 function hydrateMixture(rawMixture, store) {
   const components = store.components
     .filter(c => c.mixture === rawMixture.id)
@@ -278,10 +451,20 @@ function hydrateMixture(rawMixture, store) {
   const determinations = store.determinations
     .filter(d => d.mixture === rawMixture.id)
     .map(hydrateDetermination)
+  const holdDays = EPA_STATUS_HOLD_DAYS[rawMixture.epa_generator_status] ?? null
+  const info = calcShipByInfo(rawMixture.epa_generator_status, rawMixture.generation_date)
+  const customerStore = loadCustomerStore()
+  const customer = customerStore.customers.find(c => c.id === rawMixture.customer)
+  const location = customerStore.locations.find(l => l.id === rawMixture.customer_location)
   return {
     ...rawMixture,
     components,
     determinations,
+    customer_name: customer?.name || '',
+    customer_location_name: location?.name || '',
+    hold_days: holdDays,
+    ship_by_date: info?.shipByDate ?? null,
+    days_remaining_to_ship: info?.daysRemaining ?? null,
   }
 }
 
@@ -315,13 +498,27 @@ export const localMixtures = {
   create(payload) {
     const store = loadStore()
     const id = store.nextId.mixture++
+    const usedIds = new Set(store.mixtures.map(m => m.transaction_id))
+    const transactionId = generatePrefixedId('PID', usedIds)
     const mixture = {
       id,
+      transaction_id: transactionId,
       name: payload.name,
+      customer: payload.customer ?? null,
+      customer_location: payload.customer_location ?? null,
       is_discarded: payload.is_discarded !== false,
       discard_reason: payload.discard_reason || '',
       process_description: payload.process_description || '',
       notes: payload.notes || '',
+      review_status: payload.review_status || '',
+      pickup_by_date: payload.pickup_by_date || null,
+      hold_time_days: payload.hold_time_days || null,
+      produced_date: payload.produced_date || null,
+      profile_started_at: payload.profile_started_at || new Date().toISOString(),
+      shipment_size_unit: payload.shipment_size_unit || '',
+      shipment_size_qty: payload.shipment_size_qty ?? null,
+      epa_generator_status: payload.epa_generator_status || '',
+      generation_date: payload.generation_date || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -404,6 +601,8 @@ export const localMixtures = {
       reviewer_sign_off_date: reviewerInfo.reviewer_sign_off_date || null,
     }
     store.determinations.push(det)
+    // Mark mixture as pending review after determination
+    m.review_status = 'pending_review'
     saveStore(store)
     return ok({ determination_id: det.id, determination: hydrateDetermination(det) })
   },
@@ -457,6 +656,19 @@ export const localMixtures = {
     // the browser).
     return reject('PDF report generation is only available when the backend is deployed. Use CSV export or print this page to PDF.', 501)
   },
+
+  setReviewStatus(mixtureId, reviewStatus) {
+    const store = loadStore()
+    const m = store.mixtures.find(x => x.id === Number(mixtureId))
+    if (!m) return reject('Mixture not found.', 404)
+    if (!['pending_review', 'approved', 'rejected'].includes(reviewStatus)) {
+      return reject('Invalid review status.', 400)
+    }
+    m.review_status = reviewStatus
+    m.updated_at = new Date().toISOString()
+    saveStore(store)
+    return ok({ id: m.id, review_status: m.review_status })
+  },
 }
 
 // --------------------------------------------------------------- Local Customers
@@ -486,6 +698,7 @@ export const localCustomers = {
       contact_name: payload.contact_name || '',
       contact_email: payload.contact_email || '',
       contact_phone: payload.contact_phone || '',
+      epa_generator_status: payload.epa_generator_status || '',
       billing_address: payload.billing_address || '',
       notes: payload.notes || '',
       created_at: now,
@@ -870,5 +1083,227 @@ export const localManifests = {
     const { generateEpaFormPdf } = await import('./epaFormPdf.js')
     generateEpaFormPdf(m)
     return ok({})
+  },
+}
+
+// Re-export journey store
+export { localJourney } from './journeyStore.js'
+// --------------------------------------------------------------- Local Orders
+const ORDERS_STORAGE_KEY = 'wasteid_orders_v2'
+const LEGACY_ORDERS_STORAGE_KEY = 'wasteid_orders_v1'
+
+function emptyOrderStore() {
+  return { orders: [], journeys: [], nextId: { order: 1, journey: 1 }, seeded: false }
+}
+
+function seedOrderStore() {
+  const store = emptyOrderStore()
+  const mixtureStore = loadStore()
+  const customerStore = loadCustomerStore()
+  const shipperStore = loadShipperStore()
+  const profiles = mixtureStore.mixtures.slice(0, 20)
+  const existingOrderIds = new Set()
+  const seeds = [
+    { owner_name: 'Marcus Reilly', status: 'open', note: 'Demo open order with multiple profiles.' },
+    { owner_name: 'Jenna Whitcomb', status: 'in_quote', note: 'Demo order submitted for bidding.' },
+    { owner_name: 'Dr. Priya Natarajan', status: 'waiting_signature', note: 'Demo order awaiting customer signature.' },
+    { owner_name: 'Hank Brennan', status: 'rejected_transport', note: 'Demo order rejected by transport review.' },
+    { owner_name: 'Sarah Kowalski, RN', status: 'rejected_tldr', note: 'Demo order rejected by TLDR.' },
+  ]
+  const baseDate = new Date()
+  for (let i = 0; i < seeds.length; i++) {
+    const entry = seeds[i]
+    const profileSliceStart = i * 4
+    const orderProfiles = profiles.slice(profileSliceStart, profileSliceStart + 4)
+    const profileIds = orderProfiles.map(p => p.id)
+    const profileNames = orderProfiles.map(p => p.name)
+    const firstCustomerId = orderProfiles[0]?.customer
+    const generatorName = customerStore.customers.find(c => c.id === firstCustomerId)?.name || '—'
+    const orderShippers = shipperStore.shippers.slice(i % 2, (i % 2) + 2)
+    const orderId = store.nextId.order++
+    const orderIdStr = generatePrefixedId('OID', existingOrderIds)
+    existingOrderIds.add(orderIdStr)
+    const createdDate = new Date(baseDate.getTime() - (seeds.length - i) * 86400000)
+    const now = createdDate.toISOString()
+    store.orders.push({
+      id: orderId,
+      order_id: orderIdStr,
+      owner_name: entry.owner_name,
+      generator_name: generatorName,
+      status: entry.status,
+      profile_names: profileNames,
+      shipper_names: orderShippers.map(s => s.company_name),
+      profile_ids: profileIds,
+      shipper_ids: orderShippers.map(s => s.id),
+      notes: entry.note,
+      created_at: now,
+      updated_at: now,
+    })
+    // Create journey record for order creation
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: orderId,
+      stage: 'open',
+      timestamp: now,
+      notes: 'Order created',
+    })
+    // If status is not open, add journey for current stage
+    if (entry.status !== 'open') {
+      const stageDate = new Date(createdDate.getTime() + 3600000)
+      store.journeys.push({
+        id: store.nextId.journey++,
+        order: orderId,
+        stage: entry.status,
+        timestamp: stageDate.toISOString(),
+        notes: `Moved to ${entry.status}`,
+      })
+    }
+  }
+  store.seeded = true
+  saveOrderStore(store)
+  return store
+}
+
+function loadOrderStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null
+    if (!raw) {
+      const legacyRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(LEGACY_ORDERS_STORAGE_KEY) : null
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw)
+        const migrated = {
+          orders: legacy.orders || [],
+          journeys: legacy.journeys || [],
+          nextId: legacy.nextId || { order: 1, journey: 1 },
+          seeded: true,
+        }
+        saveOrderStore(migrated)
+        return migrated
+      }
+      return seedOrderStore()
+    }
+    const parsed = JSON.parse(raw)
+    const store = {
+      orders: parsed.orders || [],
+      journeys: parsed.journeys || [],
+      nextId: parsed.nextId || { order: 1, journey: 1 },
+      seeded: parsed.seeded || false,
+    }
+    if (!store.seeded) return seedOrderStore()
+    return store
+  } catch {
+    return seedOrderStore()
+  }
+}
+
+function saveOrderStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+export const localOrders = {
+  list(statusFilter) {
+    const store = loadOrderStore()
+    let results = store.orders
+    if (statusFilter) {
+      results = results.filter(o => o.status === statusFilter)
+    }
+    // Attach journey records
+    results = results.map(o => ({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    }))
+    return ok({ results })
+  },
+
+  get(id) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
+  },
+
+  create(payload) {
+    const store = loadOrderStore()
+    const id = store.nextId.order++
+    const usedIds = new Set(store.orders.map(o => o.order_id))
+    const orderIdStr = generatePrefixedId('OID', usedIds)
+    const now = new Date().toISOString()
+    const order = {
+      id,
+      order_id: orderIdStr,
+      owner_name: payload.owner_name || '',
+      generator_name: payload.generator_name || '',
+      generator: payload.generator || null,
+      status: payload.status || 'open',
+      profile_ids: payload.profile_ids || [],
+      profile_names: payload.profile_names || [],
+      shipper_ids: payload.shipper_ids || [],
+      shipper_names: payload.shipper_names || [],
+      notes: payload.notes || '',
+      created_at: now,
+      updated_at: now,
+    }
+    store.orders.push(order)
+    // Journey record for creation
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: id,
+      stage: 'open',
+      timestamp: now,
+      notes: 'Order created',
+    })
+    saveOrderStore(store)
+    return ok({
+      ...order,
+      journey_records: store.journeys.filter(j => j.order === id),
+    })
+  },
+
+  update(id, payload) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    Object.assign(o, payload, { updated_at: new Date().toISOString() })
+    saveOrderStore(store)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
+  },
+
+  delete(id) {
+    const store = loadOrderStore()
+    const numId = Number(id)
+    store.orders = store.orders.filter(o => o.id !== numId)
+    store.journeys = store.journeys.filter(j => j.order !== numId)
+    saveOrderStore(store)
+    return ok({})
+  },
+
+  submitToBid(id) {
+    const store = loadOrderStore()
+    const o = store.orders.find(x => x.id === Number(id))
+    if (!o) return reject('Order not found.', 404)
+    o.status = 'in_quote'
+    o.updated_at = new Date().toISOString()
+    store.journeys.push({
+      id: store.nextId.journey++,
+      order: o.id,
+      stage: 'in_quote',
+      timestamp: new Date().toISOString(),
+      notes: 'Submitted to bid',
+    })
+    saveOrderStore(store)
+    return ok({
+      ...o,
+      journey_records: store.journeys.filter(j => j.order === o.id),
+    })
   },
 }

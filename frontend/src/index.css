@@ -1,5 +1,6 @@
 :root {
   --navbar-height: 60px;
+  --admin-card-min-width: 220px;
 }
 
 body {
@@ -32,6 +33,24 @@ input, select, textarea {
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   padding: 1.5rem;
+}
+
+.admin-link-card {
+  border: 1px solid #dcfce7;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.admin-link-card:hover,
+.admin-link-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(20,83,45,0.12);
+  border-color: #86efac;
+}
+
+.admin-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--admin-card-min-width), 1fr));
+  gap: 1rem;
 }
 
 .badge {

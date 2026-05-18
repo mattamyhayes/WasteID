@@ -4,11 +4,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
-                           ShipperSerializer, EPAManifestSerializer)
+                           ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -90,9 +90,23 @@ class MixtureViewSet(viewsets.ModelViewSet):
             reviewer_sign_off_date=request.data.get('reviewer_sign_off_date') or None,
         )
 
+        # After determination, mark profile as pending review
+        mixture.review_status = 'pending_review'
+        mixture.save(update_fields=['review_status'])
+
         result['determination_id'] = det.id
         result['mixture_id'] = mixture.id
         return Response(result)
+
+    @action(detail=True, methods=['post'])
+    def set_review_status(self, request, pk=None):
+        mixture = self.get_object()
+        new_status = request.data.get('review_status', '')
+        if new_status not in ('pending_review', 'approved', 'rejected'):
+            return Response({'detail': 'Invalid review status.'}, status=status.HTTP_400_BAD_REQUEST)
+        mixture.review_status = new_status
+        mixture.save(update_fields=['review_status'])
+        return Response({'id': mixture.id, 'review_status': mixture.review_status})
 
     @action(detail=True, methods=['get'])
     def report_pdf(self, request, pk=None):
@@ -626,3 +640,49 @@ class EPAManifestViewSet(viewsets.ModelViewSet):
         response = HttpResponse(buffer.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="EPA_8700-22_{safe_tracking}.pdf"'
         return response
+
+
+class JourneyViewSet(viewsets.ModelViewSet):
+    queryset = Journey.objects.select_related('mixture', 'customer').all()
+    serializer_class = JourneySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mixture_id = self.request.query_params.get('mixture', '')
+        customer_id = self.request.query_params.get('customer', '')
+        stage = self.request.query_params.get('stage', '')
+        if mixture_id:
+            qs = qs.filter(mixture_id=mixture_id)
+        if customer_id:
+            qs = qs.filter(customer_id=customer_id)
+        if stage:
+            qs = qs.filter(stage=stage)
+        return qs
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.select_related('generator').prefetch_related(
+        'profiles', 'potential_shippers', 'journey_records').all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get('status', '')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        owner = self.request.query_params.get('owner', '')
+        if owner:
+            qs = qs.filter(owner_name__icontains=owner)
+        return qs
+
+    def perform_create(self, serializer):
+        order = serializer.save()
+        OrderJourney.objects.create(order=order, stage='open', notes='Order created')
+
+    @action(detail=True, methods=['post'])
+    def submit_to_bid(self, request, pk=None):
+        order = self.get_object()
+        order.status = 'in_quote'
+        order.save()
+        OrderJourney.objects.create(order=order, stage='in_quote', notes='Submitted to bid')
+        return Response(OrderSerializer(order).data)

@@ -12,6 +12,7 @@ CUSTOMERS = [
         'contact_name': 'Marcus Reilly',
         'contact_email': 'marcus.reilly@cascadeautobody.com',
         'contact_phone': '(503) 555-0142',
+        'epa_generator_status': 'SQG',
         'billing_address': '1820 NW Industrial St, Portland, OR 97209',
         'notes': 'Auto body shop chain. Generates waste paint, solvents, '
                  'thinners, and used oil from collision repair operations.',
@@ -47,6 +48,7 @@ CUSTOMERS = [
         'contact_name': 'Jenna Whitcomb',
         'contact_email': 'jwhitcomb@pnwprinting.com',
         'contact_phone': '(206) 555-0188',
+        'epa_generator_status': 'LQG',
         'billing_address': '900 4th Ave, Seattle, WA 98104',
         'notes': 'Commercial printer. Generates waste inks, photographic '
                  'fixers, isopropyl alcohol, and press-cleaning solvents.',
@@ -82,6 +84,7 @@ CUSTOMERS = [
         'contact_name': 'Dr. Priya Natarajan',
         'contact_email': 'p.natarajan@evergreenpharma.com',
         'contact_phone': '(425) 555-0117',
+        'epa_generator_status': 'LQG',
         'billing_address': '15500 NE 38th St, Redmond, WA 98052',
         'notes': 'Pharmaceutical research and manufacturing. Generates '
                  'P-listed and U-listed pharmaceutical waste, lab solvents, '
@@ -112,6 +115,7 @@ CUSTOMERS = [
         'contact_name': 'Hank Brennan',
         'contact_email': 'hbrennan@sawtoothmining.com',
         'contact_phone': '(208) 555-0163',
+        'epa_generator_status': 'SQG',
         'billing_address': '500 W Bannock St, Boise, ID 83702',
         'notes': 'Mining and ore processing. Generates corrosive acids, '
                  'cyanide solutions, heavy-metal sludges, and reactive '
@@ -149,6 +153,7 @@ CUSTOMERS = [
         'contact_name': 'Sarah Kowalski, RN',
         'contact_email': 'skowalski@nlhospitals.org',
         'contact_phone': '(907) 555-0199',
+        'epa_generator_status': 'VSQG',
         'billing_address': '3260 Providence Dr, Anchorage, AK 99508',
         'notes': 'Regional hospital network. Generates chemotherapy waste '
                  '(P-listed), formaldehyde, xylene, mercury-containing '

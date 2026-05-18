@@ -92,6 +92,47 @@ export default function DeterminationResults() {
         </div>
       </div>
 
+      {/* Days Remaining to Ship Banner */}
+      {mixture.days_remaining_to_ship != null && (
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderRadius: 10,
+          marginBottom: '1.5rem',
+          background: mixture.days_remaining_to_ship <= 0 ? '#fef2f2'
+            : mixture.days_remaining_to_ship <= 5 ? '#fffbeb'
+            : '#f0fdf4',
+          border: `2px solid ${mixture.days_remaining_to_ship <= 0 ? '#dc2626'
+            : mixture.days_remaining_to_ship <= 5 ? '#f59e0b'
+            : '#16a34a'}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '2.5rem' }}>
+            {mixture.days_remaining_to_ship <= 0 ? '🚨' : mixture.days_remaining_to_ship <= 5 ? '⏰' : '📅'}
+          </span>
+          <div>
+            <div style={{
+              fontSize: '1.5rem',
+              fontWeight: 800,
+              color: mixture.days_remaining_to_ship <= 0 ? '#b91c1c'
+                : mixture.days_remaining_to_ship <= 5 ? '#92400e'
+                : '#15803d',
+            }}>
+              {mixture.days_remaining_to_ship <= 0
+                ? `OVERDUE — shipment was due ${Math.abs(mixture.days_remaining_to_ship)} day(s) ago`
+                : `${mixture.days_remaining_to_ship} day(s) remaining to ship`}
+            </div>
+            <div style={{ fontSize: '0.92rem', color: '#6b7280', marginTop: 2 }}>
+              Ship by: <strong>{new Date(mixture.ship_by_date + 'T00:00:00').toLocaleDateString()}</strong>
+              {mixture.epa_generator_status && <>{' · '}{mixture.epa_generator_status} ({mixture.hold_days} day hold)</>}
+              {mixture.generation_date && <>{' · '}Generated: {new Date(mixture.generation_date + 'T00:00:00').toLocaleDateString()}</>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Status Banner */}
       <div style={{
         padding: '1.5rem 2rem',
@@ -230,6 +271,35 @@ export default function DeterminationResults() {
           </div>
         </div>
       )}
+
+      {/* Journey */}
+      <div className="card" style={{ marginBottom: '1.25rem' }}>
+        <h3 style={{ color: '#166534', marginBottom: '1rem' }}>Journey</h3>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Milestone</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Produced Date</td>
+                <td>{mixture.produced_date
+                  ? new Date(mixture.produced_date + 'T00:00:00').toLocaleDateString()
+                  : '—'}</td>
+              </tr>
+              <tr>
+                <td>Profile Started</td>
+                <td>{mixture.profile_started_at
+                  ? new Date(mixture.profile_started_at).toLocaleString()
+                  : '—'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Components Table */}
       <div className="card">
