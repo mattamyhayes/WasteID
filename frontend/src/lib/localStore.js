@@ -504,6 +504,8 @@ export const localMixtures = {
       id,
       transaction_id: transactionId,
       name: payload.name,
+      customer: payload.customer ?? null,
+      customer_location: payload.customer_location ?? null,
       is_discarded: payload.is_discarded !== false,
       discard_reason: payload.discard_reason || '',
       process_description: payload.process_description || '',
