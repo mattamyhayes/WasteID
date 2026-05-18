@@ -5,7 +5,7 @@ import { mixtures } from '../api/client'
 const TILES = [
   { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
   { key: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
-  { key: 'approved', label: 'Approved (20 Days)', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+  { key: 'approved', label: 'Approved (Last 20 Days)', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
 ]
 
 const NO_PICKUP_SORT_VALUE = 999
