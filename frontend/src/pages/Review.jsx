@@ -1,29 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { mixtures } from '../api/client'
-import HazardBadge from '../components/HazardBadge'
 
 const TILES = [
-  { key: 'pending_review', label: 'Pending Initial Review', icon: '📋', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
-  { key: 'rejected', label: 'Rejected', icon: '❌', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
-  { key: 'approved', label: 'Approved (Last 20 Days)', icon: '✅', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+  { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
+  { key: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
+  { key: 'approved', label: 'Approved (Last 20 Days)', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
 ]
 
 const NO_PICKUP_SORT_VALUE = 999
 
-function daysRemaining(pickupByDate) {
-  if (!pickupByDate) return null
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const pickup = new Date(pickupByDate + 'T00:00:00')
-  const diff = Math.ceil((pickup - now) / (1000 * 60 * 60 * 24))
-  return diff
-}
-
 function holdTimeColor(daysLeft) {
   if (daysLeft === null) return {}
-  if (daysLeft <= 3) return { background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }
-  if (daysLeft <= 7) return { background: '#fef9c3', color: '#854d0e', fontWeight: 700 }
+  if (daysLeft <= 5) return { background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }
+  if (daysLeft <= 10) return { background: '#fef9c3', color: '#854d0e', fontWeight: 700 }
   return { background: '#dcfce7', color: '#15803d', fontWeight: 600 }
 }
 
@@ -105,8 +95,8 @@ export default function Review() {
           vb = b.created_at || ''
           break
         case 'hold_time':
-          va = daysRemaining(a.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
-          vb = daysRemaining(b.pickup_by_date) ?? NO_PICKUP_SORT_VALUE
+          va = a.days_remaining_to_ship ?? NO_PICKUP_SORT_VALUE
+          vb = b.days_remaining_to_ship ?? NO_PICKUP_SORT_VALUE
           break
         case 'hazardous':
           va = a.determinations?.[a.determinations.length - 1]?.is_hazardous_waste ? 1 : 0
@@ -176,7 +166,7 @@ export default function Review() {
       {!loading && (
         <>
           {/* Tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
             {TILES.map(tile => (
               <button
                 key={tile.key}
@@ -184,21 +174,20 @@ export default function Review() {
                 style={{
                   background: activeTile === tile.key ? tile.bg : '#fff',
                   border: `2px solid ${activeTile === tile.key ? tile.border : '#e5e7eb'}`,
-                  borderRadius: 12,
-                  padding: '1.25rem 1.5rem',
+                  borderRadius: 8,
+                  padding: '0.5rem 1rem',
                   cursor: 'pointer',
-                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
                   transition: 'all 0.15s',
-                  boxShadow: activeTile === tile.key ? `0 4px 12px ${tile.border}40` : '0 2px 8px rgba(0,0,0,0.06)',
+                  boxShadow: activeTile === tile.key ? `0 2px 8px ${tile.border}40` : '0 1px 4px rgba(0,0,0,0.06)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>{tile.icon}</span>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: tile.color }}>{tile.label}</span>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 800, color: tile.color }}>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: tile.color, lineHeight: 1 }}>
                   {tileCounts[tile.key]}
-                </div>
+                </span>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: tile.color }}>{tile.label}</span>
               </button>
             ))}
           </div>
@@ -247,7 +236,7 @@ export default function Review() {
                         if (wasteCodes.length === 0 && latestDet?.waste_codes) {
                           try { wasteCodes = JSON.parse(latestDet.waste_codes) } catch { wasteCodes = [] }
                         }
-                        const daysLeft = daysRemaining(m.pickup_by_date)
+                        const daysLeft = m.days_remaining_to_ship ?? null
                         const holdStyle = holdTimeColor(daysLeft)
 
                         return (
@@ -270,20 +259,14 @@ export default function Review() {
                             <td style={{ fontSize: '0.88rem', color: '#6b7280' }}>
                               {new Date(m.created_at).toLocaleDateString()}
                             </td>
-                            <td>
-                              {latestDet ? (
-                                <span className={`badge ${isHazardous ? 'badge-hazardous' : 'badge-safe'}`}>
-                                  {isHazardous ? '⚠️ Hazardous' : '✅ Safe'}
-                                </span>
-                              ) : (
-                                <span className="badge" style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a' }}>
-                                  ⏳ Pending
-                                </span>
-                              )}
+                            <td style={{ fontSize: '0.88rem' }}>
+                              {latestDet
+                                ? (isHazardous ? 'Hazardous' : 'Non-Hazardous')
+                                : <span style={{ color: '#9ca3af' }}>Pending</span>}
                             </td>
-                            <td>
+                            <td style={{ fontSize: '0.85rem' }}>
                               {wasteCodes.length > 0
-                                ? wasteCodes.map(code => <HazardBadge key={code} code={code} />)
+                                ? wasteCodes.join(', ')
                                 : <span style={{ color: '#9ca3af' }}>—</span>}
                             </td>
                             <td>
@@ -302,9 +285,13 @@ export default function Review() {
                               )}
                             </td>
                             <td>
-                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
                                 {latestDet && (
-                                  <Link to={`/results/${latestDet.id}`} className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}>
+                                  <Link
+                                    to={`/results/${latestDet.id}`}
+                                    className="btn btn-secondary"
+                                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
+                                  >
                                     View
                                   </Link>
                                 )}
@@ -312,28 +299,28 @@ export default function Review() {
                                   <>
                                     <Link
                                       to={`/review/${m.id}/signoff`}
-                                      className="btn btn-primary"
-                                      style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                     >
-                                      Review
+                                      Sign Off
                                     </Link>
                                     {latestDet && (
                                       <>
                                         <button
                                           className="btn btn-primary"
-                                          style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                           disabled={actionLoading === m.id}
                                           onClick={() => handleSetStatus(m.id, 'approved')}
                                         >
-                                          {actionLoading === m.id ? '…' : '✅ Approve'}
+                                          {actionLoading === m.id ? '…' : 'Approve'}
                                         </button>
                                         <button
                                           className="btn btn-danger"
-                                          style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                           disabled={actionLoading === m.id}
                                           onClick={() => handleSetStatus(m.id, 'rejected')}
                                         >
-                                          {actionLoading === m.id ? '…' : '❌ Reject'}
+                                          {actionLoading === m.id ? '…' : 'Reject'}
                                         </button>
                                       </>
                                     )}
@@ -341,12 +328,12 @@ export default function Review() {
                                 )}
                                 {activeTile === 'rejected' && (
                                   <button
-                                    className="btn btn-primary"
-                                    style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem' }}
+                                    className="btn btn-secondary"
+                                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                     disabled={actionLoading === m.id}
                                     onClick={() => handleSetStatus(m.id, 'pending_review')}
                                   >
-                                    {actionLoading === m.id ? '…' : '🔄 Back to Review'}
+                                    {actionLoading === m.id ? '…' : 'Resubmit'}
                                   </button>
                                 )}
                               </div>
