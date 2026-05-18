@@ -4,10 +4,17 @@ import uuid
 
 
 class Customer(models.Model):
+    EPA_GENERATOR_STATUS_CHOICES = [
+        ('VSQG', 'VSQG – Very Small Quantity Generator'),
+        ('SQG', 'SQG – Small Quantity Generator'),
+        ('LQG', 'LQG – Large Quantity Generator'),
+    ]
+
     name = models.CharField(max_length=200, unique=True)
     contact_name = models.CharField(max_length=200, blank=True)
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=50, blank=True)
+    epa_generator_status = models.CharField(max_length=4, choices=EPA_GENERATOR_STATUS_CHOICES, blank=True)
     billing_address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

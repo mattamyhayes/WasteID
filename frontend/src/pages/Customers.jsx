@@ -53,6 +53,7 @@ export default function Customers() {
             contactName: c.contact_name || '',
             contactEmail: c.contact_email || '',
             contactPhone: c.contact_phone || '',
+            epaStatus: c.epa_generator_status || '',
             locationName: loc.name || '',
             locationCity: loc.city || '',
             locationState: loc.state || '',
@@ -66,6 +67,7 @@ export default function Customers() {
           contactName: c.contact_name || '',
           contactEmail: c.contact_email || '',
           contactPhone: c.contact_phone || '',
+          epaStatus: c.epa_generator_status || '',
           locationName: '',
           locationCity: '',
           locationState: '',
@@ -95,6 +97,7 @@ export default function Customers() {
         case 'contact': aVal = a.contactName; bVal = b.contactName; break
         case 'email': aVal = a.contactEmail; bVal = b.contactEmail; break
         case 'phone': aVal = a.contactPhone; bVal = b.contactPhone; break
+        case 'epa_status': aVal = a.epaStatus; bVal = b.epaStatus; break
         case 'location': aVal = a.locationName; bVal = b.locationName; break
         case 'city': aVal = a.locationCity; bVal = b.locationCity; break
         case 'state': aVal = a.locationState; bVal = b.locationState; break
@@ -167,6 +170,7 @@ export default function Customers() {
                 <th style={thStyle} onClick={() => handleSort('contact')}>Contact{getSortIndicator('contact')}</th>
                 <th style={thStyle} onClick={() => handleSort('email')}>Email{getSortIndicator('email')}</th>
                 <th style={thStyle} onClick={() => handleSort('phone')}>Phone{getSortIndicator('phone')}</th>
+                <th style={thStyle} onClick={() => handleSort('epa_status')}>EPA Status{getSortIndicator('epa_status')}</th>
                 <th style={thStyle} onClick={() => handleSort('location')}>Location{getSortIndicator('location')}</th>
                 <th style={thStyle} onClick={() => handleSort('city')}>City{getSortIndicator('city')}</th>
                 <th style={thStyle} onClick={() => handleSort('state')}>State{getSortIndicator('state')}</th>
@@ -175,7 +179,7 @@ export default function Customers() {
             <tbody>
               {sortedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
+                  <td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
                     No results match your search.
                   </td>
                 </tr>
@@ -188,6 +192,7 @@ export default function Customers() {
                     <td style={tdStyle}>{row.contactName}</td>
                     <td style={tdStyle}>{row.contactEmail}</td>
                     <td style={tdStyle}>{row.contactPhone}</td>
+                    <td style={tdStyle}>{row.epaStatus || '—'}</td>
                     <td style={tdStyle}>{row.locationName}</td>
                     <td style={tdStyle}>{row.locationCity}</td>
                     <td style={tdStyle}>{row.locationState}</td>
