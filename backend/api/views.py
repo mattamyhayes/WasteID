@@ -4,11 +4,12 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney, StateRule, StateValidationResult
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
-                           ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer)
+                           ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer,
+                           StateRuleSerializer, StateValidationResultSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -107,6 +108,26 @@ class MixtureViewSet(viewsets.ModelViewSet):
         mixture.review_status = new_status
         mixture.save(update_fields=['review_status'])
         return Response({'id': mixture.id, 'review_status': mixture.review_status})
+
+    @action(detail=True, methods=['post'])
+    def validate_state_rules(self, request, pk=None):
+        """Run state rules validation engine against this mixture."""
+        from .state_rules_engine import validate_state_rules
+        mixture = self.get_object()
+        additional_answers = request.data.get('additional_answers', {})
+
+        result = validate_state_rules(mixture, additional_answers)
+
+        # Save the validation result
+        StateValidationResult.objects.create(
+            mixture=mixture,
+            state_code=result['state_code'],
+            overall_result=result['overall_result'],
+            rule_results=json.dumps(result['rule_results']),
+            additional_data_collected=json.dumps(additional_answers),
+        )
+
+        return Response(result)
 
     @action(detail=True, methods=['get'])
     def report_pdf(self, request, pk=None):
@@ -686,3 +707,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         OrderJourney.objects.create(order=order, stage='in_quote', notes='Submitted to bid')
         return Response(OrderSerializer(order).data)
+
+
+class StateRuleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = StateRule.objects.filter(is_active=True)
+    serializer_class = StateRuleSerializer

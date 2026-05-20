@@ -90,6 +90,9 @@ export const mixtures = {
   setReviewStatus: (mixtureId, reviewStatus) => useLocalMixtures
     ? localMixtures.setReviewStatus(mixtureId, reviewStatus)
     : client.post(`/mixtures/${mixtureId}/set_review_status/`, { review_status: reviewStatus }),
+  validateStateRules: (mixtureId, additionalAnswers = {}) => useLocalMixtures
+    ? localMixtures.validateStateRules(mixtureId, additionalAnswers)
+    : client.post(`/mixtures/${mixtureId}/validate_state_rules/`, { additional_answers: additionalAnswers }),
 }
 
 export const customers = {

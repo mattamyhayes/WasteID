@@ -669,6 +669,25 @@ export const localMixtures = {
     saveStore(store)
     return ok({ id: m.id, review_status: m.review_status })
   },
+
+  validateStateRules(id, additionalAnswers = {}) {
+    // In local mode, simulate state rules validation
+    const store = loadStore()
+    const m = store.mixtures.find(x => x.id === Number(id))
+    if (!m) return Promise.reject({ response: { status: 404, data: { detail: 'Mixture not found.' } } })
+    // Resolve state from customer location
+    const customerStore = loadCustomerStore()
+    const location = customerStore.locations.find(l => l.id === m.customer_location)
+    const stateCode = location?.state?.toUpperCase()?.trim()?.slice(0, 2) || ''
+
+    // In local mode, return pass (no state rules data loaded locally)
+    return ok({
+      overall_result: stateCode ? 'pass' : 'pass',
+      rule_results: [],
+      questions: [],
+      state_code: stateCode,
+    })
+  },
 }
 
 // --------------------------------------------------------------- Local Customers

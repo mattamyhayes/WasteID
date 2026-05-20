@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { mixtures as mixturesApi } from '../api/client'
 import { calcShipByInfo, parseLocalDate } from '../lib/shipByUtils'
 
@@ -46,6 +47,7 @@ function ApprovalBadge({ approved }) {
 }
 
 export default function Shipping() {
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -199,30 +201,23 @@ export default function Shipping() {
         </div>
       )}
 
-      {/* Shipping Form Modal - Coming Soon */}
+      {/* Shipping Action Modal */}
       {selectedOrder && (
         <div
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 200,
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 200,
           }}
           onClick={() => setSelectedOrder(null)}
         >
           <div
             className="card"
-            style={{ maxWidth: 560, width: '90%', padding: '2rem', textAlign: 'center' }}
+            style={{ maxWidth: 560, width: '90%', padding: '2rem' }}
             onClick={e => e.stopPropagation()}
           >
             <h2 style={{ color: '#14532d', marginBottom: '0.75rem' }}>
-              Generate Shipping Information
+              Shipping Actions
             </h2>
             <p style={{ color: '#6b7280', marginBottom: '0.5rem' }}>
               Order <strong>#{selectedOrder.id}</strong> — {selectedOrder.name}
@@ -234,27 +229,61 @@ export default function Shipping() {
               Ship by: {formatDate(selectedOrder.shipByDate)}
             </p>
 
-            <div style={{
-              background: '#fef3c7',
-              border: '1px solid #fbbf24',
-              borderRadius: 8,
-              padding: '1.5rem',
-              marginBottom: '1.5rem',
-            }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚧</div>
-              <h3 style={{ color: '#92400e', marginBottom: '0.5rem' }}>Coming Soon</h3>
-              <p style={{ color: '#78350f', fontSize: '0.9rem' }}>
-                The shipping form is currently under development. This feature will allow you to
-                generate BOL, shipping labels, and manifest documentation for this order.
-              </p>
-            </div>
+            {selectedOrder.isHazardous && (
+              <div style={{
+                background: '#f0fdf4', border: '1px solid #16a34a', borderRadius: 8,
+                padding: '1rem', marginBottom: '1rem',
+              }}>
+                <p style={{ color: '#15803d', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  ⚠️ Hazardous Waste — Manifest Required
+                </p>
+                <p style={{ color: '#166534', fontSize: '0.88rem', marginBottom: '1rem' }}>
+                  This order contains hazardous waste and requires an EPA Form 8700-22 Uniform Hazardous Waste Manifest.
+                </p>
+                <a
+                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
+                  }}
+                  className="btn btn-primary"
+                  style={{ textDecoration: 'none', display: 'inline-block' }}
+                >
+                  📄 Create Manifest
+                </a>
+              </div>
+            )}
 
-            <button
-              className="btn btn-secondary"
-              onClick={() => setSelectedOrder(null)}
-            >
-              Close
-            </button>
+            {!selectedOrder.isHazardous && (
+              <div style={{
+                background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8,
+                padding: '1rem', marginBottom: '1rem',
+              }}>
+                <p style={{ color: '#374151', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  ✅ Non-Hazardous Waste
+                </p>
+                <p style={{ color: '#6b7280', fontSize: '0.88rem', marginBottom: '1rem' }}>
+                  This order does not require a hazardous waste manifest. A Bill of Lading (BOL) or standard shipping document may be used.
+                </p>
+                <a
+                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
+                  }}
+                  className="btn btn-secondary"
+                  style={{ textDecoration: 'none', display: 'inline-block' }}
+                >
+                  📋 Create Shipping Document
+                </a>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <button className="btn btn-secondary" onClick={() => setSelectedOrder(null)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
