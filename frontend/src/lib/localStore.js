@@ -1449,6 +1449,10 @@ function hydrateListingWithMixture(listing, store) {
       status_display: { pending: 'Pending Review', accepted: 'Accepted', rejected: 'Rejected', withdrawn: 'Withdrawn' }[b.status] || b.status,
     }))
   const activeBids = bids.filter(b => ['pending', 'accepted'].includes(b.status))
+  const customerStore = loadCustomerStore()
+  const location = mixture.customer_location
+    ? customerStore.locations.find(l => l.id === mixture.customer_location)
+    : null
   return {
     ...listing,
     bids,
@@ -1462,7 +1466,7 @@ function hydrateListingWithMixture(listing, store) {
     days_remaining_to_ship: hydratedMixture.days_remaining_to_ship,
     is_hazardous: latestDet?.is_hazardous_waste ?? null,
     waste_codes: latestDet ? safeParseJsonArray(latestDet.waste_codes) : [],
-    generator_state: hydratedMixture.customer_location_name ? '' : '',
+    generator_state: location?.state || '',
     status_display: { open: 'Open for Bids', bid_accepted: 'Bid Accepted', completed: 'Completed', withdrawn: 'Withdrawn' }[listing.status] || listing.status,
     bid_type_needed_display: { shipping: 'Shipping Only', disposal: 'Disposal Only', both: 'Shipping and Disposal', either: 'Either Shipping or Disposal' }[listing.bid_type_needed] || listing.bid_type_needed,
   }

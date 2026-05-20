@@ -434,7 +434,7 @@ function ListingCard({ listing, onBidClick }) {
         <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #f3f4f6' }}>
           <div style={{ paddingTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 2rem', fontSize: '0.88rem', color: '#374151' }}>
             <div><span style={{ color: '#6b7280' }}>Profile ID:</span> <span style={{ fontFamily: 'monospace' }}>{listing.mixture_transaction_id}</span></div>
-            <div><span style={{ color: '#6b7280' }}>Hazardous:</span> <strong>{listing.is_hazardous == null ? '—' : listing.is_hazardous ? 'Yes' : 'No'}</strong></div>
+            <div><span style={{ color: '#6b7280' }}>Hazardous:</span> <strong>{listing.is_hazardous === null || listing.is_hazardous === undefined ? '—' : listing.is_hazardous ? 'Yes' : 'No'}</strong></div>
             <div><span style={{ color: '#6b7280' }}>Listed:</span> {new Date(listing.created_at).toLocaleDateString()}</div>
             {listing.preferred_completion_date && (
               <div><span style={{ color: '#6b7280' }}>Preferred Completion:</span> {new Date(listing.preferred_completion_date + 'T00:00:00').toLocaleDateString()}</div>

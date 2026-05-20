@@ -242,12 +242,15 @@ class MarketplaceListingSerializer(serializers.ModelSerializer):
     def get_bid_count(self, obj):
         return obj.bids.filter(status__in=['pending', 'accepted']).count()
 
+    def _get_latest_determination(self, obj):
+        return obj.mixture.determinations.order_by('-created_at').first()
+
     def get_is_hazardous(self, obj):
-        det = obj.mixture.determinations.order_by('-created_at').first()
+        det = self._get_latest_determination(obj)
         return det.is_hazardous_waste if det else None
 
     def get_waste_codes(self, obj):
-        det = obj.mixture.determinations.order_by('-created_at').first()
+        det = self._get_latest_determination(obj)
         if not det:
             return []
         try:
