@@ -51,7 +51,6 @@ export default function Shipping() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -124,7 +123,7 @@ export default function Shipping() {
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ color: '#14532d' }}>Shipping</h1>
         <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-          Signed orders ready for shipping. Click an order to generate shipping information.
+          Signed orders ready for shipping. Use the Actions column to generate shipping documents.
         </p>
       </div>
 
@@ -154,14 +153,14 @@ export default function Shipping() {
                 <th style={thStyle}>Customer Approved</th>
                 <th style={thStyle}>Reviewed By</th>
                 <th style={thStyle}>Review Date</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {signedOrders.map(order => (
                 <tr
                   key={order.id}
-                  onClick={() => setSelectedOrder(order)}
-                  style={{ cursor: 'pointer', transition: 'background 0.15s' }}
+                  style={{ transition: 'background 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                   onMouseLeave={e => e.currentTarget.style.background = ''}
                 >
@@ -194,6 +193,15 @@ export default function Shipping() {
                   </td>
                   <td style={tdStyle}>{order.reviewerName}</td>
                   <td style={tdStyle}>{formatDate(order.reviewDate)}</td>
+                  <td style={tdStyle}>
+                    <button
+                      className={`btn ${order.isHazardous ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' }}
+                      onClick={() => navigate(`/epa-form?mixtureId=${order.id}`)}
+                    >
+                      {order.isHazardous ? '📄 Create Manifest' : '📋 Create Shipping Doc'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -201,92 +209,6 @@ export default function Shipping() {
         </div>
       )}
 
-      {/* Shipping Action Modal */}
-      {selectedOrder && (
-        <div
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 200,
-          }}
-          onClick={() => setSelectedOrder(null)}
-        >
-          <div
-            className="card"
-            style={{ maxWidth: 560, width: '90%', padding: '2rem' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 style={{ color: '#14532d', marginBottom: '0.75rem' }}>
-              Shipping Actions
-            </h2>
-            <p style={{ color: '#6b7280', marginBottom: '0.5rem' }}>
-              Order <strong>#{selectedOrder.id}</strong> — {selectedOrder.name}
-            </p>
-            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-              Generator: {selectedOrder.customerName}
-            </p>
-            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Ship by: {formatDate(selectedOrder.shipByDate)}
-            </p>
-
-            {selectedOrder.isHazardous && (
-              <div style={{
-                background: '#f0fdf4', border: '1px solid #16a34a', borderRadius: 8,
-                padding: '1rem', marginBottom: '1rem',
-              }}>
-                <p style={{ color: '#15803d', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  ⚠️ Hazardous Waste — Manifest Required
-                </p>
-                <p style={{ color: '#166534', fontSize: '0.88rem', marginBottom: '1rem' }}>
-                  This order contains hazardous waste and requires an EPA Form 8700-22 Uniform Hazardous Waste Manifest.
-                </p>
-                <a
-                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
-                  }}
-                  className="btn btn-primary"
-                  style={{ textDecoration: 'none', display: 'inline-block' }}
-                >
-                  📄 Create Manifest
-                </a>
-              </div>
-            )}
-
-            {!selectedOrder.isHazardous && (
-              <div style={{
-                background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8,
-                padding: '1rem', marginBottom: '1rem',
-              }}>
-                <p style={{ color: '#374151', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  ✅ Non-Hazardous Waste
-                </p>
-                <p style={{ color: '#6b7280', fontSize: '0.88rem', marginBottom: '1rem' }}>
-                  This order does not require a hazardous waste manifest. A Bill of Lading (BOL) or standard shipping document may be used.
-                </p>
-                <a
-                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
-                  }}
-                  className="btn btn-secondary"
-                  style={{ textDecoration: 'none', display: 'inline-block' }}
-                >
-                  📋 Create Shipping Document
-                </a>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-              <button className="btn btn-secondary" onClick={() => setSelectedOrder(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
