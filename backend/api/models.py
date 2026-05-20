@@ -98,6 +98,14 @@ def _generate_order_id():
     return _generate_prefixed_id("OID")
 
 
+def _generate_listing_id():
+    return _generate_prefixed_id("MKT")
+
+
+def _generate_bid_id():
+    return _generate_prefixed_id("BID")
+
+
 class Mixture(models.Model):
     REVIEW_STATUS_CHOICES = [
         ('pending_review', 'Pending Initial Review'),
@@ -458,6 +466,81 @@ class StateRule(models.Model):
 
     def __str__(self):
         return f"{self.rule_id_code}: {self.description[:60]}"
+
+
+class MarketplaceListing(models.Model):
+    """A waste profile listed on the marketplace for bidding."""
+    STATUS_CHOICES = [
+        ('open', 'Open for Bids'),
+        ('bid_accepted', 'Bid Accepted'),
+        ('completed', 'Completed'),
+        ('withdrawn', 'Withdrawn'),
+    ]
+    BID_TYPE_NEEDED_CHOICES = [
+        ('shipping', 'Shipping Only'),
+        ('disposal', 'Disposal Only'),
+        ('both', 'Shipping and Disposal'),
+        ('either', 'Either Shipping or Disposal'),
+    ]
+
+    listing_id = models.CharField(max_length=32, unique=True, default=_generate_listing_id)
+    mixture = models.OneToOneField(Mixture, on_delete=models.CASCADE, related_name='marketplace_listing')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    bid_type_needed = models.CharField(max_length=20, choices=BID_TYPE_NEEDED_CHOICES, default='either')
+    description = models.TextField(blank=True)
+    preferred_completion_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Listing {self.listing_id} – {self.mixture.name}"
+
+
+class Bid(models.Model):
+    """A bid submitted by a service provider on a marketplace listing."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('withdrawn', 'Withdrawn'),
+    ]
+    BID_TYPE_CHOICES = [
+        ('shipping', 'Shipping Only'),
+        ('disposal', 'Disposal Only'),
+        ('both', 'Shipping and Disposal'),
+    ]
+
+    listing = models.ForeignKey(MarketplaceListing, on_delete=models.CASCADE, related_name='bids')
+    bid_id = models.CharField(max_length=32, unique=True, default=_generate_bid_id)
+    bidder_company_name = models.CharField(max_length=300)
+    bidder_contact_name = models.CharField(max_length=200, blank=True)
+    bidder_contact_email = models.EmailField(blank=True)
+    bidder_contact_phone = models.CharField(max_length=50, blank=True)
+    epa_id = models.CharField(max_length=20, blank=True, help_text='Bidder EPA ID number')
+    bid_type = models.CharField(max_length=20, choices=BID_TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    service_area_states = models.TextField(default='[]', help_text='JSON array of 2-letter state codes')
+    waste_codes_handled = models.TextField(default='[]', help_text='JSON array of EPA waste codes the bidder can handle')
+    certifications = models.TextField(blank=True, help_text='Description of certifications and permits')
+    notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+
+    def get_service_area_states(self):
+        return json.loads(self.service_area_states)
+
+    def get_waste_codes_handled(self):
+        return json.loads(self.waste_codes_handled)
+
+    def __str__(self):
+        return f"Bid {self.bid_id} by {self.bidder_company_name} on {self.listing.listing_id}"
 
 
 class StateValidationResult(models.Model):

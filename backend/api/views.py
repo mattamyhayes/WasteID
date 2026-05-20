@@ -4,12 +4,16 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney, StateRule, StateValidationResult
+from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
+                     CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
+                     StateRule, StateValidationResult, MarketplaceListing, Bid)
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
                            ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer,
-                           StateRuleSerializer, StateValidationResultSerializer)
+                           StateRuleSerializer, StateValidationResultSerializer,
+                           MarketplaceListingSerializer, MarketplaceListingSummarySerializer,
+                           BidSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -712,3 +716,152 @@ class OrderViewSet(viewsets.ModelViewSet):
 class StateRuleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StateRule.objects.filter(is_active=True)
     serializer_class = StateRuleSerializer
+
+
+class MarketplaceListingViewSet(viewsets.ModelViewSet):
+    queryset = (MarketplaceListing.objects
+                .select_related('mixture__customer', 'mixture__customer_location')
+                .prefetch_related('mixture__determinations', 'bids')
+                .all())
+    serializer_class = MarketplaceListingSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return MarketplaceListingSummarySerializer
+        return MarketplaceListingSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Filter by status (comma-separated values supported)
+        status_param = self.request.query_params.get('status', '')
+        if status_param:
+            qs = qs.filter(status__in=status_param.split(','))
+        # Filter by bid_type_needed
+        bid_type = self.request.query_params.get('bid_type_needed', '')
+        if bid_type:
+            qs = qs.filter(bid_type_needed__in=bid_type.split(','))
+        # Filter by generator EPA status
+        epa_status = self.request.query_params.get('epa_generator_status', '')
+        if epa_status:
+            qs = qs.filter(mixture__epa_generator_status__in=epa_status.split(','))
+        # Filter by hazardous (requires joining through determinations)
+        is_hazardous = self.request.query_params.get('is_hazardous', '')
+        if is_hazardous.lower() in ('true', '1', 'yes'):
+            qs = qs.filter(mixture__determinations__is_hazardous_waste=True).distinct()
+        elif is_hazardous.lower() in ('false', '0', 'no'):
+            qs = qs.filter(mixture__determinations__is_hazardous_waste=False).distinct()
+        # Filter by state (customer location state)
+        state = self.request.query_params.get('state', '')
+        if state:
+            qs = qs.filter(mixture__customer_location__state__iexact=state)
+        # Filter by waste code (substring match on determination.waste_codes JSON)
+        waste_code = self.request.query_params.get('waste_code', '')
+        if waste_code:
+            qs = qs.filter(mixture__determinations__waste_codes__icontains=waste_code).distinct()
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        mixture_id = request.data.get('mixture')
+        if not mixture_id:
+            return Response({'detail': 'mixture is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            mixture = Mixture.objects.get(pk=mixture_id)
+        except Mixture.DoesNotExist:
+            return Response({'detail': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if mixture.review_status != 'approved':
+            return Response({'detail': 'Only approved profiles can be listed on the marketplace.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if hasattr(mixture, 'marketplace_listing'):
+            existing = mixture.marketplace_listing
+            if existing.status in ('open', 'bid_accepted'):
+                return Response(MarketplaceListingSerializer(existing).data, status=status.HTTP_200_OK)
+            # Allow re-listing if previously withdrawn/completed
+            existing.status = 'open'
+            existing.bid_type_needed = request.data.get('bid_type_needed', existing.bid_type_needed)
+            existing.description = request.data.get('description', existing.description)
+            existing.preferred_completion_date = request.data.get('preferred_completion_date',
+                                                                   existing.preferred_completion_date)
+            existing.save()
+            return Response(MarketplaceListingSerializer(existing).data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        listing = self.get_object()
+        if listing.status not in ('open',):
+            return Response({'detail': 'Only open listings can be withdrawn.'}, status=status.HTTP_400_BAD_REQUEST)
+        listing.status = 'withdrawn'
+        listing.save()
+        # Reject all pending bids
+        listing.bids.filter(status='pending').update(status='rejected')
+        return Response(MarketplaceListingSerializer(listing).data)
+
+    @action(detail=True, methods=['post'])
+    def accept_bid(self, request, pk=None):
+        listing = self.get_object()
+        bid_id = request.data.get('bid_id')
+        if not bid_id:
+            return Response({'detail': 'bid_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            bid = listing.bids.get(id=bid_id)
+        except Bid.DoesNotExist:
+            return Response({'detail': 'Bid not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if bid.status != 'pending':
+            return Response({'detail': 'Only pending bids can be accepted.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Accept the chosen bid
+        bid.status = 'accepted'
+        bid.save()
+        # Reject all other pending bids on this listing
+        listing.bids.filter(status='pending').exclude(id=bid.id).update(status='rejected')
+        # Update listing status
+        listing.status = 'bid_accepted'
+        listing.save()
+        return Response(MarketplaceListingSerializer(listing).data)
+
+    @action(detail=True, methods=['post'])
+    def complete(self, request, pk=None):
+        listing = self.get_object()
+        if listing.status != 'bid_accepted':
+            return Response({'detail': 'Only listings with an accepted bid can be marked complete.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        listing.status = 'completed'
+        listing.save()
+        return Response(MarketplaceListingSerializer(listing).data)
+
+
+class BidViewSet(viewsets.ModelViewSet):
+    queryset = Bid.objects.select_related('listing__mixture__customer').all()
+    serializer_class = BidSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        listing_id = self.request.query_params.get('listing', '')
+        if listing_id:
+            qs = qs.filter(listing_id=listing_id)
+        bid_status = self.request.query_params.get('status', '')
+        if bid_status:
+            qs = qs.filter(status__in=bid_status.split(','))
+        company = self.request.query_params.get('company', '')
+        if company:
+            qs = qs.filter(bidder_company_name__icontains=company)
+        # Filter by waste codes handled (JSON array contains a value)
+        waste_code = self.request.query_params.get('waste_code', '')
+        if waste_code:
+            qs = qs.filter(waste_codes_handled__icontains=waste_code)
+        # Filter by service area state
+        state = self.request.query_params.get('state', '')
+        if state:
+            qs = qs.filter(service_area_states__icontains=state)
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        bid = self.get_object()
+        if bid.status != 'pending':
+            return Response({'detail': 'Only pending bids can be withdrawn.'}, status=status.HTTP_400_BAD_REQUEST)
+        bid.status = 'withdrawn'
+        bid.save()
+        return Response(BidSerializer(bid).data)

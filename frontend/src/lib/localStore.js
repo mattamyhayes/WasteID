@@ -1326,3 +1326,323 @@ export const localOrders = {
     })
   },
 }
+
+// --------------------------------------------------------------- Local Marketplace
+const MARKETPLACE_STORAGE_KEY = 'wasteid_marketplace_v1'
+
+function emptyMarketplaceStore() {
+  return { listings: [], bids: [], nextId: { listing: 1, bid: 1 }, seeded: false }
+}
+
+function loadMarketplaceStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(MARKETPLACE_STORAGE_KEY) : null
+    if (!raw) return seedMarketplaceStore()
+    const parsed = JSON.parse(raw)
+    const store = {
+      listings: parsed.listings || [],
+      bids: parsed.bids || [],
+      nextId: parsed.nextId || { listing: 1, bid: 1 },
+      seeded: parsed.seeded || false,
+    }
+    if (!store.seeded) return seedMarketplaceStore()
+    return store
+  } catch {
+    return seedMarketplaceStore()
+  }
+}
+
+function saveMarketplaceStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(MARKETPLACE_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+function randomHex8() {
+  const alphabet = '0123456789ABCDEF'
+  let out = ''
+  for (let i = 0; i < 8; i++) out += alphabet[Math.floor(Math.random() * 16)]
+  return out
+}
+
+function seedMarketplaceStore() {
+  const store = emptyMarketplaceStore()
+  const mixtureStore = loadStore()
+  // Seed with approved profiles
+  const approvedMixtures = mixtureStore.mixtures.filter(m => m.review_status === 'approved').slice(0, 6)
+  const bidTypes = ['shipping', 'disposal', 'both', 'either']
+  const companies = [
+    { name: 'Clean Harbors Environmental', contact: 'David Patterson', email: 'dpatterson@cleanharbors.com', phone: '(781) 792-5000', epa_id: 'MAD053452637', states: ['MA', 'NY', 'CT', 'NJ', 'PA'], certifications: 'RCRA Part B Permitted TSDF, DOT Certified Transporter, ISO 14001 Certified' },
+    { name: 'Stericycle Environmental Solutions', contact: 'Michelle Torres', email: 'mtorres@stericycle.com', phone: '(866) 783-7422', epa_id: 'ILD000805937', states: ['IL', 'WI', 'IN', 'OH', 'MI'], certifications: 'Hazardous Waste Transporter, Lab Pack Specialist, Pharmaceutical Waste Disposal' },
+    { name: 'US Ecology Holdings', contact: 'Robert Gould', email: 'rgould@usecology.com', phone: '(208) 331-8400', epa_id: 'IDD073114654', states: ['ID', 'OR', 'WA', 'MT', 'WY'], certifications: 'RCRA Permitted Landfill & Incinerator, TSDF, Hazardous Waste Transporter' },
+    { name: 'Veolia Environmental Services', contact: 'Anne-Marie Laurent', email: 'alaurent@veolia.com', phone: '(713) 496-5000', epa_id: 'TXD000838896', states: ['TX', 'LA', 'OK', 'AR', 'NM'], certifications: 'Industrial Waste Management, Chemical Treatment, Incineration Facility, ISO 9001' },
+    { name: 'Heritage Crystal Clean', contact: 'Jason Wilkins', email: 'jwilkins@heritagece.com', phone: '(847) 836-5670', epa_id: 'IND089783012', states: ['IL', 'IN', 'OH', 'MI', 'WI', 'MN'], certifications: 'Parts Cleaning, Used Oil Recycling, Hazardous Waste Transporter' },
+  ]
+  const bidTypeOptions = ['shipping', 'disposal', 'both']
+  const now = new Date()
+
+  for (let i = 0; i < approvedMixtures.length; i++) {
+    const mixture = approvedMixtures[i]
+    const listingId = `MKT-${randomHex8()}`
+    const createdAt = new Date(now.getTime() - (approvedMixtures.length - i) * 2 * 86400000).toISOString()
+    const listing = {
+      id: store.nextId.listing++,
+      listing_id: listingId,
+      mixture: mixture.id,
+      status: i === 2 ? 'bid_accepted' : 'open',
+      bid_type_needed: bidTypes[i % bidTypes.length],
+      description: `Approved waste profile available for bidding. Generator requires prompt service within EPA hold-time guidelines.`,
+      preferred_completion_date: null,
+      created_at: createdAt,
+      updated_at: createdAt,
+    }
+    store.listings.push(listing)
+
+    // Add 2-3 seed bids per open listing
+    const numBids = i === 2 ? 3 : 2
+    for (let b = 0; b < numBids; b++) {
+      const company = companies[(i + b) % companies.length]
+      const bidStatus = i === 2 ? (b === 0 ? 'accepted' : 'rejected') : 'pending'
+      const submittedAt = new Date(new Date(createdAt).getTime() + (b + 1) * 3600000 * 4).toISOString()
+      store.bids.push({
+        id: store.nextId.bid++,
+        bid_id: `BID-${randomHex8()}`,
+        listing: listing.id,
+        bidder_company_name: company.name,
+        bidder_contact_name: company.contact,
+        bidder_contact_email: company.email,
+        bidder_contact_phone: company.phone,
+        epa_id: company.epa_id,
+        bid_type: bidTypeOptions[b % bidTypeOptions.length],
+        amount: String(2500 + (i * 350) + (b * 250)),
+        service_area_states: JSON.stringify(company.states),
+        waste_codes_handled: JSON.stringify(['D001', 'D002', 'D003', 'F001', 'F002']),
+        certifications: company.certifications,
+        notes: `We have capacity for immediate pickup and have handled similar waste streams previously.`,
+        status: bidStatus,
+        submitted_at: submittedAt,
+        updated_at: submittedAt,
+      })
+    }
+  }
+
+  store.seeded = true
+  saveMarketplaceStore(store)
+  return store
+}
+
+function hydrateListingWithMixture(listing, store) {
+  const mixtureStore = loadStore()
+  const mixture = mixtureStore.mixtures.find(m => m.id === listing.mixture)
+  if (!mixture) return null
+  const hydratedMixture = hydrateMixture(mixture, mixtureStore)
+  const latestDet = hydratedMixture.determinations?.[hydratedMixture.determinations.length - 1] || null
+  const bids = store.bids
+    .filter(b => b.listing === listing.id)
+    .map(b => ({
+      ...b,
+      service_area_states_list: safeParseJsonArray(b.service_area_states),
+      waste_codes_handled_list: safeParseJsonArray(b.waste_codes_handled),
+      bid_type_display: { shipping: 'Shipping Only', disposal: 'Disposal Only', both: 'Shipping and Disposal' }[b.bid_type] || b.bid_type,
+      status_display: { pending: 'Pending Review', accepted: 'Accepted', rejected: 'Rejected', withdrawn: 'Withdrawn' }[b.status] || b.status,
+    }))
+  const activeBids = bids.filter(b => ['pending', 'accepted'].includes(b.status))
+  return {
+    ...listing,
+    bids,
+    bid_count: activeBids.length,
+    mixture_name: mixture.name,
+    mixture_transaction_id: mixture.transaction_id,
+    customer_name: hydratedMixture.customer_name || '',
+    epa_generator_status: mixture.epa_generator_status || '',
+    shipment_size_qty: mixture.shipment_size_qty || null,
+    shipment_size_unit: mixture.shipment_size_unit || '',
+    days_remaining_to_ship: hydratedMixture.days_remaining_to_ship,
+    is_hazardous: latestDet?.is_hazardous_waste ?? null,
+    waste_codes: latestDet ? safeParseJsonArray(latestDet.waste_codes) : [],
+    generator_state: hydratedMixture.customer_location_name ? '' : '',
+    status_display: { open: 'Open for Bids', bid_accepted: 'Bid Accepted', completed: 'Completed', withdrawn: 'Withdrawn' }[listing.status] || listing.status,
+    bid_type_needed_display: { shipping: 'Shipping Only', disposal: 'Disposal Only', both: 'Shipping and Disposal', either: 'Either Shipping or Disposal' }[listing.bid_type_needed] || listing.bid_type_needed,
+  }
+}
+
+export const localMarketplace = {
+  listListings(params = {}) {
+    const store = loadMarketplaceStore()
+    let listings = store.listings
+      .map(l => hydrateListingWithMixture(l, store))
+      .filter(Boolean)
+
+    if (params.status) {
+      const statuses = params.status.split(',')
+      listings = listings.filter(l => statuses.includes(l.status))
+    }
+    if (params.bid_type_needed) {
+      const types = params.bid_type_needed.split(',')
+      listings = listings.filter(l => types.includes(l.bid_type_needed))
+    }
+    if (params.epa_generator_status) {
+      const statuses = params.epa_generator_status.split(',')
+      listings = listings.filter(l => statuses.includes(l.epa_generator_status))
+    }
+    if (params.is_hazardous === 'true') listings = listings.filter(l => l.is_hazardous === true)
+    if (params.is_hazardous === 'false') listings = listings.filter(l => l.is_hazardous === false)
+    if (params.waste_code) listings = listings.filter(l => l.waste_codes.some(c => c.includes(params.waste_code.toUpperCase())))
+
+    return ok({ results: listings })
+  },
+
+  getListing(id) {
+    const store = loadMarketplaceStore()
+    const l = store.listings.find(x => x.id === Number(id))
+    if (!l) return reject('Listing not found.', 404)
+    const hydrated = hydrateListingWithMixture(l, store)
+    if (!hydrated) return reject('Listing profile not found.', 404)
+    return ok(hydrated)
+  },
+
+  createListing(payload) {
+    const store = loadMarketplaceStore()
+    const mixtureId = Number(payload.mixture)
+    const mixtureStore = loadStore()
+    const mixture = mixtureStore.mixtures.find(m => m.id === mixtureId)
+    if (!mixture) return reject('Profile not found.', 404)
+    if (mixture.review_status !== 'approved') return reject('Only approved profiles can be listed.', 400)
+    // Check if already listed
+    const existing = store.listings.find(l => l.mixture === mixtureId)
+    if (existing) {
+      if (['open', 'bid_accepted'].includes(existing.status)) {
+        const hydrated = hydrateListingWithMixture(existing, store)
+        return ok(hydrated)
+      }
+      // Re-list
+      existing.status = 'open'
+      existing.bid_type_needed = payload.bid_type_needed || existing.bid_type_needed
+      existing.description = payload.description || existing.description
+      existing.updated_at = new Date().toISOString()
+      saveMarketplaceStore(store)
+      return ok(hydrateListingWithMixture(existing, store))
+    }
+    const now = new Date().toISOString()
+    const listing = {
+      id: store.nextId.listing++,
+      listing_id: `MKT-${randomHex8()}`,
+      mixture: mixtureId,
+      status: 'open',
+      bid_type_needed: payload.bid_type_needed || 'either',
+      description: payload.description || '',
+      preferred_completion_date: payload.preferred_completion_date || null,
+      created_at: now,
+      updated_at: now,
+    }
+    store.listings.push(listing)
+    saveMarketplaceStore(store)
+    return ok(hydrateListingWithMixture(listing, store))
+  },
+
+  withdrawListing(id) {
+    const store = loadMarketplaceStore()
+    const l = store.listings.find(x => x.id === Number(id))
+    if (!l) return reject('Listing not found.', 404)
+    if (l.status !== 'open') return reject('Only open listings can be withdrawn.', 400)
+    l.status = 'withdrawn'
+    l.updated_at = new Date().toISOString()
+    store.bids.filter(b => b.listing === l.id && b.status === 'pending').forEach(b => { b.status = 'rejected' })
+    saveMarketplaceStore(store)
+    return ok(hydrateListingWithMixture(l, store))
+  },
+
+  acceptBid(listingId, bidId) {
+    const store = loadMarketplaceStore()
+    const l = store.listings.find(x => x.id === Number(listingId))
+    if (!l) return reject('Listing not found.', 404)
+    const bid = store.bids.find(b => b.id === Number(bidId) && b.listing === l.id)
+    if (!bid) return reject('Bid not found.', 404)
+    if (bid.status !== 'pending') return reject('Only pending bids can be accepted.', 400)
+    bid.status = 'accepted'
+    bid.updated_at = new Date().toISOString()
+    store.bids.filter(b => b.listing === l.id && b.status === 'pending' && b.id !== bid.id)
+      .forEach(b => { b.status = 'rejected'; b.updated_at = new Date().toISOString() })
+    l.status = 'bid_accepted'
+    l.updated_at = new Date().toISOString()
+    saveMarketplaceStore(store)
+    return ok(hydrateListingWithMixture(l, store))
+  },
+
+  completeListing(id) {
+    const store = loadMarketplaceStore()
+    const l = store.listings.find(x => x.id === Number(id))
+    if (!l) return reject('Listing not found.', 404)
+    if (l.status !== 'bid_accepted') return reject('Only listings with an accepted bid can be completed.', 400)
+    l.status = 'completed'
+    l.updated_at = new Date().toISOString()
+    saveMarketplaceStore(store)
+    return ok(hydrateListingWithMixture(l, store))
+  },
+
+  submitBid(payload) {
+    const store = loadMarketplaceStore()
+    const listingId = Number(payload.listing)
+    const l = store.listings.find(x => x.id === listingId)
+    if (!l) return reject('Listing not found.', 404)
+    if (l.status !== 'open') return reject('This listing is no longer accepting bids.', 400)
+    const now = new Date().toISOString()
+    const bid = {
+      id: store.nextId.bid++,
+      bid_id: `BID-${randomHex8()}`,
+      listing: listingId,
+      bidder_company_name: payload.bidder_company_name || '',
+      bidder_contact_name: payload.bidder_contact_name || '',
+      bidder_contact_email: payload.bidder_contact_email || '',
+      bidder_contact_phone: payload.bidder_contact_phone || '',
+      epa_id: payload.epa_id || '',
+      bid_type: payload.bid_type || 'shipping',
+      amount: payload.amount || null,
+      service_area_states: Array.isArray(payload.service_area_states)
+        ? JSON.stringify(payload.service_area_states)
+        : (payload.service_area_states || '[]'),
+      waste_codes_handled: Array.isArray(payload.waste_codes_handled)
+        ? JSON.stringify(payload.waste_codes_handled)
+        : (payload.waste_codes_handled || '[]'),
+      certifications: payload.certifications || '',
+      notes: payload.notes || '',
+      status: 'pending',
+      submitted_at: now,
+      updated_at: now,
+    }
+    store.bids.push(bid)
+    saveMarketplaceStore(store)
+    return ok({
+      ...bid,
+      service_area_states_list: safeParseJsonArray(bid.service_area_states),
+      waste_codes_handled_list: safeParseJsonArray(bid.waste_codes_handled),
+    })
+  },
+
+  withdrawBid(bidId) {
+    const store = loadMarketplaceStore()
+    const bid = store.bids.find(b => b.id === Number(bidId))
+    if (!bid) return reject('Bid not found.', 404)
+    if (bid.status !== 'pending') return reject('Only pending bids can be withdrawn.', 400)
+    bid.status = 'withdrawn'
+    bid.updated_at = new Date().toISOString()
+    saveMarketplaceStore(store)
+    return ok(bid)
+  },
+
+  listBids(params = {}) {
+    const store = loadMarketplaceStore()
+    let bids = store.bids
+    if (params.listing) bids = bids.filter(b => b.listing === Number(params.listing))
+    if (params.status) bids = bids.filter(b => params.status.split(',').includes(b.status))
+    return ok({
+      results: bids.map(b => ({
+        ...b,
+        service_area_states_list: safeParseJsonArray(b.service_area_states),
+        waste_codes_handled_list: safeParseJsonArray(b.waste_codes_handled),
+      })),
+    })
+  },
+}
