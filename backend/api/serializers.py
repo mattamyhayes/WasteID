@@ -167,13 +167,13 @@ class StateRuleSerializer(serializers.ModelSerializer):
     def get_questions(self, obj):
         try:
             return json.loads(obj.question_template)
-        except Exception:
+        except (json.JSONDecodeError, TypeError, ValueError):
             return []
 
     def get_conditions(self, obj):
         try:
             return json.loads(obj.condition_expression)
-        except Exception:
+        except (json.JSONDecodeError, TypeError, ValueError):
             return {}
 
     class Meta:
@@ -187,7 +187,7 @@ class StateValidationResultSerializer(serializers.ModelSerializer):
     def get_rule_results_list(self, obj):
         try:
             return json.loads(obj.rule_results)
-        except Exception:
+        except (json.JSONDecodeError, TypeError, ValueError):
             return []
 
     class Meta:

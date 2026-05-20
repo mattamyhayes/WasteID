@@ -90,7 +90,7 @@ def _generate_profile_id():
     return _generate_prefixed_id("PID")
 
 
-# Alias retained for backwards-compatible migration reference
+# Alias retained for migration 0002_customers_and_transaction_id
 _generate_transaction_id = _generate_profile_id
 
 

@@ -91,7 +91,7 @@ def build_context_from_mixture(mixture):
             context['waste_codes'] = []
 
     # Determine if liquid based on shipment size unit
-    context['is_liquid'] = mixture.shipment_size_unit in ('gallons',)
+    context['is_liquid'] = mixture.shipment_size_unit == 'gallons'
 
     # Manifest required for SQG/LQG with hazardous waste
     context['manifest_required'] = (
