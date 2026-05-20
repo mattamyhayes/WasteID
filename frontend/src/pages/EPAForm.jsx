@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { shippers as shippersApi, manifests as manifestsApi, mixtures as mixturesApi } from '../api/client'
 import { generateEpaFormPdf } from '../lib/epaFormPdf'
 
@@ -79,6 +79,8 @@ const emptyForm = {
 
 export default function EPAForm() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const preselectedMixtureId = searchParams.get('mixtureId')
   const [form, setForm] = useState({ ...emptyForm })
   const [wasteItems, setWasteItems] = useState([{ ...emptyWasteItem }])
   const [selectedShipper, setSelectedShipper] = useState('')
@@ -137,6 +139,20 @@ export default function EPAForm() {
     }
     return dets
   }, [allMixtures])
+
+  // Auto-select determination from pre-selected mixture (from Shipping page link)
+  useEffect(() => {
+    if (!preselectedMixtureId || loading || availableDeterminations.length === 0) return
+    const mixtureIdNum = Number(preselectedMixtureId)
+    const detsForMixture = availableDeterminations.filter(d => d.mixtureId === mixtureIdNum)
+    if (detsForMixture.length > 0) {
+      // Select the latest determination for this mixture
+      const latestDet = detsForMixture[detsForMixture.length - 1]
+      if (!selectedDeterminations.includes(latestDet.id)) {
+        setSelectedDeterminations([latestDet.id])
+      }
+    }
+  }, [preselectedMixtureId, loading, availableDeterminations])
 
   const handleShipperSelect = (shipperId) => {
     setSelectedShipper(shipperId)

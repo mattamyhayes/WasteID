@@ -33,6 +33,13 @@ export default function NewDetermination() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // State rules
+  const [stateRulesModal, setStateRulesModal] = useState(false)
+  const [stateQuestions, setStateQuestions] = useState([])
+  const [stateAnswers, setStateAnswers] = useState({})
+  const [stateValidating, setStateValidating] = useState(false)
+  const [savedMixtureId, setSavedMixtureId] = useState(null)
+
   // Mixture record
   const [mixtureId, setMixtureId] = useState(null)
   const [transactionId, setTransactionId] = useState('')
@@ -123,6 +130,24 @@ export default function NewDetermination() {
     setEpaGeneratorStatus(selectedCustomer?.epa_generator_status || '')
   }, [customerId, selectedCustomer?.epa_generator_status])
 
+  const handleStateRulesSubmit = async () => {
+    setStateValidating(true)
+    try {
+      const result = await mixtures.validateStateRules(savedMixtureId, stateAnswers)
+      if (result.data.overall_result === 'needs_info' && result.data.questions.length > 0) {
+        setStateQuestions(result.data.questions)
+      } else {
+        setStateRulesModal(false)
+        navigate('/review')
+      }
+    } catch (e) {
+      setError('State validation failed. Please try again.')
+      setStateRulesModal(false)
+    } finally {
+      setStateValidating(false)
+    }
+  }
+
   const validate = () => {
     if (!name.trim()) { setError('Please enter a mixture name.'); return false }
     if (!customerId) { setError('Please select a generator.'); return false }
@@ -183,6 +208,15 @@ export default function NewDetermination() {
       // Mark as pending review
       await mixtures.setReviewStatus(id, 'pending_review')
 
+      // Run state rules validation (SR-FLOW-1)
+      const stateResult = await mixtures.validateStateRules(id)
+      if (stateResult.data.overall_result === 'needs_info' && stateResult.data.questions.length > 0) {
+        setSavedMixtureId(id)
+        setStateQuestions(stateResult.data.questions)
+        setStateRulesModal(true)
+        return // Don't navigate yet - wait for answers
+      }
+      // State rules passed - proceed
       navigate('/review')
     } catch (e) {
       setError(e.response?.data?.detail || 'Could not save profile. Please try again.')
@@ -422,6 +456,73 @@ export default function NewDetermination() {
           {submitting ? 'Saving…' : '📋 Submit for Review'}
         </button>
       </div>
+
+      {/* State Rules Follow-up Questions Modal */}
+      {stateRulesModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 200,
+        }}>
+          <div className="card" style={{ maxWidth: 600, width: '90%', padding: '2rem', maxHeight: '80vh', overflow: 'auto' }}>
+            <h2 style={{ color: '#14532d', marginBottom: '0.75rem' }}>
+              📋 Additional State Requirements
+            </h2>
+            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Your generator's state requires additional information before this profile can proceed to review.
+              Please answer the following questions.
+            </p>
+            {stateQuestions.map((q, idx) => (
+              <div key={q.id || idx} className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontWeight: 600, color: '#374151' }}>
+                  {q.text || q.label || q.question || `Question ${idx + 1}`}
+                </label>
+                {q.type === 'boolean' || q.type === 'yes_no' ? (
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                      <input type="radio" name={`sq_${q.id || idx}`}
+                        checked={stateAnswers[q.rule_id_code]?.[q.id] === 'yes'}
+                        onChange={() => setStateAnswers(prev => ({
+                          ...prev,
+                          [q.rule_id_code]: { ...(prev[q.rule_id_code] || {}), [q.id]: 'yes' }
+                        }))} />
+                      Yes
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                      <input type="radio" name={`sq_${q.id || idx}`}
+                        checked={stateAnswers[q.rule_id_code]?.[q.id] === 'no'}
+                        onChange={() => setStateAnswers(prev => ({
+                          ...prev,
+                          [q.rule_id_code]: { ...(prev[q.rule_id_code] || {}), [q.id]: 'no' }
+                        }))} />
+                      No
+                    </label>
+                  </div>
+                ) : (
+                  <input className="form-control"
+                    value={stateAnswers[q.rule_id_code]?.[q.id] || ''}
+                    onChange={e => setStateAnswers(prev => ({
+                      ...prev,
+                      [q.rule_id_code]: { ...(prev[q.rule_id_code] || {}), [q.id]: e.target.value }
+                    }))}
+                    placeholder={q.placeholder || 'Enter your answer'} />
+                )}
+                {q.help_text && (
+                  <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>{q.help_text}</small>
+                )}
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button className="btn btn-secondary" onClick={() => { setStateRulesModal(false) }}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleStateRulesSubmit} disabled={stateValidating}>
+                {stateValidating ? 'Validating…' : 'Submit & Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
