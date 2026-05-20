@@ -2,7 +2,8 @@ from rest_framework import serializers
 import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
-                     Order, Journey, OrderJourney, StateRule, StateValidationResult)
+                     Order, Journey, OrderJourney, StateRule, StateValidationResult,
+                     MarketplaceListing, Bid)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -194,3 +195,87 @@ class StateValidationResultSerializer(serializers.ModelSerializer):
         model = StateValidationResult
         fields = '__all__'
         read_only_fields = ['validated_at']
+
+
+class BidSerializer(serializers.ModelSerializer):
+    service_area_states_list = serializers.SerializerMethodField()
+    waste_codes_handled_list = serializers.SerializerMethodField()
+    bid_type_display = serializers.CharField(source='get_bid_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    def get_service_area_states_list(self, obj):
+        try:
+            return json.loads(obj.service_area_states)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_waste_codes_handled_list(self, obj):
+        try:
+            return json.loads(obj.waste_codes_handled)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    class Meta:
+        model = Bid
+        fields = '__all__'
+        read_only_fields = ['bid_id', 'submitted_at', 'updated_at']
+
+
+class MarketplaceListingSerializer(serializers.ModelSerializer):
+    bids = BidSerializer(many=True, read_only=True)
+    bid_count = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    bid_type_needed_display = serializers.CharField(source='get_bid_type_needed_display', read_only=True)
+
+    # Mixture summary fields for browsing without a separate join
+    mixture_name = serializers.CharField(source='mixture.name', read_only=True)
+    mixture_transaction_id = serializers.CharField(source='mixture.transaction_id', read_only=True)
+    customer_name = serializers.CharField(source='mixture.customer.name', read_only=True, default='')
+    epa_generator_status = serializers.CharField(source='mixture.epa_generator_status', read_only=True, default='')
+    shipment_size_qty = serializers.IntegerField(source='mixture.shipment_size_qty', read_only=True, default=None)
+    shipment_size_unit = serializers.CharField(source='mixture.shipment_size_unit', read_only=True, default='')
+    days_remaining_to_ship = serializers.IntegerField(source='mixture.days_remaining_to_ship', read_only=True, default=None)
+    is_hazardous = serializers.SerializerMethodField()
+    waste_codes = serializers.SerializerMethodField()
+    generator_state = serializers.SerializerMethodField()
+
+    def get_bid_count(self, obj):
+        return obj.bids.filter(status__in=['pending', 'accepted']).count()
+
+    def _get_latest_determination(self, obj):
+        return obj.mixture.determinations.order_by('-created_at').first()
+
+    def get_is_hazardous(self, obj):
+        det = self._get_latest_determination(obj)
+        return det.is_hazardous_waste if det else None
+
+    def get_waste_codes(self, obj):
+        det = self._get_latest_determination(obj)
+        if not det:
+            return []
+        try:
+            return json.loads(det.waste_codes)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_generator_state(self, obj):
+        loc = obj.mixture.customer_location
+        return loc.state if loc else ''
+
+    class Meta:
+        model = MarketplaceListing
+        fields = [
+            'id', 'listing_id', 'mixture', 'mixture_name', 'mixture_transaction_id',
+            'customer_name', 'epa_generator_status', 'shipment_size_qty', 'shipment_size_unit',
+            'days_remaining_to_ship', 'is_hazardous', 'waste_codes', 'generator_state',
+            'status', 'status_display', 'bid_type_needed', 'bid_type_needed_display',
+            'description', 'preferred_completion_date',
+            'bid_count', 'bids', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['listing_id', 'created_at', 'updated_at']
+
+
+class MarketplaceListingSummarySerializer(MarketplaceListingSerializer):
+    """Lighter serializer for list view – omits full bids array."""
+    class Meta(MarketplaceListingSerializer.Meta):
+        fields = [f for f in MarketplaceListingSerializer.Meta.fields if f != 'bids']

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localJourney } from '../lib/journeyStore.js'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests, localOrders } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests, localOrders, localMarketplace } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -204,4 +204,34 @@ export const orders = {
   submitToBid: (id) => useLocalMixtures
     ? localOrders.submitToBid(id)
     : client.post(`/orders/${id}/submit_to_bid/`),
+}
+
+export const marketplace = {
+  listListings: (params = {}) => useLocalMixtures
+    ? localMarketplace.listListings(params)
+    : client.get('/marketplace-listings/', { params }),
+  getListing: (id) => useLocalMixtures
+    ? localMarketplace.getListing(id)
+    : client.get(`/marketplace-listings/${id}/`),
+  createListing: (data) => useLocalMixtures
+    ? localMarketplace.createListing(data)
+    : client.post('/marketplace-listings/', data),
+  withdrawListing: (id) => useLocalMixtures
+    ? localMarketplace.withdrawListing(id)
+    : client.post(`/marketplace-listings/${id}/withdraw/`),
+  acceptBid: (listingId, bidId) => useLocalMixtures
+    ? localMarketplace.acceptBid(listingId, bidId)
+    : client.post(`/marketplace-listings/${listingId}/accept_bid/`, { bid_id: bidId }),
+  completeListing: (id) => useLocalMixtures
+    ? localMarketplace.completeListing(id)
+    : client.post(`/marketplace-listings/${id}/complete/`),
+  submitBid: (data) => useLocalMixtures
+    ? localMarketplace.submitBid(data)
+    : client.post('/bids/', data),
+  withdrawBid: (bidId) => useLocalMixtures
+    ? localMarketplace.withdrawBid(bidId)
+    : client.post(`/bids/${bidId}/withdraw/`),
+  listBids: (params = {}) => useLocalMixtures
+    ? localMarketplace.listBids(params)
+    : client.get('/bids/', { params }),
 }

@@ -17,6 +17,7 @@ import Journey from './pages/Journey'
 import Shipping from './pages/Shipping'
 import Admin from './pages/Admin'
 import Reports from './pages/Reports'
+import Marketplace from './pages/Marketplace'
 
 export default function App() {
   return (
@@ -42,7 +43,7 @@ export default function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
-          <Route path="/marketplace" element={<ComingSoon title="Marketplace" />} />
+          <Route path="/marketplace" element={<Marketplace />} />
         </Routes>
       </main>
       <Footer />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { mixtures } from '../api/client'
+import { mixtures, marketplace } from '../api/client'
 
 const TILES = [
   { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
@@ -24,6 +24,8 @@ export default function Review() {
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
   const [actionLoading, setActionLoading] = useState(null)
+  const [marketplaceLoading, setMarketplaceLoading] = useState(null)
+  const [marketplaceListings, setMarketplaceListings] = useState({})
 
   const load = async () => {
     setLoading(true)
@@ -31,6 +33,16 @@ export default function Review() {
       const res = await mixtures.list()
       const all = res.data.results || res.data
       setItems(all)
+      // Load marketplace listings to know which profiles are already listed
+      try {
+        const mktRes = await marketplace.listListings()
+        const listings = mktRes.data.results || mktRes.data
+        const byMixture = {}
+        listings.forEach(l => { byMixture[l.mixture] = l })
+        setMarketplaceListings(byMixture)
+      } catch {
+        // Non-critical – marketplace listings may not be available
+      }
     } finally {
       setLoading(false)
     }
@@ -139,6 +151,18 @@ export default function Review() {
       alert(e?.response?.data?.detail || 'Failed to update review status.')
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  const handleSendToMarketplace = async (mixtureId) => {
+    setMarketplaceLoading(mixtureId)
+    try {
+      await marketplace.createListing({ mixture: mixtureId })
+      await load()
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'Failed to send profile to marketplace.')
+    } finally {
+      setMarketplaceLoading(null)
     }
   }
 
@@ -336,6 +360,41 @@ export default function Review() {
                                     {actionLoading === m.id ? '…' : 'Resubmit'}
                                   </button>
                                 )}
+                                {activeTile === 'approved' && (() => {
+                                  const listing = marketplaceListings[m.id]
+                                  if (listing && listing.status === 'open') {
+                                    return (
+                                      <Link
+                                        to="/marketplace"
+                                        className="btn btn-secondary"
+                                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#dbeafe', color: '#1e40af' }}
+                                      >
+                                        🏪 Listed
+                                      </Link>
+                                    )
+                                  }
+                                  if (listing && listing.status === 'bid_accepted') {
+                                    return (
+                                      <Link
+                                        to="/marketplace"
+                                        className="btn btn-secondary"
+                                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#dcfce7', color: '#15803d' }}
+                                      >
+                                        ✅ Bid Accepted
+                                      </Link>
+                                    )
+                                  }
+                                  return (
+                                    <button
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f0fdf4', color: '#166534', border: '1px solid #86efac' }}
+                                      disabled={marketplaceLoading === m.id}
+                                      onClick={() => handleSendToMarketplace(m.id)}
+                                    >
+                                      {marketplaceLoading === m.id ? '…' : '🏪 Send to Marketplace'}
+                                    </button>
+                                  )
+                                })()}
                               </div>
                             </td>
                           </tr>
