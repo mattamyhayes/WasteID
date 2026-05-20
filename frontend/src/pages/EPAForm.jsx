@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { shippers as shippersApi, manifests as manifestsApi, mixtures as mixturesApi } from '../api/client'
 import { generateEpaFormPdf } from '../lib/epaFormPdf'
+import { buildDotDescription, validateManifestForm, validateManifestTrackingNumber, getCertificationText, computePageCount } from '../lib/manifestUtils'
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -93,6 +94,8 @@ export default function EPAForm() {
   const [loading, setLoading] = useState(true)
   const [savedManifests, setSavedManifests] = useState([])
   const [exportingId, setExportingId] = useState(null)
+  const [validationErrors, setValidationErrors] = useState([])
+  const [showValidation, setShowValidation] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -146,12 +149,12 @@ export default function EPAForm() {
     const mixtureIdNum = Number(preselectedMixtureId)
     const detsForMixture = availableDeterminations.filter(d => d.mixtureId === mixtureIdNum)
     if (detsForMixture.length > 0) {
-      // Select the latest determination for this mixture
       const latestDet = detsForMixture[detsForMixture.length - 1]
       if (!selectedDeterminations.includes(latestDet.id)) {
         setSelectedDeterminations([latestDet.id])
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preselectedMixtureId, loading, availableDeterminations])
 
   const handleShipperSelect = (shipperId) => {
@@ -203,15 +206,25 @@ export default function EPAForm() {
     const selected = availableDeterminations.filter(d => selectedDeterminations.includes(d.id))
     if (selected.length === 0) return
 
-    const newItems = selected.map(det => ({
-      dot_description: `Hazardous waste from ${det.mixtureName}`,
-      containers_no: '1',
-      container_type: 'DM',
-      quantity: '',
-      unit: 'P',
-      waste_codes: det.wasteCodes.join(', '),
-      hazard_class: '',
-    }))
+    const newItems = selected.map(det => {
+      // Apply "Waste" prefix rule (R-9.2) based on generator status
+      const { description } = buildDotDescription({
+        unNumber: '',
+        properShippingName: `Hazardous waste from ${det.mixtureName}`,
+        hazardClass: '',
+        packingGroup: '',
+        epaGeneratorStatus: det.epaGeneratorStatus || '',
+      })
+      return {
+        dot_description: description,
+        containers_no: '1',
+        container_type: 'DM',
+        quantity: '',
+        unit: 'P',
+        waste_codes: det.wasteCodes.join(', '),
+        hazard_class: '',
+      }
+    })
 
     setWasteItems(prev => {
       // Replace empty first item or append
@@ -246,6 +259,14 @@ export default function EPAForm() {
   }
 
   const handleExportCurrentForm = () => {
+    // Validate before PDF generation (R-UX-6: PDF gated on passing validation + certification)
+    const errors = validateManifestForm(form, wasteItems)
+    if (errors.length > 0 || !form.generator_certification) {
+      setValidationErrors(errors.length > 0 ? errors : [{ field: 'generator_certification', box: '15', message: 'Generator certification is required before generating PDF.' }])
+      setShowValidation(true)
+      setError('Please fix validation errors before generating PDF.')
+      return
+    }
     // Build a manifest-like object from the current form state and export as PDF
     const manifestObj = {
       ...form,
@@ -255,6 +276,20 @@ export default function EPAForm() {
       created_at: new Date().toISOString(),
     }
     generateEpaFormPdf(manifestObj)
+  }
+
+  // R-UX-6: Validate action
+  const handleValidate = () => {
+    const errors = validateManifestForm(form, wasteItems)
+    setValidationErrors(errors)
+    setShowValidation(true)
+    if (errors.length === 0) {
+      setError('')
+      setSuccess('✅ Manifest validation passed — all required fields are complete.')
+    } else {
+      setSuccess('')
+      setError(`Found ${errors.length} validation issue(s). See details below.`)
+    }
   }
 
   const handleSubmit = async () => {
@@ -650,12 +685,9 @@ export default function EPAForm() {
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>9. Generator/Offeror Certification</div>
         <div style={{ background: '#f9fafb', padding: '0.75rem 1rem', borderRadius: 6, marginBottom: '1rem', fontSize: '0.85rem', lineHeight: 1.6, color: '#4b5563' }}>
-          I hereby declare that the contents of this consignment are fully and accurately described above by the proper shipping name,
-          and are classified, packaged, marked and labeled/placarded, and are in all respects in proper condition for transport according
-          to applicable international and national governmental regulations. If export shipment and I am the Primary Exporter, I certify
-          that the contents of this consignment conform to the terms of the attached EPA Acknowledgment of Consent. I certify that the
-          waste minimization statement identified in 40 CFR 262.27(a) (if I am a large quantity generator) or (b) (if I am a small
-          quantity generator) is true.
+          {getCertificationText(
+            availableDeterminations.find(d => selectedDeterminations.includes(d.id))?.epaGeneratorStatus || ''
+          )}
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
           <input type="checkbox" checked={form.generator_certification} onChange={fCheck('generator_certification')}
@@ -674,15 +706,39 @@ export default function EPAForm() {
         </div>
       </div>
 
+      {/* Validation Errors Display */}
+      {showValidation && validationErrors.length > 0 && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '1rem', marginTop: '1rem' }}>
+          <h4 style={{ color: '#991b1b', marginBottom: '0.5rem' }}>⚠️ Validation Issues ({validationErrors.length})</h4>
+          <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+            {validationErrors.map((err, i) => (
+              <li key={i} style={{ color: '#7f1d1d', fontSize: '0.88rem', marginBottom: '0.25rem' }}>
+                <strong>[Box {err.box}]</strong> {err.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {showValidation && validationErrors.length === 0 && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #16a34a', borderRadius: 8, padding: '1rem', marginTop: '1rem' }}>
+          <p style={{ color: '#15803d', fontWeight: 600, margin: 0 }}>✅ All manifest fields pass validation.</p>
+        </div>
+      )}
+
       {/* Submit */}
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', marginBottom: '2rem' }}>
         <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}
           style={{ padding: '0.6rem 2rem', fontSize: '1rem' }}>
-          {submitting ? 'Saving…' : '💾 Save Manifest'}
+          {submitting ? 'Saving…' : '💾 Save Draft'}
+        </button>
+        <button className="btn btn-secondary" onClick={handleValidate}
+          style={{ padding: '0.6rem 1.5rem', fontSize: '1rem' }}>
+          ✓ Validate
         </button>
         <button className="btn btn-secondary" onClick={handleExportCurrentForm}
           style={{ padding: '0.6rem 1.5rem', fontSize: '1rem' }}>
-          📄 Export Current Form as PDF
+          📄 Generate PDF
         </button>
         <button className="btn btn-secondary" onClick={() => navigate('/')}>Cancel</button>
       </div>

@@ -241,7 +241,7 @@ export default function Shipping() {
                   This order contains hazardous waste and requires an EPA Form 8700-22 Uniform Hazardous Waste Manifest.
                 </p>
                 <a
-                  href={`#/epa-form?mixtureId=${selectedOrder.id}`}
+                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
                   onClick={(e) => {
                     e.preventDefault()
                     navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
@@ -266,7 +266,7 @@ export default function Shipping() {
                   This order does not require a hazardous waste manifest. A Bill of Lading (BOL) or standard shipping document may be used.
                 </p>
                 <a
-                  href={`#/epa-form?mixtureId=${selectedOrder.id}`}
+                  href={`/epa-form?mixtureId=${selectedOrder.id}`}
                   onClick={(e) => {
                     e.preventDefault()
                     navigate(`/epa-form?mixtureId=${selectedOrder.id}`)
