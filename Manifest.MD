@@ -230,5 +230,9 @@ A manifest creation flow is considered compliant when, for any signed hazardous-
 - 40 CFR Part 262, Subpart B — The Manifest
 - 49 CFR 172.101 — Hazardous Materials Table (including 172.101(c)(9) "Waste" prefix rule)
 - 40 CFR 262.20 — General Requirements (manifest)
+- 40 CFR 262.14 — Conditions for VSQG exemption
+- 40 CFR 262.15 — Satellite accumulation areas
 - 40 CFR 262.16 — Conditions for SQG accumulation
 - 40 CFR 262.17 — Conditions for LQG accumulation
+
+> **Note on generator-status-driven rules:** The "Waste" prefix rule in R-9.2 and the hold-time table in §3 reflect the **business rules supplied for this application** (matching the existing `EPA_STATUS_HOLD_DAYS` map in `backend/api/models.py` and the user-specified DOT description behavior tied to VSQG/SQG/LQG status). These app-level rules should be reviewed against the current text of 49 CFR 172.101(c)(9) and 40 CFR 262.14–262.17 by a qualified EHS reviewer before production use.
