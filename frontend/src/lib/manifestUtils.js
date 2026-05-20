@@ -34,7 +34,7 @@ export const VALID_PACKING_GROUPS = ['PG I', 'PG II', 'PG III', '']
  * @param {string} params.hazardClass - Hazard class or division (e.g., "3")
  * @param {string} params.packingGroup - Packing group (e.g., "PG II")
  * @param {string} params.epaGeneratorStatus - Generator status: "VSQG", "SQG", or "LQG"
- * @returns {object} { description: string, wastePrefix Applied: boolean }
+ * @returns {object} { description: string, wastePrefixApplied: boolean }
  */
 export function buildDotDescription({ unNumber, properShippingName, hazardClass, packingGroup, epaGeneratorStatus }) {
   const psn = (properShippingName || '').trim()
