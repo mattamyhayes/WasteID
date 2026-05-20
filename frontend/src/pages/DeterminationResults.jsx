@@ -250,7 +250,7 @@ export default function DeterminationResults() {
             border: '1px solid #f59e0b',
             borderRadius: 8,
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '0.75rem' }}>
               <div>
                 <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 2 }}>Reviewed By</div>
                 <div style={{ fontWeight: 700, fontSize: '1rem' }}>{det.reviewer_name}</div>

@@ -381,7 +381,7 @@ export default function EPAForm() {
       {/* Section 1: Manifest Tracking */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>1. Manifest Information</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Manifest Tracking Number</label>
             <input className="form-control" value={form.manifest_tracking_number} onChange={f('manifest_tracking_number')}
@@ -398,7 +398,7 @@ export default function EPAForm() {
       {/* Section 2: Generator Information */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>2. Generator Information</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Generator Name *</label>
             <input className="form-control" value={form.generator_name} onChange={f('generator_name')}
@@ -414,7 +414,7 @@ export default function EPAForm() {
           <label style={labelStyle}>Mailing Address</label>
           <input className="form-control" value={form.generator_address} onChange={f('generator_address')} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>City</label>
             <input className="form-control" value={form.generator_city} onChange={f('generator_city')} />
@@ -431,7 +431,7 @@ export default function EPAForm() {
             <input className="form-control" value={form.generator_zip} onChange={f('generator_zip')} />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Generator Phone</label>
             <input className="form-control" value={form.generator_phone} onChange={f('generator_phone')} />
@@ -447,7 +447,7 @@ export default function EPAForm() {
       {/* Section 3: Transporters */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>3. Transporters</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Transporter 1 Company Name</label>
             <input className="form-control" value={form.transporter1_name} onChange={f('transporter1_name')} />
@@ -457,7 +457,7 @@ export default function EPAForm() {
             <input className="form-control" value={form.transporter1_epa_id} onChange={f('transporter1_epa_id')} />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Transporter 2 Company Name</label>
             <input className="form-control" value={form.transporter2_name} onChange={f('transporter2_name')} />
@@ -472,7 +472,7 @@ export default function EPAForm() {
       {/* Section 4: Designated Facility */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>4. Designated Facility</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Facility Name</label>
             <input className="form-control" value={form.designated_facility_name} onChange={f('designated_facility_name')} />
@@ -486,7 +486,7 @@ export default function EPAForm() {
           <label style={labelStyle}>Facility Address</label>
           <input className="form-control" value={form.designated_facility_address} onChange={f('designated_facility_address')} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>City</label>
             <input className="form-control" value={form.designated_facility_city} onChange={f('designated_facility_city')} />
@@ -596,7 +596,7 @@ export default function EPAForm() {
                 onChange={e => updateWasteItem(idx, 'dot_description', e.target.value)}
                 placeholder="e.g., Waste Flammable Liquid, N.O.S., 3, UN1993, PG II" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
               <div className="form-group" style={fieldStyle}>
                 <label style={labelStyle}>No. of Containers</label>
                 <input className="form-control" type="number" min="1" value={item.containers_no}
@@ -663,7 +663,7 @@ export default function EPAForm() {
           <span style={{ fontSize: '0.9rem' }}>This is an international shipment</span>
         </label>
         {form.international_shipment && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.import_to_us} onChange={fCheck('import_to_us')}
                 style={{ width: 16, height: 16 }} />
@@ -694,7 +694,7 @@ export default function EPAForm() {
             style={{ width: 18, height: 18 }} />
           <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>I certify the above statement</span>
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group" style={fieldStyle}>
             <label style={labelStyle}>Printed/Typed Name</label>
             <input className="form-control" value={form.generator_printed_name} onChange={f('generator_printed_name')} />
@@ -727,7 +727,7 @@ export default function EPAForm() {
       )}
 
       {/* Submit */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}
           style={{ padding: '0.6rem 2rem', fontSize: '1rem' }}>
           {submitting ? 'Saving…' : '💾 Save Draft'}

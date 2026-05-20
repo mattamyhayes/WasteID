@@ -144,7 +144,7 @@ export default function ReviewSignOff() {
         <p style={{ color: '#6b7280', marginBottom: '1rem', fontSize: '0.92rem' }}>
           Confirm or adjust the measured mixture properties before running the determination.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group">
             <label>Overall Flash Point (°C)</label>
             <input className="form-control" type="number" step="any" placeholder="e.g., 25"
@@ -219,7 +219,7 @@ export default function ReviewSignOff() {
             </label>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div className="form-group">
               <label style={{ fontWeight: 600 }}>Full Name *</label>
               <input className="form-control" value={reviewerName}
