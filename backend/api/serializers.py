@@ -2,7 +2,7 @@ from rest_framework import serializers
 import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
-                     Order, Journey, OrderJourney)
+                     Order, Journey, OrderJourney, StateRule, StateValidationResult)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -158,3 +158,39 @@ class OrderSerializer(serializers.ModelSerializer):
                   'status', 'profiles', 'potential_shippers', 'profile_ids', 'shipper_ids',
                   'notes', 'created_at', 'updated_at', 'journey_records']
         read_only_fields = ['order_id', 'created_at', 'updated_at']
+
+
+class StateRuleSerializer(serializers.ModelSerializer):
+    questions = serializers.SerializerMethodField()
+    conditions = serializers.SerializerMethodField()
+
+    def get_questions(self, obj):
+        try:
+            return json.loads(obj.question_template)
+        except Exception:
+            return []
+
+    def get_conditions(self, obj):
+        try:
+            return json.loads(obj.condition_expression)
+        except Exception:
+            return {}
+
+    class Meta:
+        model = StateRule
+        fields = '__all__'
+
+
+class StateValidationResultSerializer(serializers.ModelSerializer):
+    rule_results_list = serializers.SerializerMethodField()
+
+    def get_rule_results_list(self, obj):
+        try:
+            return json.loads(obj.rule_results)
+        except Exception:
+            return []
+
+    class Meta:
+        model = StateValidationResult
+        fields = '__all__'
+        read_only_fields = ['validated_at']

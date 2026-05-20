@@ -90,6 +90,10 @@ def _generate_profile_id():
     return _generate_prefixed_id("PID")
 
 
+# Alias retained for backwards-compatible migration reference
+_generate_transaction_id = _generate_profile_id
+
+
 def _generate_order_id():
     return _generate_prefixed_id("OID")
 
@@ -413,3 +417,68 @@ class OrderJourney(models.Model):
 
     def __str__(self):
         return f"Journey {self.order.order_id} → {self.get_stage_display()} at {self.timestamp}"
+
+
+class StateRule(models.Model):
+    """Data-driven state-specific hazardous waste rule."""
+    CATEGORY_CHOICES = [
+        ('identification', 'Identification'),
+        ('storage', 'Storage'),
+        ('manifest', 'Manifest'),
+        ('transport', 'Transport'),
+        ('reporting', 'Reporting'),
+        ('labeling', 'Labeling'),
+    ]
+    RESULT_CHOICES = [
+        ('pass', 'Pass'),
+        ('needs_info', 'Needs Info'),
+        ('fail', 'Fail'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    state_code = models.CharField(max_length=2, db_index=True, help_text='2-letter state/territory code')
+    rule_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    rule_id_code = models.CharField(max_length=20, unique=True, help_text='e.g., AL-001, CA-003')
+    rule_reference = models.CharField(max_length=300, blank=True, help_text='Regulation citation')
+    description = models.TextField()
+    condition_expression = models.TextField(default='{}', help_text='JSON conditions for when this rule applies')
+    question_template = models.TextField(default='[]', help_text='JSON array of questions to ask if NEEDS_INFO')
+    effective_date = models.DateField(null=True, blank=True)
+    sunset_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['state_code', 'rule_id_code']
+
+    def get_conditions(self):
+        return json.loads(self.condition_expression)
+
+    def get_questions(self):
+        return json.loads(self.question_template)
+
+    def __str__(self):
+        return f"{self.rule_id_code}: {self.description[:60]}"
+
+
+class StateValidationResult(models.Model):
+    """Records the result of running state rules against a mixture profile."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='state_validations')
+    validated_at = models.DateTimeField(auto_now_add=True)
+    state_code = models.CharField(max_length=2)
+    overall_result = models.CharField(max_length=12, choices=[
+        ('pass', 'Pass'),
+        ('needs_info', 'Needs Info'),
+        ('fail', 'Fail'),
+    ])
+    rule_results = models.TextField(default='[]', help_text='JSON array of {rule_id, result, details}')
+    additional_data_collected = models.TextField(default='{}', help_text='JSON object of answers to state questions')
+
+    class Meta:
+        ordering = ['-validated_at']
+
+    def get_rule_results(self):
+        return json.loads(self.rule_results)
+
+    def __str__(self):
+        return f"State validation for {self.mixture} ({self.state_code}) - {self.overall_result}"
