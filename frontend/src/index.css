@@ -177,6 +177,8 @@ input, select, textarea {
 }
 
 @media (max-width: 768px) {
+  .container { padding: 0 1rem; }
+
   .mobile-only { display: block; }
   .desktop-only { display: none; }
 
@@ -232,6 +234,23 @@ input, select, textarea {
   .mobile-nav-btn:active { background: #f0fdf4; }
 
   .mobile-nav-btn .mnb-icon { font-size: 1.6rem; }
+
+  .wizard-steps {
+    flex-wrap: wrap;
+    border-bottom: none;
+    gap: 0.5rem;
+  }
+
+  .wizard-step {
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    margin-bottom: 0;
+  }
+
+  .wizard-step.active,
+  .wizard-step.done {
+    border-width: 2px;
+  }
 }
 
 /* Table */

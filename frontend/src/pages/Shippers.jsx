@@ -101,7 +101,7 @@ export default function Shippers() {
 
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ color: '#166534', marginBottom: '0.75rem' }}>Company Information</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div className="form-group" style={fieldStyle}>
               <label>Company Name *</label>
               <input className="form-control" value={form.company_name} onChange={f('company_name')}
@@ -133,7 +133,7 @@ export default function Shippers() {
             <label>Street Address</label>
             <input className="form-control" value={form.address} onChange={f('address')} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
             <div className="form-group" style={fieldStyle}>
               <label>City</label>
               <input className="form-control" value={form.city} onChange={f('city')} />
@@ -153,7 +153,7 @@ export default function Shippers() {
             <label>Site Street Address</label>
             <input className="form-control" value={form.site_address} onChange={f('site_address')} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
             <div className="form-group" style={fieldStyle}>
               <label>Site City</label>
               <input className="form-control" value={form.site_city} onChange={f('site_city')} />
@@ -173,7 +173,7 @@ export default function Shippers() {
             <textarea className="form-control" rows={2} value={form.notes} onChange={f('notes')} />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Saving…' : 'Save Shipper'}
             </button>
@@ -216,7 +216,7 @@ export default function Shippers() {
       )}
 
       {!loading && items.length > 0 && (
-        <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+        <div className="card table-wrap" style={{ padding: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>

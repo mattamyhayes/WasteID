@@ -82,7 +82,7 @@ export default function AddCustomer() {
             <option value="LQG">LQG – Large Quantity Generator</option>
           </select>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="form-group">
             <label>Contact Name</label>
             <input className="form-control" value={form.contact_name}
@@ -128,7 +128,7 @@ export default function AddCustomer() {
           </ul>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', alignItems: 'end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Location Name *</label>
             <input className="form-control" value={locForm.name}
@@ -153,7 +153,7 @@ export default function AddCustomer() {
         </div>
         <button type="button" className="btn btn-secondary" onClick={addPendingLocation}>+ Add Location</button>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
             {submitting ? 'Saving…' : 'Save Generator'}
           </button>

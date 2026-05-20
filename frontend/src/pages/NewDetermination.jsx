@@ -421,7 +421,7 @@ export default function NewDetermination() {
           <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
             Provide measured mixture properties to improve accuracy. Leave blank if unknown.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div className="form-group">
               <label>Overall Flash Point (°C)</label>
               <input className="form-control" type="number" step="any" placeholder="e.g., 25"

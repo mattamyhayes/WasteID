@@ -127,7 +127,7 @@ function BidPanel({ listing, onAccept, onClose, accepting }) {
               <BidStatusBadge status={bid.status} label={bid.status_display || bid.status} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1rem', fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.35rem 1rem', fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
               <div><span style={{ color: '#6b7280' }}>Type:</span> <strong>{bid.bid_type_display || bid.bid_type}</strong></div>
               <div><span style={{ color: '#6b7280' }}>Amount:</span> <strong>{bid.amount ? `$${Number(bid.amount).toLocaleString()}` : '—'}</strong></div>
               <div><span style={{ color: '#6b7280' }}>Contact:</span> {bid.bidder_contact_name || '—'}</div>
@@ -245,7 +245,7 @@ function BidModal({ listing, onClose, onSubmit, submitting }) {
             <strong>Waste Codes:</strong> {(listing.waste_codes || []).join(', ') || '—'}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.75rem 1rem' }}>
             <div className="form-group" style={{ gridColumn: '1/-1' }}>
               <label style={{ fontWeight: 600 }}>Company Name *</label>
               <input className={`form-control${errors.bidder_company_name ? ' is-invalid' : ''}`}
@@ -432,7 +432,7 @@ function ListingCard({ listing, onBidClick }) {
 
       {expanded && (
         <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #f3f4f6' }}>
-          <div style={{ paddingTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 2rem', fontSize: '0.88rem', color: '#374151' }}>
+          <div style={{ paddingTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.5rem 2rem', fontSize: '0.88rem', color: '#374151' }}>
             <div><span style={{ color: '#6b7280' }}>Profile ID:</span> <span style={{ fontFamily: 'monospace' }}>{listing.mixture_transaction_id}</span></div>
             <div><span style={{ color: '#6b7280' }}>Hazardous:</span> <strong>{listing.is_hazardous === null || listing.is_hazardous === undefined ? '—' : listing.is_hazardous ? 'Yes' : 'No'}</strong></div>
             <div><span style={{ color: '#6b7280' }}>Listed:</span> {new Date(listing.created_at).toLocaleDateString()}</div>
