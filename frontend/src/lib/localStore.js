@@ -272,7 +272,7 @@ function seedMixtureStore() {
   const now = new Date()
   const seededProfiles = Array.from({ length: 20 }, (_, i) => ({
     name: `Demo Profile ${i + 1}`,
-    review_status: i % 5 === 0 ? 'rejected' : i % 3 === 0 ? 'approved' : 'pending_review',
+    review_status: i % 5 === 0 ? 'rejected' : i % 3 === 0 ? 'approved' : i % 7 === 0 ? 'draft' : 'pending_review',
     customer: customerStore.customers[i % customerStore.customers.length],
     generation_offset_days: 55 - (i * 2),
     component_count: 5 + (i % 6),
@@ -300,6 +300,7 @@ function seedMixtureStore() {
       process_description: `Demo waste stream for ${profile.customer.name}`,
       notes: 'Prepopulated demo profile',
       review_status: profile.review_status,
+      profile_stage: profile.review_status === 'approved' ? 'Approved' : profile.review_status === 'pending_review' ? 'Pending Review' : 'Draft',
       pickup_by_date: null,
       hold_time_days: null,
       produced_date: null,
@@ -511,6 +512,7 @@ export const localMixtures = {
       process_description: payload.process_description || '',
       notes: payload.notes || '',
       review_status: payload.review_status || '',
+      profile_stage: payload.profile_stage || 'Draft',
       pickup_by_date: payload.pickup_by_date || null,
       hold_time_days: payload.hold_time_days || null,
       produced_date: payload.produced_date || null,
@@ -603,6 +605,7 @@ export const localMixtures = {
     store.determinations.push(det)
     // Mark mixture as pending review after determination
     m.review_status = 'pending_review'
+    m.profile_stage = 'Pending Review'
     saveStore(store)
     return ok({ determination_id: det.id, determination: hydrateDetermination(det) })
   },
@@ -661,13 +664,17 @@ export const localMixtures = {
     const store = loadStore()
     const m = store.mixtures.find(x => x.id === Number(mixtureId))
     if (!m) return reject('Mixture not found.', 404)
-    if (!['pending_review', 'approved', 'rejected'].includes(reviewStatus)) {
+    if (!['draft', 'pending_review', 'approved', 'rejected'].includes(reviewStatus)) {
       return reject('Invalid review status.', 400)
     }
     m.review_status = reviewStatus
+    // Sync profile_stage with review_status
+    if (reviewStatus === 'approved') m.profile_stage = 'Approved'
+    else if (reviewStatus === 'pending_review') m.profile_stage = 'Pending Review'
+    else m.profile_stage = 'Draft'
     m.updated_at = new Date().toISOString()
     saveStore(store)
-    return ok({ id: m.id, review_status: m.review_status })
+    return ok({ id: m.id, review_status: m.review_status, profile_stage: m.profile_stage })
   },
 
   validateStateRules(id, additionalAnswers = {}) {

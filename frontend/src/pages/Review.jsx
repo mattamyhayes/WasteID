@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
 
 const TILES = [
+  { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
   { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
   { key: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
   { key: 'approved', label: 'Approved (Last 20 Days)', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
@@ -21,7 +22,7 @@ export default function Review() {
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTile, setActiveTile] = useState('pending_review')
+  const [activeTile, setActiveTile] = useState('draft')
   const [sortCol, setSortCol] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
   const [actionLoading, setActionLoading] = useState(null)
@@ -64,6 +65,7 @@ export default function Review() {
     twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
 
     return {
+      draft: items.filter(m => !m.review_status || m.review_status === 'draft').length,
       pending_review: items.filter(m => m.review_status === 'pending_review').length,
       rejected: profilesWithDetermination.filter(m => m.review_status === 'rejected').length,
       approved: profilesWithDetermination.filter(m => {
@@ -78,6 +80,10 @@ export default function Review() {
     if (!activeTile) return []
     const twentyDaysAgo = new Date()
     twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20)
+
+    if (activeTile === 'draft') {
+      return items.filter(m => !m.review_status || m.review_status === 'draft')
+    }
 
     if (activeTile === 'pending_review') {
       return items.filter(m => m.review_status === 'pending_review')
@@ -308,8 +314,11 @@ export default function Review() {
                         <th style={thStyle} onClick={() => handleSort('created_at')}>
                           Created{sortIndicator('created_at')}
                         </th>
+                        <th style={{ ...thStyle, cursor: 'default' }}>
+                          Stage
+                        </th>
                         <th style={thStyle} onClick={() => handleSort('hazardous')}>
-                          Status{sortIndicator('hazardous')}
+                          Type{sortIndicator('hazardous')}
                         </th>
                         <th style={thStyle} onClick={() => handleSort('waste_codes')}>
                           Waste Codes{sortIndicator('waste_codes')}
@@ -353,10 +362,26 @@ export default function Review() {
                             <td style={{ fontSize: '0.88rem', color: '#6b7280' }}>
                               {new Date(m.created_at).toLocaleDateString()}
                             </td>
+                            <td style={{ fontSize: '0.85rem' }}>
+                              {(() => {
+                                const stage = m.profile_stage || (!m.review_status || m.review_status === 'draft' ? 'Draft' : m.review_status === 'pending_review' ? 'Pending Review' : m.review_status === 'approved' ? 'Approved' : 'Draft')
+                                const stageColors = {
+                                  'Draft': { background: '#f3f4f6', color: '#4b5563' },
+                                  'Pending Review': { background: '#fef3c7', color: '#92400e' },
+                                  'Approved': { background: '#dcfce7', color: '#166534' },
+                                }
+                                const style = stageColors[stage] || stageColors['Draft']
+                                return (
+                                  <span style={{ ...style, padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, fontSize: '0.8rem' }}>
+                                    {stage}
+                                  </span>
+                                )
+                              })()}
+                            </td>
                             <td style={{ fontSize: '0.88rem' }}>
                               {latestDet
                                 ? (isHazardous ? 'Hazardous' : 'Non-Hazardous')
-                                : <span style={{ color: '#9ca3af' }}>Pending</span>}
+                                : <span style={{ color: '#9ca3af' }}>Pending Determination</span>}
                             </td>
                             <td style={{ fontSize: '0.85rem' }}>
                               {wasteCodes.length > 0
@@ -381,7 +406,7 @@ export default function Review() {
                             <td>
                               <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <Link
-                                  to={`/review/${m.id}/signoff`}
+                                  to={`/determine?edit=${m.id}`}
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                 >
