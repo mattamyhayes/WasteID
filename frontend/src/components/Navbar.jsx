@@ -10,6 +10,7 @@ export const navLinks = [
   { to: '/scheduling', label: 'Scheduling', icon: '📅' },
   { to: '/journey', label: 'Journey', icon: '🗺️' },
   { to: '/reports', label: 'Reports', icon: '📂' },
+  { to: '/incinerators', label: 'Incinerators', icon: '🔥' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },
 ]
 

@@ -18,6 +18,7 @@ import Shipping from './pages/Shipping'
 import Admin from './pages/Admin'
 import Reports from './pages/Reports'
 import Marketplace from './pages/Marketplace'
+import Incinerators from './pages/Incinerators'
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/incinerators" element={<Incinerators />} />
         </Routes>
       </main>
       <Footer />

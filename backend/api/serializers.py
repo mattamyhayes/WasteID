@@ -3,7 +3,7 @@ import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
                      Order, Journey, OrderJourney, StateRule, StateValidationResult,
-                     MarketplaceListing, Bid)
+                     MarketplaceListing, Bid, Incinerator)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -279,3 +279,31 @@ class MarketplaceListingSummarySerializer(MarketplaceListingSerializer):
     """Lighter serializer for list view – omits full bids array."""
     class Meta(MarketplaceListingSerializer.Meta):
         fields = [f for f in MarketplaceListingSerializer.Meta.fields if f != 'bids']
+
+
+class IncineratorSerializer(serializers.ModelSerializer):
+    accepted_waste_codes = serializers.JSONField(default=list)
+
+    class Meta:
+        model = Incinerator
+        fields = ['id', 'name', 'address', 'city', 'state', 'zip_code', 'phone',
+                  'contact_name', 'contact_email', 'permit_number', 'notes',
+                  'accepted_waste_codes', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate_accepted_waste_codes(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Must be a list of waste codes.")
+        return value
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if isinstance(rep['accepted_waste_codes'], str):
+            rep['accepted_waste_codes'] = json.loads(rep['accepted_waste_codes'])
+        return rep
+
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        if 'accepted_waste_codes' in ret and isinstance(ret['accepted_waste_codes'], list):
+            ret['accepted_waste_codes'] = json.dumps(ret['accepted_waste_codes'])
+        return ret
