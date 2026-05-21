@@ -76,7 +76,7 @@ function MixtureRow({ m, onDelete, onPdf }) {
             </>
           )}
           {m.shipment_size_unit && m.shipment_size_qty && (
-            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit}</>
+            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit === 'gallons' ? 'Drums' : m.shipment_size_unit}</>
           )}
           {latestDet && (
             <>

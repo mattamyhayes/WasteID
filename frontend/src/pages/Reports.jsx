@@ -85,7 +85,7 @@ function MixtureRow({ m, onDelete, onPdf }) {
           {m.components?.length ?? 0} component{m.components?.length !== 1 ? 's' : ''} ·
           Created {new Date(m.created_at).toLocaleDateString()}
           {m.shipment_size_unit && m.shipment_size_qty && (
-            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit}</>
+            <> · Shipment: {m.shipment_size_qty} {m.shipment_size_unit === 'gallons' ? 'Drums' : m.shipment_size_unit}</>
           )}
           {latestDet && (
             <>

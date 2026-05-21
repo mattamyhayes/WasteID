@@ -413,7 +413,7 @@ function ListingCard({ listing, onBidClick }) {
               <span><span style={{ color: '#6b7280' }}>Generator:</span> <strong>{listing.epa_generator_status}</strong></span>
             )}
             {listing.shipment_size_qty && (
-              <span><span style={{ color: '#6b7280' }}>Size:</span> <strong>{listing.shipment_size_qty} {listing.shipment_size_unit}</strong></span>
+              <span><span style={{ color: '#6b7280' }}>Size:</span> <strong>{listing.shipment_size_qty} {listing.shipment_size_unit === 'gallons' ? 'Drums' : listing.shipment_size_unit}</strong></span>
             )}
             <span><span style={{ color: '#6b7280' }}>Bids:</span> <strong>{listing.bid_count}</strong></span>
           </div>

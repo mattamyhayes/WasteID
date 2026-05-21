@@ -1,7 +1,7 @@
 // Shared constants and utilities for ship-by date calculations.
 // EPA generator status hold days (single source of truth for the frontend).
 
-export const EPA_STATUS_HOLD_DAYS = { VSQG: 10, SQG: 30, LQG: 60 }
+export const EPA_STATUS_HOLD_DAYS = { VSQG: 180, SQG: 180, LQG: 90 }
 
 /**
  * Calculate ship-by date info given EPA status and generation date.
