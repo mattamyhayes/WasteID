@@ -159,51 +159,58 @@ export default function NewDetermination() {
     return true
   }
 
+  // Helper to save profile and add components, returns the mixture id
+  const saveProfile = async () => {
+    const payload = {
+      name: name.trim(),
+      is_discarded: isDiscarded,
+      discard_reason: isDiscarded ? discardReason : '',
+      process_description: processDesc,
+      notes,
+      customer: customerId ? Number(customerId) : null,
+      customer_location: locationId ? Number(locationId) : null,
+      shipment_size_unit: shipmentSizeUnit,
+      shipment_size_qty: shipmentSizeQty ? Number(shipmentSizeQty) : null,
+      epa_generator_status: epaGeneratorStatus,
+      generation_date: generationDate || null,
+      draft_flash_point_c: flashPoint !== '' ? parseFloat(flashPoint) : null,
+      draft_ph: ph !== '' ? parseFloat(ph) : null,
+      draft_is_reactive: isReactive,
+    }
+
+    let id = mixtureId
+    if (id) {
+      await mixtures.update(id, payload)
+    } else {
+      const res = await mixtures.create(payload)
+      id = res.data.id
+      setMixtureId(id)
+      setTransactionId(res.data.transaction_id || '')
+    }
+
+    // Add components
+    for (const comp of components) {
+      await mixtures.addComponent(id, {
+        chemical: comp.chemical,
+        custom_name: comp.custom_name,
+        quantity: comp.quantity,
+        unit: comp.unit,
+        override_flash_point_c: comp.override_flash_point_c,
+        override_ph: comp.override_ph,
+        override_is_reactive: comp.override_is_reactive,
+      })
+    }
+
+    return id
+  }
+
   // Save the profile and submit for review (no determination run yet)
   const handleSubmitForReview = async () => {
     if (!validate()) return
     setSubmitting(true)
     setError('')
     try {
-      const payload = {
-        name: name.trim(),
-        is_discarded: isDiscarded,
-        discard_reason: isDiscarded ? discardReason : '',
-        process_description: processDesc,
-        notes,
-        customer: customerId ? Number(customerId) : null,
-        customer_location: locationId ? Number(locationId) : null,
-        shipment_size_unit: shipmentSizeUnit,
-        shipment_size_qty: shipmentSizeQty ? Number(shipmentSizeQty) : null,
-        epa_generator_status: epaGeneratorStatus,
-        generation_date: generationDate || null,
-        draft_flash_point_c: flashPoint !== '' ? parseFloat(flashPoint) : null,
-        draft_ph: ph !== '' ? parseFloat(ph) : null,
-        draft_is_reactive: isReactive,
-      }
-
-      let id = mixtureId
-      if (id) {
-        await mixtures.update(id, payload)
-      } else {
-        const res = await mixtures.create(payload)
-        id = res.data.id
-        setMixtureId(id)
-        setTransactionId(res.data.transaction_id || '')
-      }
-
-      // Add components
-      for (const comp of components) {
-        await mixtures.addComponent(id, {
-          chemical: comp.chemical,
-          custom_name: comp.custom_name,
-          quantity: comp.quantity,
-          unit: comp.unit,
-          override_flash_point_c: comp.override_flash_point_c,
-          override_ph: comp.override_ph,
-          override_is_reactive: comp.override_is_reactive,
-        })
-      }
+      const id = await saveProfile()
 
       // Mark as pending review
       await mixtures.setReviewStatus(id, 'pending_review')
@@ -220,6 +227,29 @@ export default function NewDetermination() {
       navigate('/review')
     } catch (e) {
       setError(e.response?.data?.detail || 'Could not save profile. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Save the profile and immediately run a determination
+  const handleCreateDetermination = async () => {
+    if (!validate()) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const id = await saveProfile()
+
+      // Build additional props from draft values
+      const additionalProps = {}
+      if (flashPoint !== '') additionalProps.flash_point_c = parseFloat(flashPoint)
+      if (ph !== '') additionalProps.ph = parseFloat(ph)
+      if (isReactive) additionalProps.is_reactive = true
+
+      const detRes = await mixtures.determine(id, additionalProps, {})
+      navigate(`/results/${detRes.data.determination_id}`)
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Could not create determination. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -451,9 +481,12 @@ export default function NewDetermination() {
       </>
 
       {/* Submit */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
         <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting}>
           {submitting ? 'Saving…' : '📋 Submit for Review'}
+        </button>
+        <button className="btn btn-primary" style={{ background: '#7c3aed', borderColor: '#7c3aed' }} onClick={handleCreateDetermination} disabled={submitting}>
+          {submitting ? 'Saving…' : '🧪 Create Determination'}
         </button>
       </div>
 
