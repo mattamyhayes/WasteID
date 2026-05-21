@@ -173,11 +173,12 @@ export default function Shippers() {
             <textarea className="form-control" rows={2} value={form.notes} onChange={f('notes')} />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Saving…' : 'Save Shipper'}
             </button>
             <button className="btn btn-secondary" onClick={cancel}>Cancel</button>
+            {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>⚠ {error}</span>}
           </div>
         </div>
       </div>

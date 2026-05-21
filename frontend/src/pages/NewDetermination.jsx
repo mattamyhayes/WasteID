@@ -481,7 +481,8 @@ export default function NewDetermination() {
       </>
 
       {/* Submit */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500, marginRight: 'auto' }}>⚠ {error}</span>}
         <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting}>
           {submitting ? 'Saving…' : '📋 Submit for Review'}
         </button>

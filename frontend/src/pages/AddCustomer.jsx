@@ -153,13 +153,14 @@ export default function AddCustomer() {
         </div>
         <button type="button" className="btn btn-secondary" onClick={addPendingLocation}>+ Add Location</button>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
             {submitting ? 'Saving…' : 'Save Generator'}
           </button>
           <button className="btn btn-secondary" onClick={() => navigate('/generators')}>
             Cancel
           </button>
+          {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>⚠ {error}</span>}
         </div>
       </div>
     </div>
