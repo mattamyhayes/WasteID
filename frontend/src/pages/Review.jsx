@@ -387,15 +387,13 @@ export default function Review() {
                                 >
                                   Edit
                                 </Link>
-                                {latestDet && (
-                                  <Link
-                                    to={`/results/${latestDet.id}`}
-                                    className="btn btn-secondary"
-                                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
-                                  >
-                                    View
-                                  </Link>
-                                )}
+                                <Link
+                                  to={latestDet ? `/results/${latestDet.id}` : `/review/${m.id}/signoff`}
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
+                                >
+                                  View
+                                </Link>
                                 <button
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
@@ -404,7 +402,7 @@ export default function Review() {
                                 >
                                   {determinationLoading === m.id ? '…' : '🧪 Determine'}
                                 </button>
-                                {latestDet && wasteCodes.length > 0 && (
+                                {wasteCodes.length > 0 && (
                                   <button
                                     className="btn btn-secondary"
                                     style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
@@ -416,26 +414,22 @@ export default function Review() {
                                 )}
                                 {activeTile === 'pending_review' && (
                                   <>
-                                    {latestDet && (
-                                      <>
-                                        <button
-                                          className="btn btn-primary"
-                                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
-                                          disabled={actionLoading === m.id}
-                                          onClick={() => handleSetStatus(m.id, 'approved')}
-                                        >
-                                          {actionLoading === m.id ? '…' : 'Approve'}
-                                        </button>
-                                        <button
-                                          className="btn btn-danger"
-                                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
-                                          disabled={actionLoading === m.id}
-                                          onClick={() => handleSetStatus(m.id, 'rejected')}
-                                        >
-                                          {actionLoading === m.id ? '…' : 'Reject'}
-                                        </button>
-                                      </>
-                                    )}
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
+                                      disabled={actionLoading === m.id}
+                                      onClick={() => handleSetStatus(m.id, 'approved')}
+                                    >
+                                      {actionLoading === m.id ? '…' : 'Approve'}
+                                    </button>
+                                    <button
+                                      className="btn btn-danger"
+                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
+                                      disabled={actionLoading === m.id}
+                                      onClick={() => handleSetStatus(m.id, 'rejected')}
+                                    >
+                                      {actionLoading === m.id ? '…' : 'Reject'}
+                                    </button>
                                   </>
                                 )}
                                 {activeTile === 'rejected' && (
