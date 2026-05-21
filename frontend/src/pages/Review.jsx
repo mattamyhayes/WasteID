@@ -11,6 +11,20 @@ const TILES = [
 
 const NO_PICKUP_SORT_VALUE = 999
 
+const STAGE_COLORS = {
+  'Draft': { background: '#f3f4f6', color: '#4b5563' },
+  'Pending Review': { background: '#fef3c7', color: '#92400e' },
+  'Approved': { background: '#dcfce7', color: '#166534' },
+}
+
+function getProfileStage(m) {
+  if (m.profile_stage) return m.profile_stage
+  if (!m.review_status || m.review_status === 'draft') return 'Draft'
+  if (m.review_status === 'pending_review') return 'Pending Review'
+  if (m.review_status === 'approved') return 'Approved'
+  return 'Draft'
+}
+
 function holdTimeColor(daysLeft) {
   if (daysLeft === null) return {}
   if (daysLeft <= 5) return { background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }
@@ -364,13 +378,8 @@ export default function Review() {
                             </td>
                             <td style={{ fontSize: '0.85rem' }}>
                               {(() => {
-                                const stage = m.profile_stage || (!m.review_status || m.review_status === 'draft' ? 'Draft' : m.review_status === 'pending_review' ? 'Pending Review' : m.review_status === 'approved' ? 'Approved' : 'Draft')
-                                const stageColors = {
-                                  'Draft': { background: '#f3f4f6', color: '#4b5563' },
-                                  'Pending Review': { background: '#fef3c7', color: '#92400e' },
-                                  'Approved': { background: '#dcfce7', color: '#166534' },
-                                }
-                                const style = stageColors[stage] || stageColors['Draft']
+                                const stage = getProfileStage(m)
+                                const style = STAGE_COLORS[stage] || STAGE_COLORS['Draft']
                                 return (
                                   <span style={{ ...style, padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, fontSize: '0.8rem' }}>
                                     {stage}
