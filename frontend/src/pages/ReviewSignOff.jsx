@@ -89,6 +89,7 @@ export default function ReviewSignOff() {
   const holdDays = mixture.hold_days ?? null
   const shipByDate = mixture.ship_by_date
   const daysRemaining = mixture.days_remaining_to_ship
+  const shipmentSizeUnitLabel = mixture.shipment_size_unit === 'gallons' ? 'Drums' : mixture.shipment_size_unit
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
@@ -120,7 +121,7 @@ export default function ReviewSignOff() {
               {daysRemaining != null && ` (${daysRemaining} days remaining)`}<br /></>
           )}
           {mixture.shipment_size_unit && (
-            <><strong>Shipment Size:</strong> {mixture.shipment_size_qty} {mixture.shipment_size_unit}<br /></>
+            <><strong>Shipment Size:</strong> {mixture.shipment_size_qty} {shipmentSizeUnitLabel}<br /></>
           )}
           {mixture.process_description && <><strong>Process:</strong> {mixture.process_description}<br /></>}
           {mixture.notes && <><strong>Notes:</strong> {mixture.notes}<br /></>}

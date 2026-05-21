@@ -306,7 +306,7 @@ function seedMixtureStore() {
       produced_date: null,
       profile_started_at: createdAt,
       shipment_size_unit: 'gallons',
-      shipment_size_qty: [5, 15, 30, 55][id % 4],
+      shipment_size_qty: [5, 15, 30, 55, 85, 95][id % 6],
       epa_generator_status: epaStatus,
       generation_date: dateOnly,
       created_at: createdAt,

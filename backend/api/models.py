@@ -121,7 +121,7 @@ class Mixture(models.Model):
     ]
 
     SHIPMENT_SIZE_UNIT_CHOICES = [
-        ('gallons', 'Gallons'),
+        ('gallons', 'Drums'),
         ('cyb', 'CYB'),
         ('bulk', 'Bulk'),
     ]
@@ -131,6 +131,8 @@ class Mixture(models.Model):
         (15, '15'),
         (30, '30'),
         (55, '55'),
+        (85, '85'),
+        (95, '95'),
     ]
 
     EPA_GENERATOR_STATUS_CHOICES = [
@@ -140,9 +142,9 @@ class Mixture(models.Model):
     ]
 
     EPA_STATUS_HOLD_DAYS = {
-        'VSQG': 10,
-        'SQG': 30,
-        'LQG': 60,
+        'VSQG': 180,
+        'SQG': 180,
+        'LQG': 90,
     }
     name = models.CharField(max_length=200, default='Unnamed Mixture')
     transaction_id = models.CharField(max_length=32, unique=True, default=_generate_profile_id)

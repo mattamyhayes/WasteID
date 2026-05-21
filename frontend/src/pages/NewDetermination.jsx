@@ -15,18 +15,32 @@ const DISCARD_REASONS = [
 ]
 
 const SHIPMENT_SIZE_UNITS = [
-  { value: 'gallons', label: 'Gallons' },
+  { value: 'gallons', label: 'Drums' },
   { value: 'cyb', label: 'CYB' },
   { value: 'bulk', label: 'Bulk' },
 ]
 
-const SHIPMENT_SIZE_QTYS = [5, 15, 30, 55]
+const SHIPMENT_SIZE_QTYS = [5, 15, 30, 55, 85, 95]
 
 const EPA_GENERATOR_STATUSES = [
   { value: 'VSQG', label: 'VSQG – Very Small Quantity Generator' },
   { value: 'SQG', label: 'SQG – Small Quantity Generator' },
   { value: 'LQG', label: 'LQG – Large Quantity Generator' },
 ]
+
+const EPA_GENERATOR_STATUS_GUIDANCE = {
+  LQG: [
+    'Can hold waste for up to 90 days.',
+  ],
+  SQG: [
+    'Can hold waste for up to 180 days.',
+  ],
+  VSQG: [
+    'Non-acute waste: can be held for up to 180 days.',
+    'Cannot generate more than 220 lbs (100 kg) monthly or hold more than 2,200 lbs (1,000 kg) on-site at any time.',
+    'Acute waste: can hold up to 2.2 lbs (1 kg) for 90 days.',
+  ],
+}
 
 export default function NewDetermination() {
   const navigate = useNavigate()
@@ -427,9 +441,16 @@ export default function NewDetermination() {
               ))}
             </select>
             {epaGeneratorStatus && (
-              <small style={{ color: '#166534', fontWeight: 600 }}>
-                {epaGeneratorStatus} can hold waste for up to {holdDays} days.
-              </small>
+              <div style={{ marginTop: '0.45rem' }}>
+                <small style={{ color: '#166534', fontWeight: 700, display: 'block' }}>
+                  {epaGeneratorStatus} regulatory guidance
+                </small>
+                <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0, color: '#166534', fontSize: '0.82rem' }}>
+                  {(EPA_GENERATOR_STATUS_GUIDANCE[epaGeneratorStatus] || [`Can hold waste for up to ${EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? '—'} days.`]).map(item => (
+                    <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
 
