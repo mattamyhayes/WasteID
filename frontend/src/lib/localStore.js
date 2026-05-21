@@ -1029,6 +1029,97 @@ export const localShippers = {
   },
 }
 
+// --------------------------------------------------------------- Local Incinerators
+const INCINERATORS_STORAGE_KEY = 'wasteid_incinerators_v1'
+
+function emptyIncineratorStore() {
+  return { incinerators: [], nextId: 1, seeded: false }
+}
+
+function seedIncineratorStore() {
+  const store = emptyIncineratorStore()
+  store.seeded = true
+  saveIncineratorStore(store)
+  return store
+}
+
+function loadIncineratorStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(INCINERATORS_STORAGE_KEY) : null
+    if (!raw) return seedIncineratorStore()
+    const parsed = JSON.parse(raw)
+    const store = {
+      incinerators: parsed.incinerators || [],
+      nextId: parsed.nextId || 1,
+      seeded: parsed.seeded || false,
+    }
+    if (!store.seeded) {
+      return seedIncineratorStore()
+    }
+    return store
+  } catch {
+    return seedIncineratorStore()
+  }
+}
+
+function saveIncineratorStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(INCINERATORS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+export const localIncinerators = {
+  list() {
+    const store = loadIncineratorStore()
+    return ok({ results: store.incinerators })
+  },
+  get(id) {
+    const store = loadIncineratorStore()
+    const s = store.incinerators.find(x => x.id === Number(id))
+    if (!s) return reject('Incinerator not found.', 404)
+    return ok(s)
+  },
+  create(payload) {
+    const store = loadIncineratorStore()
+    const now = new Date().toISOString()
+    const incinerator = {
+      id: store.nextId++,
+      name: payload.name || '',
+      address: payload.address || '',
+      city: payload.city || '',
+      state: payload.state || '',
+      zip_code: payload.zip_code || '',
+      phone: payload.phone || '',
+      contact_name: payload.contact_name || '',
+      contact_email: payload.contact_email || '',
+      permit_number: payload.permit_number || '',
+      notes: payload.notes || '',
+      accepted_waste_codes: payload.accepted_waste_codes || [],
+      created_at: now,
+      updated_at: now,
+    }
+    store.incinerators.push(incinerator)
+    saveIncineratorStore(store)
+    return ok(incinerator)
+  },
+  update(id, payload) {
+    const store = loadIncineratorStore()
+    const s = store.incinerators.find(x => x.id === Number(id))
+    if (!s) return reject('Incinerator not found.', 404)
+    Object.assign(s, payload, { updated_at: new Date().toISOString() })
+    saveIncineratorStore(store)
+    return ok(s)
+  },
+  delete(id) {
+    const store = loadIncineratorStore()
+    store.incinerators = store.incinerators.filter(s => s.id !== Number(id))
+    saveIncineratorStore(store)
+    return ok({})
+  },
+}
+
 // --------------------------------------------------------------- Local Manifests
 const MANIFESTS_STORAGE_KEY = 'wasteid_manifests_v1'
 

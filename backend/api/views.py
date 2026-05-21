@@ -6,14 +6,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
-                     StateRule, StateValidationResult, MarketplaceListing, Bid)
+                     StateRule, StateValidationResult, MarketplaceListing, Bid, Incinerator)
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
                            ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer,
                            StateRuleSerializer, StateValidationResultSerializer,
                            MarketplaceListingSerializer, MarketplaceListingSummarySerializer,
-                           BidSerializer)
+                           BidSerializer, IncineratorSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -865,3 +865,15 @@ class BidViewSet(viewsets.ModelViewSet):
         bid.status = 'withdrawn'
         bid.save()
         return Response(BidSerializer(bid).data)
+
+
+class IncineratorViewSet(viewsets.ModelViewSet):
+    queryset = Incinerator.objects.all()
+    serializer_class = IncineratorSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        q = self.request.query_params.get('q', '')
+        if q:
+            qs = qs.filter(name__icontains=q)
+        return qs

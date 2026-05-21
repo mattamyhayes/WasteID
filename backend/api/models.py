@@ -565,3 +565,29 @@ class StateValidationResult(models.Model):
 
     def __str__(self):
         return f"State validation for {self.mixture} ({self.state_code}) - {self.overall_result}"
+
+
+class Incinerator(models.Model):
+    """Incinerator facility that can accept specific EPA waste codes for disposal."""
+    name = models.CharField(max_length=300)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    zip_code = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    contact_name = models.CharField(max_length=200, blank=True)
+    contact_email = models.EmailField(blank=True)
+    permit_number = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    accepted_waste_codes = models.TextField(default='[]', help_text='JSON array of accepted EPA waste codes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def get_accepted_waste_codes(self):
+        return json.loads(self.accepted_waste_codes)
+
+    def __str__(self):
+        return self.name

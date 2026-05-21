@@ -1,7 +1,7 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localJourney } from '../lib/journeyStore.js'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localManifests, localOrders, localMarketplace } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -144,6 +144,24 @@ export const shippers = {
   delete: (id) => useLocalMixtures
     ? localShippers.delete(id)
     : client.delete(`/shippers/${id}/`),
+}
+
+export const incinerators = {
+  list: () => useLocalMixtures
+    ? localIncinerators.list()
+    : client.get('/incinerators/'),
+  get: (id) => useLocalMixtures
+    ? localIncinerators.get(id)
+    : client.get(`/incinerators/${id}/`),
+  create: (data) => useLocalMixtures
+    ? localIncinerators.create(data)
+    : client.post('/incinerators/', data),
+  update: (id, data) => useLocalMixtures
+    ? localIncinerators.update(id, data)
+    : client.patch(`/incinerators/${id}/`, data),
+  delete: (id) => useLocalMixtures
+    ? localIncinerators.delete(id)
+    : client.delete(`/incinerators/${id}/`),
 }
 
 export const manifests = {
