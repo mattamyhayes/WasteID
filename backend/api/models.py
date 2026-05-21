@@ -395,10 +395,10 @@ class Order(models.Model):
     """Work order that groups profiles for bidding and shipping."""
     STATUS_CHOICES = [
         ('open', 'Open Order'),
-        ('in_quote', 'Waiting for Bid'),
+        ('in_quote', 'Waiting to Quote'),
         ('waiting_signature', 'Waiting for Customer Signature'),
         ('rejected_transport', 'Rejected by Transport'),
-        ('rejected_tldr', 'Rejected by TLDR'),
+        ('rejected_tldr', 'Rejected by TSDF'),
     ]
 
     order_id = models.CharField(max_length=32, unique=True, default=_generate_order_id)
@@ -425,7 +425,7 @@ class OrderJourney(models.Model):
         ('in_quote', 'In Quote'),
         ('waiting_signature', 'Waiting for Customer Signature'),
         ('rejected_transport', 'Rejected by Transport'),
-        ('rejected_tldr', 'Rejected by TLDR'),
+        ('rejected_tldr', 'Rejected by TSDF'),
     ]
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='journey_records')

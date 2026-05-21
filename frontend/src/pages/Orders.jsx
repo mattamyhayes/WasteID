@@ -3,10 +3,10 @@ import { orders as ordersApi, mixtures as mixturesApi, shippers as shippersApi }
 
 const STATUS_TILES = [
   { key: 'open', label: 'Open Orders', icon: '📂', color: '#2563eb' },
-  { key: 'in_quote', label: 'Waiting for Bid', icon: '💰', color: '#d97706' },
+  { key: 'in_quote', label: 'Waiting to Quote', icon: '💰', color: '#d97706' },
   { key: 'waiting_signature', label: 'Waiting for Customer Signature', icon: '✍️', color: '#7c3aed' },
   { key: 'rejected_transport', label: 'Rejected by Transport', icon: '🚫', color: '#dc2626' },
-  { key: 'rejected_tldr', label: 'Rejected by TLDR', icon: '❌', color: '#be123c' },
+  { key: 'rejected_tldr', label: 'Rejected by TSDF', icon: '❌', color: '#be123c' },
 ]
 
 const STATUS_OPTIONS = STATUS_TILES.map(tile => ({ value: tile.key, label: tile.label }))

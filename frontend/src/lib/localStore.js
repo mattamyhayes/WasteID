@@ -1225,7 +1225,7 @@ function seedOrderStore() {
     { owner_name: 'Jenna Whitcomb', status: 'in_quote', note: 'Demo order submitted for bidding.' },
     { owner_name: 'Dr. Priya Natarajan', status: 'waiting_signature', note: 'Demo order awaiting customer signature.' },
     { owner_name: 'Hank Brennan', status: 'rejected_transport', note: 'Demo order rejected by transport review.' },
-    { owner_name: 'Sarah Kowalski, RN', status: 'rejected_tldr', note: 'Demo order rejected by TLDR.' },
+    { owner_name: 'Sarah Kowalski, RN', status: 'rejected_tldr', note: 'Demo order rejected by TSDF.' },
   ]
   const baseDate = new Date()
   for (let i = 0; i < seeds.length; i++) {

@@ -320,10 +320,10 @@ function OrdersTab({ profileItems }) {
 
   const STATUS_LABELS = {
     open: 'Open',
-    in_quote: 'Waiting for Bid',
+    in_quote: 'Waiting to Quote',
     waiting_signature: 'Waiting for Signature',
     rejected_transport: 'Rejected by Transport',
-    rejected_tldr: 'Rejected by TLDR',
+    rejected_tldr: 'Rejected by TSDF',
   }
 
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>
