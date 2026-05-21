@@ -446,7 +446,7 @@ export default function NewDetermination() {
                   {epaGeneratorStatus} regulatory guidance
                 </small>
                 <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0, color: '#166534', fontSize: '0.82rem' }}>
-                  {(EPA_GENERATOR_STATUS_GUIDANCE[epaGeneratorStatus] || [`Can hold waste for up to ${holdDays} days.`]).map(item => (
+                  {(EPA_GENERATOR_STATUS_GUIDANCE[epaGeneratorStatus] || [`Can hold waste for up to ${EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? '—'} days.`]).map(item => (
                     <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
                   ))}
                 </ul>
