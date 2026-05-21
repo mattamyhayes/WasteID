@@ -320,7 +320,9 @@ export default function Review() {
                                   {m.name}
                                 </Link>
                               ) : (
-                                <span style={{ fontWeight: 600 }}>{m.name}</span>
+                                <Link to={`/review/${m.id}/signoff`} style={{ color: '#166534', fontWeight: 600 }}>
+                                  {m.name}
+                                </Link>
                               )}
                               {m.transaction_id && (
                                 <div style={{ fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
@@ -358,7 +360,14 @@ export default function Review() {
                               )}
                             </td>
                             <td>
-                              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Link
+                                  to={`/review/${m.id}/signoff`}
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
+                                >
+                                  Edit
+                                </Link>
                                 {latestDet && (
                                   <Link
                                     to={`/results/${latestDet.id}`}
@@ -375,18 +384,11 @@ export default function Review() {
                                     disabled={compareLoading === m.id}
                                     onClick={() => handleCompare(m)}
                                   >
-                                    {compareLoading === m.id ? '…' : 'Compare'}
+                                    {compareLoading === m.id ? '…' : 'Match'}
                                   </button>
                                 )}
                                 {activeTile === 'pending_review' && (
                                   <>
-                                    <Link
-                                      to={`/review/${m.id}/signoff`}
-                                      className="btn btn-secondary"
-                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
-                                    >
-                                      Sign Off
-                                    </Link>
                                     {latestDet && (
                                       <>
                                         <button
