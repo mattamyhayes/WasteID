@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { mixtures, marketplace } from '../api/client'
+import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
 
 const TILES = [
   { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
@@ -26,6 +26,8 @@ export default function Review() {
   const [actionLoading, setActionLoading] = useState(null)
   const [marketplaceLoading, setMarketplaceLoading] = useState(null)
   const [marketplaceListings, setMarketplaceListings] = useState({})
+  const [compareModal, setCompareModal] = useState(null) // { profileName, wasteCodes, fullMatches, partialMatches }
+  const [compareLoading, setCompareLoading] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -163,6 +165,53 @@ export default function Review() {
       alert(e?.response?.data?.detail || 'Failed to send profile to marketplace.')
     } finally {
       setMarketplaceLoading(null)
+    }
+  }
+
+  const handleCompare = async (mixture) => {
+    const latestDet = mixture.determinations?.[mixture.determinations.length - 1]
+    let wasteCodes = latestDet?.waste_codes_list || []
+    if (wasteCodes.length === 0 && latestDet?.waste_codes) {
+      try { wasteCodes = JSON.parse(latestDet.waste_codes) } catch { wasteCodes = [] }
+    }
+    if (wasteCodes.length === 0) {
+      alert('No waste codes found for this profile.')
+      return
+    }
+
+    setCompareLoading(mixture.id)
+    try {
+      const res = await incineratorsApi.list()
+      const allIncinerators = res.data.results || res.data
+      const profileCodes = new Set(wasteCodes)
+
+      const fullMatches = []
+      const partialMatches = []
+
+      allIncinerators.forEach(inc => {
+        const acceptedCodes = inc.accepted_waste_codes || []
+        if (acceptedCodes.length === 0) return
+
+        const acceptedSet = new Set(acceptedCodes)
+        const matchingCodes = wasteCodes.filter(code => acceptedSet.has(code))
+
+        if (matchingCodes.length === wasteCodes.length) {
+          fullMatches.push({ ...inc, matchingCodes })
+        } else if (matchingCodes.length > 0) {
+          partialMatches.push({ ...inc, matchingCodes, missingCodes: wasteCodes.filter(code => !acceptedSet.has(code)) })
+        }
+      })
+
+      setCompareModal({
+        profileName: mixture.name,
+        wasteCodes,
+        fullMatches,
+        partialMatches,
+      })
+    } catch {
+      alert('Failed to load incinerators for comparison.')
+    } finally {
+      setCompareLoading(null)
     }
   }
 
@@ -319,6 +368,16 @@ export default function Review() {
                                     View
                                   </Link>
                                 )}
+                                {latestDet && wasteCodes.length > 0 && (
+                                  <button
+                                    className="btn btn-secondary"
+                                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
+                                    disabled={compareLoading === m.id}
+                                    onClick={() => handleCompare(m)}
+                                  >
+                                    {compareLoading === m.id ? '…' : 'Compare'}
+                                  </button>
+                                )}
                                 {activeTile === 'pending_review' && (
                                   <>
                                     <Link
@@ -424,6 +483,105 @@ export default function Review() {
             </div>
           )}
         </>
+      )}
+
+      {/* Compare Modal */}
+      {compareModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: '1rem',
+        }} onClick={() => setCompareModal(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 12, maxWidth: 700, width: '100%', maxHeight: '80vh',
+            overflow: 'auto', padding: '2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div>
+                <h2 style={{ color: '#14532d', margin: 0 }}>Incinerator Comparison</h2>
+                <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: '0.25rem 0 0' }}>
+                  Profile: <strong>{compareModal.profileName}</strong>
+                </p>
+                <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>
+                  EPA Codes: {compareModal.wasteCodes.join(', ')}
+                </p>
+              </div>
+              <button
+                onClick={() => setCompareModal(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Full Matches */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ color: '#16a34a', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '2px solid #86efac', paddingBottom: '0.4rem' }}>
+                ✅ Full Match ({compareModal.fullMatches.length})
+              </h3>
+              <p style={{ color: '#6b7280', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
+                These incinerators accept <strong>all</strong> EPA codes for this profile.
+              </p>
+              {compareModal.fullMatches.length === 0 ? (
+                <p style={{ color: '#9ca3af', fontSize: '0.9rem', fontStyle: 'italic' }}>No incinerators fully match all waste codes.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {compareModal.fullMatches.map(inc => (
+                    <div key={inc.id} style={{ padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                      <strong style={{ color: '#166534' }}>{inc.name}</strong>
+                      {(inc.city || inc.state) && (
+                        <span style={{ color: '#6b7280', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
+                          — {[inc.city, inc.state].filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                      {inc.permit_number && (
+                        <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: '0.5rem' }}>
+                          (Permit: {inc.permit_number})
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Partial Matches */}
+            <div>
+              <h3 style={{ color: '#d97706', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '2px solid #fde68a', paddingBottom: '0.4rem' }}>
+                ⚠️ Partial Match ({compareModal.partialMatches.length})
+              </h3>
+              <p style={{ color: '#6b7280', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
+                These incinerators accept <strong>some but not all</strong> EPA codes for this profile.
+              </p>
+              {compareModal.partialMatches.length === 0 ? (
+                <p style={{ color: '#9ca3af', fontSize: '0.9rem', fontStyle: 'italic' }}>No partial matches found.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {compareModal.partialMatches.map(inc => (
+                    <div key={inc.id} style={{ padding: '0.75rem', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
+                      <div>
+                        <strong style={{ color: '#92400e' }}>{inc.name}</strong>
+                        {(inc.city || inc.state) && (
+                          <span style={{ color: '#6b7280', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
+                            — {[inc.city, inc.state].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', marginTop: '0.3rem' }}>
+                        <span style={{ color: '#16a34a' }}>Accepts: {inc.matchingCodes.join(', ')}</span>
+                        <span style={{ color: '#dc2626', marginLeft: '0.75rem' }}>Missing: {inc.missingCodes.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+              <button className="btn btn-secondary" onClick={() => setCompareModal(null)}>Close</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
