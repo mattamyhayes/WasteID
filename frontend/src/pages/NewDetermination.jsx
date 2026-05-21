@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
@@ -30,6 +30,8 @@ const EPA_GENERATOR_STATUSES = [
 
 export default function NewDetermination() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const editId = searchParams.get('edit')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -75,28 +77,76 @@ export default function NewDetermination() {
     [epaGeneratorStatus, generationDate]
   )
 
-  // Reset all state on mount
+  // Reset all state on mount (or load existing profile in edit mode)
   useEffect(() => {
     setError('')
     setSubmitting(false)
-    setMixtureId(null)
-    setTransactionId('')
-    setName('')
-    setCustomerId('')
-    setLocationId('')
-    setIsDiscarded(true)
-    setDiscardReason('spent')
-    setProcessDesc('')
-    setComponents([])
-    setFlashPoint('')
-    setPh('')
-    setIsReactive(false)
-    setNotes('')
-    setShipmentSizeUnit('')
-    setShipmentSizeQty('')
-    setEpaGeneratorStatus('')
-    setGenerationDate('')
-  }, [])
+    if (!editId) {
+      setMixtureId(null)
+      setTransactionId('')
+      setName('')
+      setCustomerId('')
+      setLocationId('')
+      setIsDiscarded(true)
+      setDiscardReason('spent')
+      setProcessDesc('')
+      setComponents([])
+      setFlashPoint('')
+      setPh('')
+      setIsReactive(false)
+      setNotes('')
+      setShipmentSizeUnit('')
+      setShipmentSizeQty('')
+      setEpaGeneratorStatus('')
+      setGenerationDate('')
+    }
+  }, [editId])
+
+  // Load existing profile when in edit mode
+  useEffect(() => {
+    if (!editId) return
+    let cancelled = false
+    async function loadProfile() {
+      try {
+        const res = await mixtures.get(editId)
+        if (cancelled) return
+        const m = res.data
+        setMixtureId(m.id)
+        setTransactionId(m.transaction_id || '')
+        setName(m.name || '')
+        setCustomerId(m.customer ? String(m.customer) : '')
+        setLocationId(m.customer_location ? String(m.customer_location) : '')
+        setIsDiscarded(m.is_discarded !== false)
+        setDiscardReason(m.discard_reason || 'spent')
+        setProcessDesc(m.process_description || '')
+        setNotes(m.notes || '')
+        setShipmentSizeUnit(m.shipment_size_unit || '')
+        setShipmentSizeQty(m.shipment_size_qty ? String(m.shipment_size_qty) : '')
+        setEpaGeneratorStatus(m.epa_generator_status || '')
+        setGenerationDate(m.generation_date || '')
+        if (m.draft_flash_point_c != null) setFlashPoint(String(m.draft_flash_point_c))
+        if (m.draft_ph != null) setPh(String(m.draft_ph))
+        if (m.draft_is_reactive) setIsReactive(true)
+        // Load components
+        if (m.components && m.components.length > 0) {
+          setComponents(m.components.map(c => ({
+            chemical: c.chemical || null,
+            custom_name: c.custom_name || '',
+            quantity: c.quantity,
+            unit: c.unit,
+            override_flash_point_c: c.override_flash_point_c || null,
+            override_ph: c.override_ph || null,
+            override_is_reactive: c.override_is_reactive || false,
+            component_name: c.component_name || c.custom_name || '',
+          })))
+        }
+      } catch (e) {
+        setError('Could not load profile for editing.')
+      }
+    }
+    loadProfile()
+    return () => { cancelled = true }
+  }, [editId])
 
   // Load generators once
   useEffect(() => {

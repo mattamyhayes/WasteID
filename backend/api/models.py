@@ -108,9 +108,16 @@ def _generate_bid_id():
 
 class Mixture(models.Model):
     REVIEW_STATUS_CHOICES = [
+        ('draft', 'Draft'),
         ('pending_review', 'Pending Initial Review'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
+    ]
+
+    PROFILE_STAGE_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Pending Review', 'Pending Review'),
+        ('Approved', 'Approved'),
     ]
 
     SHIPMENT_SIZE_UNIT_CHOICES = [
@@ -154,7 +161,8 @@ class Mixture(models.Model):
     process_description = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
-    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, blank=True, default='', help_text='Review workflow status')
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='draft', help_text='Review workflow status')
+    profile_stage = models.CharField(max_length=20, choices=PROFILE_STAGE_CHOICES, default='Draft', help_text='Current stage of the profile: Draft, Pending Review, or Approved')
     pickup_by_date = models.DateField(null=True, blank=True, help_text='Date by which waste must be picked up from generator')
     hold_time_days = models.IntegerField(null=True, blank=True, help_text='Total hold time in days from generation to required pickup')
 
@@ -345,6 +353,9 @@ class Journey(models.Model):
     """Tracks each stage of the customer workflow for executive journey-map reporting."""
     STAGE_CHOICES = [
         ('produced', 'Produced'),
+        ('draft', 'Draft'),
+        ('pending_review', 'Pending Review'),
+        ('approved', 'Approved'),
         ('profile', 'Profile'),
         ('prof_review', 'Prof Review'),
         ('quote', 'Quote'),
