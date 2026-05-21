@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
 
 const TILES = [
@@ -18,6 +18,7 @@ function holdTimeColor(daysLeft) {
 }
 
 export default function Review() {
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTile, setActiveTile] = useState('pending_review')
@@ -28,6 +29,7 @@ export default function Review() {
   const [marketplaceListings, setMarketplaceListings] = useState({})
   const [compareModal, setCompareModal] = useState(null) // { profileName, wasteCodes, fullMatches, partialMatches }
   const [compareLoading, setCompareLoading] = useState(null)
+  const [determinationLoading, setDeterminationLoading] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -215,6 +217,23 @@ export default function Review() {
     }
   }
 
+  const handleCreateDetermination = async (mixture) => {
+    setDeterminationLoading(mixture.id)
+    try {
+      const additionalProps = {}
+      if (mixture.draft_flash_point_c != null) additionalProps.flash_point_c = mixture.draft_flash_point_c
+      if (mixture.draft_ph != null) additionalProps.ph = mixture.draft_ph
+      if (mixture.draft_is_reactive) additionalProps.is_reactive = true
+
+      const detRes = await mixtures.determine(mixture.id, additionalProps, {})
+      navigate(`/results/${detRes.data.determination_id}`)
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'Failed to create determination.')
+    } finally {
+      setDeterminationLoading(null)
+    }
+  }
+
   const sortIndicator = (col) => {
     if (sortCol !== col) return ' ↕'
     return sortDir === 'asc' ? ' ↑' : ' ↓'
@@ -375,6 +394,14 @@ export default function Review() {
                                 >
                                   View
                                 </Link>
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
+                                  disabled={determinationLoading === m.id}
+                                  onClick={() => handleCreateDetermination(m)}
+                                >
+                                  {determinationLoading === m.id ? '…' : '🧪 Determine'}
+                                </button>
                                 {wasteCodes.length > 0 && (
                                   <button
                                     className="btn btn-secondary"
