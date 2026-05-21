@@ -121,9 +121,10 @@ function UserManagement() {
               <option value="Inactive">Inactive</option>
             </select>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={handleSave}>Save</button>
             <button className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+            {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>⚠ {error}</span>}
           </div>
         </div>
       )}

@@ -727,7 +727,7 @@ export default function EPAForm() {
       )}
 
       {/* Submit */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}
           style={{ padding: '0.6rem 2rem', fontSize: '1rem' }}>
           {submitting ? 'Saving…' : '💾 Save Draft'}
@@ -741,6 +741,7 @@ export default function EPAForm() {
           📄 Generate PDF
         </button>
         <button className="btn btn-secondary" onClick={() => navigate('/')}>Cancel</button>
+        {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>⚠ {error}</span>}
       </div>
 
       {/* Saved Manifests */}
