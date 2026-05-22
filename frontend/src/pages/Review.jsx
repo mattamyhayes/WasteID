@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
+import ProfileDocuments from '../components/ProfileDocuments'
 
 const TILES = [
   { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
@@ -45,6 +46,7 @@ export default function Review() {
   const [compareModal, setCompareModal] = useState(null) // { profileName, wasteCodes, fullMatches, partialMatches }
   const [compareLoading, setCompareLoading] = useState(null)
   const [determinationLoading, setDeterminationLoading] = useState(null)
+  const [selectedProfileForDocs, setSelectedProfileForDocs] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -432,6 +434,13 @@ export default function Review() {
                                   View
                                 </Link>
                                 <button
+                                 className="btn btn-secondary"
+                                 style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: selectedProfileForDocs?.id === m.id ? '#fef3c7' : '#f9fafb', color: '#92400e', border: '1px solid #fbbf24' }}
+                                 onClick={() => setSelectedProfileForDocs(selectedProfileForDocs?.id === m.id ? null : m)}
+                               >
+                                 📎 Docs
+                               </button>
+                               <button
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
                                   disabled={determinationLoading === m.id}
@@ -524,6 +533,14 @@ export default function Review() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Document Upload Panel for selected profile */}
+          {selectedProfileForDocs && (
+            <ProfileDocuments
+              mixtureId={selectedProfileForDocs.id}
+              profileName={selectedProfileForDocs.name || selectedProfileForDocs.transaction_id}
+            />
           )}
 
           {!activeTile && items.length > 0 && (

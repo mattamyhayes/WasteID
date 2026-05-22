@@ -1748,3 +1748,120 @@ export const localMarketplace = {
     })
   },
 }
+
+// ===== Profile Documents (localStorage-backed) =====
+const DOCUMENTS_STORAGE_KEY = 'wasteid_documents_v1'
+
+function loadDocumentsStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DOCUMENTS_STORAGE_KEY) : null
+    if (!raw) return { documents: [], nextId: 1 }
+    return JSON.parse(raw)
+  } catch {
+    return { documents: [], nextId: 1 }
+  }
+}
+
+function saveDocumentsStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* storage unavailable */ }
+}
+
+// Allowed and blocked extensions mirroring the backend
+const ALLOWED_EXTENSIONS = new Set(['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff'])
+const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.js', '.vbs',
+  '.wsf', '.ps1', '.sh', '.bash', '.php', '.py', '.rb', '.pl', '.jar',
+  '.dll', '.sys', '.htm', '.html', '.svg', '.swf'])
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
+
+function validateFile(file) {
+  if (!file) return 'No file provided.'
+  if (file.size > MAX_FILE_SIZE_BYTES) return `File too large. Maximum size is 25 MB.`
+  const ext = (file.name.includes('.') ? '.' + file.name.split('.').pop() : '').toLowerCase()
+  if (BLOCKED_EXTENSIONS.has(ext)) return `File type "${ext}" is not allowed for security reasons.`
+  if (!ALLOWED_EXTENSIONS.has(ext)) return `File type "${ext}" is not supported.`
+  return null
+}
+
+export const localDocuments = {
+  list(mixtureId) {
+    const store = loadDocumentsStore()
+    const docs = mixtureId
+      ? store.documents.filter(d => d.mixture === Number(mixtureId))
+      : store.documents
+    return ok({ results: docs })
+  },
+
+  upload(mixtureId, fileType, shortName, file) {
+    const validationError = validateFile(file)
+    if (validationError) return reject(validationError, 400)
+    if (!mixtureId) return reject('mixture is required.', 400)
+    if (fileType !== 'SDS' && fileType !== 'A') return reject('file_type must be "SDS" or "A".', 400)
+    if (!shortName || !shortName.trim()) return reject('short_name is required.', 400)
+
+    const store = loadDocumentsStore()
+    const mixtureStore = loadStore()
+    const mixture = mixtureStore.mixtures.find(m => m.id === Number(mixtureId))
+    if (!mixture) return reject('Mixture not found.', 404)
+
+    const profileNumber = mixture.transaction_id || `PID-${mixtureId}`
+    const existingCount = store.documents.filter(
+      d => d.mixture === Number(mixtureId) && d.file_type === fileType
+    ).length
+    const increment = existingCount + 1
+    const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : ''
+    const storedFilename = `${profileNumber}_${fileType}${increment}${ext}`
+
+    const doc = {
+      id: store.nextId++,
+      mixture: Number(mixtureId),
+      file_type: fileType,
+      short_name: shortName.trim(),
+      stored_filename: storedFilename,
+      original_filename: file.name,
+      file_size: file.size,
+      uploaded_at: new Date().toISOString(),
+      // Store file data as base64 for local mode
+      file_data: null, // Will be set asynchronously
+      file_url: null,
+    }
+
+    // Read file as data URL for local storage
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        doc.file_data = reader.result
+        doc.file_url = reader.result
+        store.documents.push(doc)
+        saveDocumentsStore(store)
+        resolve({ data: doc })
+      }
+      reader.onerror = () => {
+        // Still save without file data
+        store.documents.push(doc)
+        saveDocumentsStore(store)
+        resolve({ data: doc })
+      }
+      reader.readAsDataURL(file)
+    })
+  },
+
+  delete(docId) {
+    const store = loadDocumentsStore()
+    const idx = store.documents.findIndex(d => d.id === Number(docId))
+    if (idx === -1) return reject('Document not found.', 404)
+    store.documents.splice(idx, 1)
+    saveDocumentsStore(store)
+    return ok({})
+  },
+
+  get(docId) {
+    const store = loadDocumentsStore()
+    const doc = store.documents.find(d => d.id === Number(docId))
+    if (!doc) return reject('Document not found.', 404)
+    return ok(doc)
+  },
+}

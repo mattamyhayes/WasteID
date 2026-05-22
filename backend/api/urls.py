@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (ChemicalViewSet, MixtureViewSet, MixtureComponentViewSet,
                     WasteDeterminationViewSet, CustomerViewSet, CustomerLocationViewSet,
                     ShipperViewSet, EPAManifestViewSet, OrderViewSet, JourneyViewSet,
-                    StateRuleViewSet, MarketplaceListingViewSet, BidViewSet, IncineratorViewSet)
+                    StateRuleViewSet, MarketplaceListingViewSet, BidViewSet, IncineratorViewSet,
+                    ProfileDocumentViewSet)
 
 router = DefaultRouter()
 router.register(r'chemicals', ChemicalViewSet)
@@ -20,6 +21,7 @@ router.register(r'state-rules', StateRuleViewSet)
 router.register(r'marketplace-listings', MarketplaceListingViewSet)
 router.register(r'bids', BidViewSet)
 router.register(r'incinerators', IncineratorViewSet)
+router.register(r'profile-documents', ProfileDocumentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

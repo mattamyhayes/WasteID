@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
+import ProfileDocuments from '../components/ProfileDocuments'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 
@@ -356,6 +357,9 @@ export default function NewDetermination() {
       )}
 
       {error && <div className="alert alert-danger">{error}</div>}
+
+      {/* Document Upload */}
+      <ProfileDocuments mixtureId={mixtureId} profileName={name || transactionId} />
 
       {/* Waste Profile */}
       <>

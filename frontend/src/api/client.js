@@ -1,7 +1,7 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localJourney } from '../lib/journeyStore.js'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace, localDocuments } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -252,4 +252,29 @@ export const marketplace = {
   listBids: (params = {}) => useLocalMixtures
     ? localMarketplace.listBids(params)
     : client.get('/bids/', { params }),
+}
+
+export const profileDocuments = {
+  list: (mixtureId) => useLocalMixtures
+    ? localDocuments.list(mixtureId)
+    : client.get('/profile-documents/', { params: mixtureId ? { mixture: mixtureId } : {} }),
+  upload: (mixtureId, fileType, shortName, file) => {
+    if (useLocalMixtures) {
+      return localDocuments.upload(mixtureId, fileType, shortName, file)
+    }
+    const formData = new FormData()
+    formData.append('mixture', mixtureId)
+    formData.append('file_type', fileType)
+    formData.append('short_name', shortName)
+    formData.append('file', file)
+    return client.post('/profile-documents/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+  delete: (docId) => useLocalMixtures
+    ? localDocuments.delete(docId)
+    : client.delete(`/profile-documents/${docId}/`),
+  get: (docId) => useLocalMixtures
+    ? localDocuments.get(docId)
+    : client.get(`/profile-documents/${docId}/`),
 }

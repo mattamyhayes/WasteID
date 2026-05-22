@@ -6,14 +6,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
-                     StateRule, StateValidationResult, MarketplaceListing, Bid, Incinerator)
+                     StateRule, StateValidationResult, MarketplaceListing, Bid, Incinerator,
+                     ProfileDocument)
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
                            ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer,
                            StateRuleSerializer, StateValidationResultSerializer,
                            MarketplaceListingSerializer, MarketplaceListingSummarySerializer,
-                           BidSerializer, IncineratorSerializer)
+                           BidSerializer, IncineratorSerializer, ProfileDocumentSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -877,3 +878,95 @@ class IncineratorViewSet(viewsets.ModelViewSet):
         if q:
             qs = qs.filter(name__icontains=q)
         return qs
+
+
+import os
+from rest_framework.parsers import MultiPartParser, FormParser
+
+# Allowed file extensions for document uploads
+ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff'}
+# Blocked extensions that could be harmful
+BLOCKED_EXTENSIONS = {'.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.js', '.vbs',
+                      '.wsf', '.ps1', '.sh', '.bash', '.php', '.py', '.rb', '.pl', '.jar',
+                      '.dll', '.sys', '.htm', '.html', '.svg', '.swf'}
+MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB
+
+
+class ProfileDocumentViewSet(viewsets.ModelViewSet):
+    queryset = ProfileDocument.objects.select_related('mixture').all()
+    serializer_class = ProfileDocumentSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mixture_id = self.request.query_params.get('mixture')
+        if mixture_id:
+            qs = qs.filter(mixture_id=mixture_id)
+        return qs
+
+    def _validate_file(self, uploaded_file):
+        """Validate the uploaded file for security."""
+        if not uploaded_file:
+            return 'No file provided.'
+        # Check file size
+        if uploaded_file.size > MAX_FILE_SIZE:
+            return f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)} MB.'
+        # Check extension
+        _, ext = os.path.splitext(uploaded_file.name)
+        ext = ext.lower()
+        if ext in BLOCKED_EXTENSIONS:
+            return f'File type "{ext}" is not allowed for security reasons.'
+        if ext not in ALLOWED_EXTENSIONS:
+            return f'File type "{ext}" is not supported. Allowed: {", ".join(sorted(ALLOWED_EXTENSIONS))}'
+        # Check for null bytes in filename
+        if '\x00' in uploaded_file.name:
+            return 'Invalid filename.'
+        return None
+
+    def _generate_stored_filename(self, mixture, file_type, original_filename):
+        """Generate stored filename: {profile_number}{SDS|A}{increment}.{ext}"""
+        profile_number = mixture.transaction_id
+        type_suffix = file_type  # 'SDS' or 'A'
+        # Count existing documents of this type for this mixture
+        existing_count = ProfileDocument.objects.filter(
+            mixture=mixture, file_type=file_type
+        ).count()
+        increment = existing_count + 1
+        _, ext = os.path.splitext(original_filename)
+        return f"{profile_number}_{type_suffix}{increment}{ext}"
+
+    def create(self, request, *args, **kwargs):
+        uploaded_file = request.FILES.get('file')
+        error = self._validate_file(uploaded_file)
+        if error:
+            return Response({'detail': error}, status=status.HTTP_400_BAD_REQUEST)
+
+        mixture_id = request.data.get('mixture')
+        file_type = request.data.get('file_type')
+        short_name = request.data.get('short_name', '').strip()
+
+        if not mixture_id:
+            return Response({'detail': 'mixture is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if file_type not in ('SDS', 'A'):
+            return Response({'detail': 'file_type must be "SDS" or "A".'}, status=status.HTTP_400_BAD_REQUEST)
+        if not short_name:
+            return Response({'detail': 'short_name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            mixture = Mixture.objects.get(id=mixture_id)
+        except Mixture.DoesNotExist:
+            return Response({'detail': 'Mixture not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        stored_filename = self._generate_stored_filename(mixture, file_type, uploaded_file.name)
+
+        doc = ProfileDocument(
+            mixture=mixture,
+            file_type=file_type,
+            short_name=short_name,
+            file=uploaded_file,
+            stored_filename=stored_filename,
+        )
+        doc.save()
+
+        serializer = self.get_serializer(doc)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

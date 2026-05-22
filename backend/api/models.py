@@ -604,3 +604,24 @@ class Incinerator(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProfileDocument(models.Model):
+    """Document (SDS or Analytical) attached to a waste profile (Mixture)."""
+    FILE_TYPE_CHOICES = [
+        ('SDS', 'Safety Data Sheet'),
+        ('A', 'Analytical'),
+    ]
+
+    mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='documents')
+    file_type = models.CharField(max_length=3, choices=FILE_TYPE_CHOICES)
+    short_name = models.CharField(max_length=200, help_text='Short identifier for the document')
+    file = models.FileField(upload_to='profile_documents/')
+    stored_filename = models.CharField(max_length=300, help_text='Stored filename with profile number prefix')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.stored_filename} ({self.short_name})"
