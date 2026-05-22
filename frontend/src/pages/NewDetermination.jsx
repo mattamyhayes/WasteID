@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
-import ProfileDocuments from '../components/ProfileDocuments'
+import FileUpload from '../components/FileUpload'
+import DocumentList from '../components/DocumentList'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 
@@ -79,6 +80,7 @@ export default function NewDetermination() {
 
   // Generator data
   const [customerList, setCustomerList] = useState([])
+  const [docRefresh, setDocRefresh] = useState(0)
   const [customersLoading, setCustomersLoading] = useState(true)
   const [customersError, setCustomersError] = useState('')
 
@@ -358,8 +360,20 @@ export default function NewDetermination() {
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Document Upload */}
-      <ProfileDocuments mixtureId={mixtureId} profileName={name || transactionId} />
+      {/* Document Upload Section */}
+      {mixtureId && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <FileUpload profileId={mixtureId} transactionId={transactionId} onUploaded={() => setDocRefresh(r => r + 1)} />
+          <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} />
+        </div>
+      )}
+      {!mixtureId && (
+        <div className="card" style={{ marginBottom: '1.25rem', background: '#f9fafb' }}>
+          <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>
+            📎 <strong>Document upload</strong> will be available after the profile is saved for the first time.
+          </p>
+        </div>
+      )}
 
       {/* Waste Profile */}
       <>
