@@ -70,6 +70,9 @@ export default function NewDetermination() {
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
   const [components, setComponents] = useState([])
+  const [flashPoint, setFlashPoint] = useState('')
+  const [ph, setPh] = useState('')
+  const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
   // Shipment & EPA fields
