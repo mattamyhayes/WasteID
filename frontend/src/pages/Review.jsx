@@ -432,9 +432,9 @@ export default function Review() {
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
                                 >
-                                  View
-                                </Link>
-                                <button
+                                 View
+                               </Link>
+                               <button
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f0f9ff', color: '#0369a1', border: '1px solid #7dd3fc' }}
                                   onClick={() => setDocsModal({ id: m.id, name: m.name, transaction_id: m.transaction_id })}

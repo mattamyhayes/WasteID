@@ -3,7 +3,7 @@ import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
                      Order, Journey, OrderJourney, StateRule, StateValidationResult,
-                     MarketplaceListing, Bid, Incinerator)
+                     MarketplaceListing, Bid, Incinerator, ProfileDocument)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -307,3 +307,10 @@ class IncineratorSerializer(serializers.ModelSerializer):
         if 'accepted_waste_codes' in ret and isinstance(ret['accepted_waste_codes'], list):
             ret['accepted_waste_codes'] = json.dumps(ret['accepted_waste_codes'])
         return ret
+
+
+class ProfileDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileDocument
+        fields = ['id', 'mixture', 'file_type', 'short_name', 'file', 'stored_filename', 'uploaded_at']
+        read_only_fields = ['stored_filename', 'uploaded_at']
