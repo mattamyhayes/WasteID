@@ -68,9 +68,6 @@ export default function NewDetermination() {
   const [discardReason, setDiscardReason] = useState('spent')
   const [processDesc, setProcessDesc] = useState('')
   const [components, setComponents] = useState([])
-  const [flashPoint, setFlashPoint] = useState('')
-  const [ph, setPh] = useState('')
-  const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
   // Shipment & EPA fields
@@ -138,19 +135,13 @@ export default function NewDetermination() {
         setShipmentSizeQty(m.shipment_size_qty ? String(m.shipment_size_qty) : '')
         setEpaGeneratorStatus(m.epa_generator_status || '')
         setGenerationDate(m.generation_date || '')
-        if (m.draft_flash_point_c != null) setFlashPoint(String(m.draft_flash_point_c))
-        if (m.draft_ph != null) setPh(String(m.draft_ph))
-        if (m.draft_is_reactive) setIsReactive(true)
-        // Load components
+          // Load components
         if (m.components && m.components.length > 0) {
           setComponents(m.components.map(c => ({
             chemical: c.chemical || null,
             custom_name: c.custom_name || '',
             quantity: c.quantity,
             unit: c.unit,
-            override_flash_point_c: c.override_flash_point_c || null,
-            override_ph: c.override_ph || null,
-            override_is_reactive: c.override_is_reactive || false,
             component_name: c.component_name || c.custom_name || '',
           })))
         }
@@ -237,9 +228,6 @@ export default function NewDetermination() {
       shipment_size_qty: shipmentSizeQty ? Number(shipmentSizeQty) : null,
       epa_generator_status: epaGeneratorStatus,
       generation_date: generationDate || null,
-      draft_flash_point_c: flashPoint !== '' ? parseFloat(flashPoint) : null,
-      draft_ph: ph !== '' ? parseFloat(ph) : null,
-      draft_is_reactive: isReactive,
     }
 
     let id = mixtureId
@@ -259,9 +247,6 @@ export default function NewDetermination() {
         custom_name: comp.custom_name,
         quantity: comp.quantity,
         unit: comp.unit,
-        override_flash_point_c: comp.override_flash_point_c,
-        override_ph: comp.override_ph,
-        override_is_reactive: comp.override_is_reactive,
       })
     }
 
@@ -523,33 +508,8 @@ export default function NewDetermination() {
           <MixtureBuilder components={components} onChange={setComponents} editable />
         </div>
 
-        {/* Additional Properties section */}
+        {/* Notes */}
         <div className="card" style={{ marginTop: '1.25rem' }}>
-          <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Additional Properties</h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
-            Provide measured mixture properties to improve accuracy. Leave blank if unknown.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Overall Flash Point (°C)</label>
-              <input className="form-control" type="number" step="any" placeholder="e.g., 25"
-                value={flashPoint} onChange={e => setFlashPoint(e.target.value)} />
-              <small style={{ color: '#9ca3af' }}>D001 threshold: &lt;60°C</small>
-            </div>
-            <div className="form-group">
-              <label>Overall pH</label>
-              <input className="form-control" type="number" min="0" max="14" step="0.1" placeholder="e.g., 1.5"
-                value={ph} onChange={e => setPh(e.target.value)} />
-              <small style={{ color: '#9ca3af' }}>D002 thresholds: ≤2.0 or ≥12.5</small>
-            </div>
-          </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <input type="checkbox" id="reactive" checked={isReactive} onChange={e => setIsReactive(e.target.checked)}
-              style={{ width: 18, height: 18 }} />
-            <label htmlFor="reactive" style={{ marginBottom: 0 }}>
-              Mixture is reactive (unstable, water-reactive, cyanide/sulfide bearing, or explosive potential) – D003
-            </label>
-          </div>
           <div className="form-group">
             <label>Notes</label>
             <textarea className="form-control" rows={3} value={notes} onChange={e => setNotes(e.target.value)}

@@ -32,9 +32,6 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       custom_name: selectedChem ? '' : customName.trim(),
       quantity: parseFloat(qty),
       unit,
-      override_flash_point_c: null,
-      override_ph: null,
-      override_is_reactive: false,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
     }
