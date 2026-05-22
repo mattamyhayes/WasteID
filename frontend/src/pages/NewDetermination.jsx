@@ -220,10 +220,10 @@ export default function NewDetermination() {
     return true
   }
 
-  // Helper to save profile and add components, returns the mixture id
-  const saveProfile = async () => {
+  // Helper to save profile (minimal – skips required field validation), returns the mixture id
+  const saveProfileMinimal = async () => {
     const payload = {
-      name: name.trim(),
+      name: name.trim() || 'Untitled Profile',
       is_discarded: isDiscarded,
       discard_reason: isDiscarded ? discardReason : '',
       process_description: processDesc,
@@ -245,6 +245,12 @@ export default function NewDetermination() {
       setMixtureId(id)
       setTransactionId(res.data.transaction_id || '')
     }
+    return id
+  }
+
+  // Helper to save profile and add components, returns the mixture id
+  const saveProfile = async () => {
+    const id = await saveProfileMinimal()
 
     // Add components
     for (const comp of components) {
@@ -312,7 +318,23 @@ export default function NewDetermination() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>New Profile</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>New Profile</h1>
+
+      {/* PID Banner */}
+      {mixtureId && (
+        <div style={{
+          background: '#f0fdf4',
+          border: '1px solid #86efac',
+          borderRadius: 8,
+          padding: '0.5rem 1rem',
+          marginBottom: '1rem',
+          fontSize: '0.95rem',
+          color: '#166534',
+          fontWeight: 600,
+        }}>
+          PID: {mixtureId}
+        </div>
+      )}
 
       {/* Days Remaining Banner */}
       {shipByInfo && (
@@ -363,20 +385,11 @@ export default function NewDetermination() {
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Document Upload Section */}
-      {mixtureId && (
-        <div style={{ marginBottom: '1.25rem' }}>
-          <FileUpload profileId={mixtureId} transactionId={transactionId} onUploaded={() => setDocRefresh(r => r + 1)} />
-          <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} />
-        </div>
-      )}
-      {!mixtureId && (
-        <div className="card" style={{ marginBottom: '1.25rem', background: '#f9fafb' }}>
-          <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>
-            📎 <strong>Document upload</strong> will be available after the profile is saved for the first time.
-          </p>
-        </div>
-      )}
+      {/* Document Upload Section – always available; auto-saves profile on first upload */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)} />
+        {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} />}
+      </div>
 
       {/* Waste Profile */}
       <>

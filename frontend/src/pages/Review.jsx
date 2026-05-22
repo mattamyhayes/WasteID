@@ -273,7 +273,7 @@ export default function Review() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Profile Review</h1>
-        <Link to="/determine" className="btn btn-primary">+ New Profile</Link>
+        <Link to="/profile" className="btn btn-primary">+ New Profile</Link>
       </div>
 
       {loading && <p style={{ color: '#6b7280' }}>Loading…</p>}
@@ -362,7 +362,7 @@ export default function Review() {
                             <td>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <Link
-                                  to={`/determine?edit=${m.id}`}
+                                  to={`/profile?edit=${m.id}`}
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.2rem 0.45rem', lineHeight: 1 }}
                                   onClick={(e) => e.stopPropagation()}
@@ -549,7 +549,7 @@ export default function Review() {
             <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
               <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles available for review.</p>
-              <Link to="/determine" className="btn btn-primary">Start a New Profile</Link>
+              <Link to="/profile" className="btn btn-primary">Start a New Profile</Link>
             </div>
           )}
         </>

@@ -6,7 +6,7 @@ const DOC_TYPES = [
   { value: 'analytical', label: 'Analytical Report' },
 ]
 
-export default function FileUpload({ profileId, transactionId, onUploaded }) {
+export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded }) {
   const [docType, setDocType] = useState('')
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
@@ -42,7 +42,17 @@ export default function FileUpload({ profileId, transactionId, onUploaded }) {
     setUploading(true)
     setError('')
     try {
-      await addDocument(profileId, transactionId, file, docType)
+      // If profile hasn't been saved yet, auto-save it first
+      let resolvedProfileId = profileId
+      if (!resolvedProfileId && onBeforeUpload) {
+        resolvedProfileId = await onBeforeUpload()
+      }
+      if (!resolvedProfileId) {
+        setError('Could not save profile before upload. Please try again.')
+        setUploading(false)
+        return
+      }
+      await addDocument(resolvedProfileId, transactionId, file, docType)
       setFile(null)
       setDocType('')
       if (fileInputRef.current) fileInputRef.current.value = ''

@@ -27,7 +27,7 @@ export default function App() {
       <main style={{ minHeight: 'calc(100vh - var(--navbar-height) - 60px)', background: '#f5f7f5' }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/determine" element={<NewDetermination />} />
+          <Route path="/profile" element={<NewDetermination />} />
           <Route path="/results/:id" element={<DeterminationResults />} />
           <Route path="/history" element={<History />} />
           <Route path="/reports" element={<Reports />} />

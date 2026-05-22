@@ -194,7 +194,7 @@ export default function History() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Profile History</h1>
-        <Link to="/determine" className="btn btn-primary">+ New Profile</Link>
+        <Link to="/profile" className="btn btn-primary">+ New Profile</Link>
       </div>
 
       {!loading && items.length > 0 && (
@@ -234,7 +234,7 @@ export default function History() {
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
           <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>No profiles yet.</p>
-          <Link to="/determine" className="btn btn-primary">Start Your First Profile</Link>
+          <Link to="/profile" className="btn btn-primary">Start Your First Profile</Link>
         </div>
       )}
 

@@ -29,7 +29,7 @@ export default function Home() {
             accurately, transparently, and in minutes.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/determine" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem' }}>
+            <Link to="/profile" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem' }}>
               🚀 New Profile
             </Link>
             <Link to="/history" className="btn btn-outline" style={{ fontSize: '1.05rem', padding: '0.7rem 1.8rem', borderColor: '#fff', color: '#fff' }}>
@@ -76,7 +76,7 @@ export default function Home() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <Link to="/determine" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
+          <Link to="/profile" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
             New Profile →
           </Link>
         </div>
