@@ -459,7 +459,7 @@ export default function NewDetermination() {
             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
               <label>Size Unit</label>
               <select className="form-control" value={shipmentSizeUnit}
-                onChange={e => setShipmentSizeUnit(e.target.value)}>
+                onChange={e => { setShipmentSizeUnit(e.target.value); if (e.target.value === 'bulk') setShipmentSizeQty('') }}>
                 <option value="">-- Select unit --</option>
                 {SHIPMENT_SIZE_UNITS.map(u => (
                   <option key={u.value} value={u.value}>{u.label}</option>
@@ -468,13 +468,20 @@ export default function NewDetermination() {
             </div>
             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
               <label>Quantity</label>
-              <select className="form-control" value={shipmentSizeQty}
-                onChange={e => setShipmentSizeQty(e.target.value)}>
-                <option value="">-- Select quantity --</option>
-                {SHIPMENT_SIZE_QTYS.map(q => (
-                  <option key={q} value={q}>{q}</option>
-                ))}
-              </select>
+              {shipmentSizeUnit === 'bulk' ? (
+                <input className="form-control" type="number" min="0" step="any"
+                  value={shipmentSizeQty}
+                  onChange={e => setShipmentSizeQty(e.target.value)}
+                  placeholder="Enter quantity" />
+              ) : (
+                <select className="form-control" value={shipmentSizeQty}
+                  onChange={e => setShipmentSizeQty(e.target.value)}>
+                  <option value="">-- Select quantity --</option>
+                  {SHIPMENT_SIZE_QTYS.map(q => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

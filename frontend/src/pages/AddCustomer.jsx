@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { customers as customersApi, customerLocations as locationsApi } from '../api/client'
 
 const emptyCustomer = {
@@ -23,11 +23,44 @@ const emptyLocation = {
 
 export default function AddCustomer() {
   const navigate = useNavigate()
+  const { id: editId } = useParams()
+  const isEdit = Boolean(editId)
   const [form, setForm] = useState(emptyCustomer)
   const [pendingLocations, setPendingLocations] = useState([])
   const [locForm, setLocForm] = useState(emptyLocation)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!editId) return
+    setLoading(true)
+    customersApi.get(editId).then(res => {
+      const c = res.data
+      setForm({
+        name: c.name || '',
+        contact_name: c.contact_name || '',
+        contact_email: c.contact_email || '',
+        contact_phone: c.contact_phone || '',
+        epa_generator_status: c.epa_generator_status || '',
+        billing_address: c.billing_address || '',
+        notes: c.notes || '',
+      })
+      if (c.locations && c.locations.length > 0) {
+        setPendingLocations(c.locations.map(loc => ({
+          id: loc.id,
+          name: loc.name || '',
+          address: loc.address || '',
+          city: loc.city || '',
+          state: loc.state || '',
+          postal_code: loc.postal_code || '',
+          notes: loc.notes || '',
+        })))
+      }
+    }).catch(() => {
+      setError('Could not load generator details.')
+    }).finally(() => setLoading(false))
+  }, [editId])
 
   const addPendingLocation = () => {
     if (!locForm.name.trim()) { setError('Location name is required.'); return }
@@ -45,15 +78,25 @@ export default function AddCustomer() {
     setSubmitting(true)
     setError('')
     try {
-      const res = await customersApi.create({ ...form, name: form.name.trim() })
-      const newId = res.data.id
-      for (const loc of pendingLocations) {
-        await locationsApi.create({ ...loc, customer: newId })
+      if (isEdit) {
+        await customersApi.update(editId, { ...form, name: form.name.trim() })
+        // Handle new locations added during edit (those without an id)
+        for (const loc of pendingLocations) {
+          if (!loc.id) {
+            await locationsApi.create({ ...loc, customer: editId })
+          }
+        }
+      } else {
+        const res = await customersApi.create({ ...form, name: form.name.trim() })
+        const newId = res.data.id
+        for (const loc of pendingLocations) {
+          await locationsApi.create({ ...loc, customer: newId })
+        }
       }
       navigate('/generators')
     } catch (e) {
       const detail = e.response?.data
-      setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || 'Failed to create generator.'))
+      setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || `Failed to ${isEdit ? 'update' : 'create'} generator.`))
     } finally {
       setSubmitting(false)
     }
@@ -61,7 +104,7 @@ export default function AddCustomer() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 960 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>Add New Generator</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '1.5rem' }}>{isEdit ? 'Edit Generator' : 'Add New Generator'}</h1>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -155,7 +198,7 @@ export default function AddCustomer() {
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save Generator'}
+            {submitting ? 'Saving…' : (isEdit ? 'Update Generator' : 'Save Generator')}
           </button>
           <button className="btn btn-secondary" onClick={() => navigate('/generators')}>
             Cancel

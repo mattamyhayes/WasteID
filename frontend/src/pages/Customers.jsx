@@ -40,41 +40,18 @@ export default function Customers() {
     return sortDirection === 'asc' ? ' ↑' : ' ↓'
   }
 
-  // Flatten customers with their locations for searching and display
+  // One row per generator with location count
   const rows = useMemo(() => {
-    const flat = []
-    for (const c of customers) {
-      if (c.locations && c.locations.length > 0) {
-        for (const loc of c.locations) {
-          flat.push({
-            id: `${c.id}-${loc.id}`,
-            customerId: c.id,
-            customerName: c.name,
-            contactName: c.contact_name || '',
-            contactEmail: c.contact_email || '',
-            contactPhone: c.contact_phone || '',
-            epaStatus: c.epa_generator_status || '',
-            locationName: loc.name || '',
-            locationCity: loc.city || '',
-            locationState: loc.state || '',
-          })
-        }
-      } else {
-        flat.push({
-          id: `${c.id}-no-loc`,
-          customerId: c.id,
-          customerName: c.name,
-          contactName: c.contact_name || '',
-          contactEmail: c.contact_email || '',
-          contactPhone: c.contact_phone || '',
-          epaStatus: c.epa_generator_status || '',
-          locationName: '',
-          locationCity: '',
-          locationState: '',
-        })
-      }
-    }
-    return flat
+    return customers.map(c => ({
+      id: c.id,
+      customerId: c.id,
+      customerName: c.name,
+      contactName: c.contact_name || '',
+      contactEmail: c.contact_email || '',
+      contactPhone: c.contact_phone || '',
+      epaStatus: c.epa_generator_status || '',
+      locationCount: c.locations ? c.locations.length : 0,
+    }))
   }, [customers])
 
   const filteredRows = useMemo(() => {
@@ -82,9 +59,7 @@ export default function Customers() {
     const term = search.toLowerCase()
     return rows.filter(r =>
       r.customerName.toLowerCase().includes(term) ||
-      r.locationName.toLowerCase().includes(term) ||
-      r.locationCity.toLowerCase().includes(term) ||
-      r.locationState.toLowerCase().includes(term)
+      r.contactName.toLowerCase().includes(term)
     )
   }, [rows, search])
 
@@ -98,9 +73,7 @@ export default function Customers() {
         case 'email': aVal = a.contactEmail; bVal = b.contactEmail; break
         case 'phone': aVal = a.contactPhone; bVal = b.contactPhone; break
         case 'epa_status': aVal = a.epaStatus; bVal = b.epaStatus; break
-        case 'location': aVal = a.locationName; bVal = b.locationName; break
-        case 'city': aVal = a.locationCity; bVal = b.locationCity; break
-        case 'state': aVal = a.locationState; bVal = b.locationState; break
+        case 'locations': return sortDirection === 'asc' ? a.locationCount - b.locationCount : b.locationCount - a.locationCount
         default: aVal = a.customerName; bVal = b.customerName;
       }
       const cmp = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' })
@@ -166,20 +139,19 @@ export default function Customers() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
+                <th style={thStyle}></th>
                 <th style={thStyle} onClick={() => handleSort('name')}>Generator{getSortIndicator('name')}</th>
                 <th style={thStyle} onClick={() => handleSort('contact')}>Contact{getSortIndicator('contact')}</th>
                 <th style={thStyle} onClick={() => handleSort('email')}>Email{getSortIndicator('email')}</th>
                 <th style={thStyle} onClick={() => handleSort('phone')}>Phone{getSortIndicator('phone')}</th>
                 <th style={thStyle} onClick={() => handleSort('epa_status')}>EPA Status{getSortIndicator('epa_status')}</th>
-                <th style={thStyle} onClick={() => handleSort('location')}>Location{getSortIndicator('location')}</th>
-                <th style={thStyle} onClick={() => handleSort('city')}>City{getSortIndicator('city')}</th>
-                <th style={thStyle} onClick={() => handleSort('state')}>State{getSortIndicator('state')}</th>
+                <th style={thStyle} onClick={() => handleSort('locations')}>Locations{getSortIndicator('locations')}</th>
               </tr>
             </thead>
             <tbody>
               {sortedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
+                  <td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
                     No results match your search.
                   </td>
                 </tr>
@@ -188,14 +160,16 @@ export default function Customers() {
                   <tr key={row.id} style={{ transition: 'background 0.15s' }}
                     onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
+                    <td style={tdStyle}>
+                      <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
+                        onClick={() => navigate(`/generators/edit/${row.customerId}`)}>✎ Edit</button>
+                    </td>
                     <td style={tdStyle}><strong>{row.customerName}</strong></td>
                     <td style={tdStyle}>{row.contactName}</td>
                     <td style={tdStyle}>{row.contactEmail}</td>
                     <td style={tdStyle}>{row.contactPhone}</td>
                     <td style={tdStyle}>{row.epaStatus || '—'}</td>
-                    <td style={tdStyle}>{row.locationName}</td>
-                    <td style={tdStyle}>{row.locationCity}</td>
-                    <td style={tdStyle}>{row.locationState}</td>
+                    <td style={tdStyle}>{row.locationCount}</td>
                   </tr>
                 ))
               )}
