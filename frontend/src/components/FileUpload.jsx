@@ -48,7 +48,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
         resolvedProfileId = await onBeforeUpload()
       }
       if (!resolvedProfileId) {
-        setError('Could not save profile before upload. Please try again.')
+        setError('Failed to auto-save profile before upload. Please ensure required fields are valid and try again.')
         setUploading(false)
         return
       }
