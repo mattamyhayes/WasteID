@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { validateFile, addDocument } from '../lib/documentStore'
 
 const DOC_TYPES = [
@@ -11,6 +11,7 @@ export default function FileUpload({ profileId, transactionId, onUploaded }) {
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   const handleFileChange = (e) => {
     setError('')
@@ -44,9 +45,7 @@ export default function FileUpload({ profileId, transactionId, onUploaded }) {
       await addDocument(profileId, transactionId, file, docType)
       setFile(null)
       setDocType('')
-      // Reset file input
-      const input = document.getElementById('doc-upload-input')
-      if (input) input.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
       if (onUploaded) onUploaded()
     } catch (e) {
       setError('Failed to upload document. Please try again.')
@@ -82,7 +81,7 @@ export default function FileUpload({ profileId, transactionId, onUploaded }) {
         <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 200 }}>
           <label>File *</label>
           <input
-            id="doc-upload-input"
+            ref={fileInputRef}
             type="file"
             className="form-control"
             onChange={handleFileChange}

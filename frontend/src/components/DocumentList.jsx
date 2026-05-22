@@ -16,24 +16,33 @@ export default function DocumentList({ profileId, transactionId, showUpload }) {
   const handleView = (docId) => {
     const doc = getDocument(docId)
     if (!doc) return
-    // Open in a new tab
-    const win = window.open('', '_blank')
-    if (!win) {
-      alert('Please allow popups to view documents.')
-      return
-    }
-    if (doc.mime_type.startsWith('image/')) {
-      win.document.write(`<html><head><title>${doc.file_name}</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f3f4f6"><img src="${doc.data}" style="max-width:100%;max-height:100vh" alt="${doc.file_name}" /></body></html>`)
-    } else if (doc.mime_type === 'application/pdf') {
-      win.document.write(`<html><head><title>${doc.file_name}</title></head><body style="margin:0"><iframe src="${doc.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`)
-    } else {
-      // Download as blob
-      const link = win.document.createElement('a')
-      link.href = doc.data
-      link.download = doc.file_name
-      win.document.body.appendChild(link)
-      link.click()
-      setTimeout(() => win.close(), 500)
+    // Convert data URL to blob and open via object URL to avoid XSS
+    try {
+      const parts = doc.data.split(',')
+      const mime = parts[0].match(/:(.*?);/)?.[1] || doc.mime_type
+      const byteString = atob(parts[1])
+      const ab = new ArrayBuffer(byteString.length)
+      const ia = new Uint8Array(ab)
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i)
+      }
+      const blob = new Blob([ab], { type: mime })
+      const url = URL.createObjectURL(blob)
+      if (mime === 'application/pdf' || mime.startsWith('image/')) {
+        window.open(url, '_blank')
+      } else {
+        // Trigger download for non-viewable types
+        const a = document.createElement('a')
+        a.href = url
+        a.download = doc.file_name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }
+      // Revoke after a delay to allow browser to use it
+      setTimeout(() => URL.revokeObjectURL(url), 10000)
+    } catch {
+      alert('Unable to open this document.')
     }
   }
 
