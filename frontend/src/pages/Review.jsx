@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
+import DocumentList from '../components/DocumentList'
+import FileUpload from '../components/FileUpload'
 
 const TILES = [
   { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
@@ -45,6 +47,7 @@ export default function Review() {
   const [compareModal, setCompareModal] = useState(null) // { profileName, wasteCodes, fullMatches, partialMatches }
   const [compareLoading, setCompareLoading] = useState(null)
   const [determinationLoading, setDeterminationLoading] = useState(null)
+  const [docsModal, setDocsModal] = useState(null) // { id, name, transaction_id }
 
   const load = async () => {
     setLoading(true)
@@ -433,6 +436,13 @@ export default function Review() {
                                 </Link>
                                 <button
                                   className="btn btn-secondary"
+                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f0f9ff', color: '#0369a1', border: '1px solid #7dd3fc' }}
+                                  onClick={() => setDocsModal({ id: m.id, name: m.name, transaction_id: m.transaction_id })}
+                                >
+                                  📎 Docs
+                                </button>
+                                <button
+                                  className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
                                   disabled={determinationLoading === m.id}
                                   onClick={() => handleCreateDetermination(m)}
@@ -543,6 +553,46 @@ export default function Review() {
             </div>
           )}
         </>
+      )}
+
+      {/* Documents Modal */}
+      {docsModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: '1rem',
+        }} onClick={() => setDocsModal(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 12, maxWidth: 700, width: '100%', maxHeight: '80vh',
+            overflow: 'auto', padding: '2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div>
+                <h2 style={{ color: '#14532d', margin: 0 }}>📎 Profile Documents</h2>
+                <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: '0.25rem 0 0' }}>
+                  Profile: <strong>{docsModal.name}</strong>
+                  {docsModal.transaction_id && (
+                    <span style={{ fontFamily: 'monospace', marginLeft: '0.5rem', fontSize: '0.82rem' }}>
+                      ({docsModal.transaction_id})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => setDocsModal(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <DocumentList profileId={docsModal.id} transactionId={docsModal.transaction_id} showUpload />
+
+            <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+              <button className="btn btn-secondary" onClick={() => setDocsModal(null)}>Close</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Compare Modal */}
