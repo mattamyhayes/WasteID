@@ -19,8 +19,6 @@ export default function MixtureBuilder({ components, onChange, editable = false 
   const [unit, setUnit] = useState('kg')
   const [customName, setCustomName] = useState('')
   const [selectedChem, setSelectedChem] = useState(null)
-  const [overrides, setOverrides] = useState({ flash_point: '', ph: '', reactive: false })
-  const [showOverrides, setShowOverrides] = useState(false)
   const [editingIndex, setEditingIndex] = useState(null)
   const [editQty, setEditQty] = useState('')
   const [editUnit, setEditUnit] = useState('kg')
@@ -34,9 +32,9 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       custom_name: selectedChem ? '' : customName.trim(),
       quantity: parseFloat(qty),
       unit,
-      override_flash_point_c: overrides.flash_point !== '' ? parseFloat(overrides.flash_point) : null,
-      override_ph: overrides.ph !== '' ? parseFloat(overrides.ph) : null,
-      override_is_reactive: overrides.reactive,
+      override_flash_point_c: null,
+      override_ph: null,
+      override_is_reactive: false,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
     }
@@ -45,8 +43,6 @@ export default function MixtureBuilder({ components, onChange, editable = false 
     setCustomName('')
     setQty('')
     setUnit('kg')
-    setOverrides({ flash_point: '', ph: '', reactive: false })
-    setShowOverrides(false)
   }
 
   const handleRemove = (index) => {
@@ -173,37 +169,6 @@ export default function MixtureBuilder({ components, onChange, editable = false 
               {UNITS.map(u => <option key={u} value={u}>{UNIT_LABELS[u]}</option>)}
             </select>
           </div>
-        </div>
-
-        <div style={{ marginTop: '0.75rem' }}>
-          <button
-            type="button"
-            style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}
-            onClick={() => setShowOverrides(!showOverrides)}
-          >
-            {showOverrides ? '▲' : '▼'} Property overrides (flash point, pH, reactivity)
-          </button>
-          {showOverrides && (
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
-              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0 }}>
-                <label style={{ fontSize: '0.85rem' }}>Flash point (°C)</label>
-                <input className="form-control" type="number" step="any" placeholder="e.g., 23"
-                  value={overrides.flash_point}
-                  onChange={e => setOverrides(p => ({ ...p, flash_point: e.target.value }))} />
-              </div>
-              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0 }}>
-                <label style={{ fontSize: '0.85rem' }}>pH value</label>
-                <input className="form-control" type="number" min="0" max="14" step="0.1" placeholder="e.g., 1.5"
-                  value={overrides.ph}
-                  onChange={e => setOverrides(p => ({ ...p, ph: e.target.value }))} />
-              </div>
-              <div className="form-group" style={{ flex: 1, minWidth: 140, marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', paddingTop: '1.6rem' }}>
-                <input type="checkbox" id="ov-reactive" checked={overrides.reactive}
-                  onChange={e => setOverrides(p => ({ ...p, reactive: e.target.checked }))} />
-                <label htmlFor="ov-reactive" style={{ fontSize: '0.85rem', marginBottom: 0 }}>Reactive material</label>
-              </div>
-            </div>
-          )}
         </div>
 
         <button

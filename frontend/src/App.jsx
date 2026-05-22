@@ -35,6 +35,7 @@ export default function App() {
           <Route path="/review/:id/signoff" element={<ReviewSignOff />} />
           <Route path="/generators" element={<Customers />} />
           <Route path="/generators/new" element={<AddCustomer />} />
+          <Route path="/generators/edit/:id" element={<AddCustomer />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/new" element={<AddCustomer />} />
           <Route path="/shippers" element={<Shippers />} />

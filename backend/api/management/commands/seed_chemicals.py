@@ -454,6 +454,16 @@ class Command(BaseCommand):
             {'name': 'Perchlorates (mixed)', 'cas_number': '14797-73-0', 'epa_waste_code': '',
              'category': 'OTHER', 'is_reactive': True,
              'notes': 'Oxidizing salts; reactive, fire accelerant'},
+            # Common non-hazardous materials
+            {'name': 'Water (H2O)', 'cas_number': '7732-18-5', 'epa_waste_code': '',
+            'category': 'OTHER', 'ph_value': 7.0,
+            'notes': 'Water – common solvent / diluent'},
+            {'name': 'Inert Solid', 'cas_number': '', 'epa_waste_code': '',
+            'category': 'OTHER',
+            'notes': 'Inert solid material – non-hazardous'},
+            {'name': 'Inert Liquid', 'cas_number': '', 'epa_waste_code': '',
+            'category': 'OTHER',
+            'notes': 'Inert liquid material – non-hazardous'},
         ]
 
         def upsert(data_list):

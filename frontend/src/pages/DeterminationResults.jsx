@@ -72,16 +72,14 @@ export default function DeterminationResults() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
-          <h1 style={{ color: '#14532d' }}>{mixture.name}</h1>
-          {(mixture.customer_name || mixture.customer_location_name) && (
-            <p style={{ color: '#374151', fontSize: '0.92rem', margin: '0.15rem 0 0' }}>
-              {mixture.customer_name && <><strong>Generator:</strong> {mixture.customer_name}</>}
-              {mixture.customer_name && mixture.customer_location_name && ' · '}
-              {mixture.customer_location_name && <><strong>Location:</strong> {mixture.customer_location_name}</>}
-            </p>
+          {mixture.customer_name && (
+            <h1 style={{ color: '#14532d', marginBottom: '0.15rem' }}>{mixture.customer_name}</h1>
           )}
-          <p style={{ color: '#6b7280', fontSize: '0.88rem' }}>
-            Determined: {new Date(det.created_at).toLocaleString()}
+          <p style={{ color: '#374151', fontSize: '1.05rem', fontWeight: 600, margin: '0.15rem 0 0' }}>
+            {mixture.name}
+          </p>
+          <p style={{ color: '#6b7280', fontSize: '0.88rem', margin: '0.15rem 0 0' }}>
+            {new Date(det.created_at).toLocaleDateString()}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
