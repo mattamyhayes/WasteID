@@ -320,7 +320,7 @@ export default function Review() {
                     <thead>
                       <tr>
                         <th style={thStyle} onClick={() => handleSort('name')}>
-                          Profile Name{sortIndicator('name')}
+                          Profile ID{sortIndicator('name')}
                         </th>
                         <th style={thStyle} onClick={() => handleSort('customer_name')}>
                           Generator{sortIndicator('customer_name')}
@@ -357,15 +357,25 @@ export default function Review() {
                         return (
                           <tr key={m.id}>
                             <td>
-                              {latestDet ? (
-                                <Link to={`/results/${latestDet.id}`} style={{ color: '#166534', fontWeight: 600 }}>
-                                  {m.name}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <Link
+                                  to={`/determine?edit=${m.id}`}
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.8rem', padding: '0.2rem 0.45rem', lineHeight: 1 }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Edit
                                 </Link>
-                              ) : (
-                                <Link to={`/review/${m.id}/signoff`} style={{ color: '#166534', fontWeight: 600 }}>
-                                  {m.name}
-                                </Link>
-                              )}
+                                {latestDet ? (
+                                  <Link to={`/results/${latestDet.id}`} style={{ color: '#166534', fontWeight: 600 }}>
+                                    {m.name}
+                                  </Link>
+                                ) : (
+                                  <Link to={`/review/${m.id}/signoff`} style={{ color: '#166534', fontWeight: 600 }}>
+                                    {m.name}
+                                  </Link>
+                                )}
+                              </span>
                               {m.transaction_id && (
                                 <div style={{ fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
                                   {m.transaction_id}
@@ -414,13 +424,6 @@ export default function Review() {
                             </td>
                             <td>
                               <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <Link
-                                  to={`/determine?edit=${m.id}`}
-                                  className="btn btn-secondary"
-                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem' }}
-                                >
-                                  Edit
-                                </Link>
                                 <Link
                                   to={latestDet ? `/results/${latestDet.id}` : `/review/${m.id}/signoff`}
                                   className="btn btn-secondary"

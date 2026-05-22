@@ -122,7 +122,6 @@ function OrderTable({
                 <th style={thStyle} onClick={() => onSort('generator_name')}>Generator{renderSortArrow('generator_name')}</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Profiles</th>
                 <th style={{ ...thStyle, cursor: 'default' }}>Notes</th>
-                <th style={{ ...thStyle, cursor: 'default' }}>Edit</th>
               </tr>
             </thead>
             <tbody>
@@ -134,20 +133,14 @@ function OrderTable({
                     if (selectedRowId !== o.id) e.currentTarget.style.background = '#f0fdf4'
                   }}
                   onMouseLeave={e => e.currentTarget.style.background = selectedRowId === o.id ? '#ecfdf5' : ''}>
-                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{o.order_id}</td>
-                  <td style={tdStyle}>{new Date(o.created_at).toLocaleDateString()}</td>
-                  <td style={tdStyle}>{o.owner_name || '—'}</td>
-                  <td style={tdStyle}>{o.generator_name || '—'}</td>
-                  <td style={tdStyle}>{(o.profile_names || []).join(', ') || '—'}</td>
-                  <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.notes || '—'}</td>
-                  <td style={tdStyle}>
-                    {selectedRowId === o.id && (
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                       <button
                         type="button"
                         className="btn btn-secondary"
-                        style={{ padding: '0.2rem 0.45rem', lineHeight: 1 }}
+                        style={{ padding: '0.2rem 0.45rem', lineHeight: 1, fontSize: '0.8rem' }}
                         aria-label={`Edit order ${o.order_id}`}
-                        title="Edit selected order"
+                        title="Edit order"
                         onClick={(e) => {
                           e.stopPropagation()
                           onEditOrder(o)
@@ -155,8 +148,14 @@ function OrderTable({
                       >
                         Edit
                       </button>
-                    )}
+                      {o.order_id}
+                    </span>
                   </td>
+                  <td style={tdStyle}>{new Date(o.created_at).toLocaleDateString()}</td>
+                  <td style={tdStyle}>{o.owner_name || '—'}</td>
+                  <td style={tdStyle}>{o.generator_name || '—'}</td>
+                  <td style={tdStyle}>{(o.profile_names || []).join(', ') || '—'}</td>
+                  <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.notes || '—'}</td>
                 </tr>
               ))}
             </tbody>
