@@ -85,7 +85,7 @@ export default function DeterminationResults() {
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={handlePdf}>📄 PDF Report</button>
           <button className="btn btn-secondary" onClick={handleCsv}>📊 Export CSV</button>
-          <Link to="/determine" className="btn btn-primary">+ New Determination</Link>
+          <Link to="/profile" className="btn btn-primary">+ New Determination</Link>
         </div>
       </div>
 
