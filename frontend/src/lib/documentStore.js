@@ -82,11 +82,6 @@ function saveDocs(docs) {
   }
 }
 
-let nextDocId = (() => {
-  const docs = loadDocs()
-  return docs.length > 0 ? Math.max(...docs.map(d => d.id)) + 1 : 1
-})()
-
 /**
  * Store a document for a given profile (mixture) ID.
  * @param {number|string} profileId - The mixture id
@@ -97,8 +92,10 @@ let nextDocId = (() => {
  */
 export async function addDocument(profileId, transactionId, file, docType) {
   const base64 = await fileToBase64(file)
+  const docs = loadDocs()
+  const nextId = docs.length > 0 ? Math.max(...docs.map(d => d.id)) + 1 : 1
   const doc = {
-    id: nextDocId++,
+    id: nextId,
     profile_id: profileId,
     transaction_id: transactionId || '',
     doc_type: docType,
@@ -108,7 +105,6 @@ export async function addDocument(profileId, transactionId, file, docType) {
     data: base64,
     uploaded_at: new Date().toISOString(),
   }
-  const docs = loadDocs()
   docs.push(doc)
   saveDocs(docs)
   return doc
