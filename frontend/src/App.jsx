@@ -21,6 +21,9 @@ import Marketplace from './pages/Marketplace'
 import Incinerators from './pages/Incinerators'
 import FormManager from './pages/FormManager'
 import FormEditor from './pages/FormEditor'
+import SDSList from './pages/SDSList'
+import SDSAdd from './pages/SDSAdd'
+import SDSDetail from './pages/SDSDetail'
 
 export default function App() {
   return (
@@ -52,6 +55,9 @@ export default function App() {
           <Route path="/forms" element={<FormManager />} />
           <Route path="/forms/new" element={<FormEditor />} />
           <Route path="/forms/edit/:id" element={<FormEditor />} />
+          <Route path="/sds" element={<SDSList />} />
+          <Route path="/sds/add" element={<SDSAdd />} />
+          <Route path="/sds/:id" element={<SDSDetail />} />
         </Routes>
       </main>
       <Footer />

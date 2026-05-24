@@ -3,7 +3,8 @@ import json
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
                      Order, Journey, OrderJourney, StateRule, StateValidationResult,
-                     MarketplaceListing, Bid, Incinerator, ProfileDocument)
+                     MarketplaceListing, Bid, Incinerator, ProfileDocument,
+                     SafetyDataSheet)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -314,3 +315,61 @@ class ProfileDocumentSerializer(serializers.ModelSerializer):
         model = ProfileDocument
         fields = ['id', 'mixture', 'file_type', 'short_name', 'file', 'stored_filename', 'uploaded_at']
         read_only_fields = ['stored_filename', 'uploaded_at']
+
+
+class SafetyDataSheetListSerializer(serializers.ModelSerializer):
+    """Lighter serializer for SDS list view."""
+    profile_name = serializers.CharField(source='mixture.name', read_only=True, default='')
+    profile_transaction_id = serializers.CharField(source='mixture.transaction_id', read_only=True, default='')
+
+    class Meta:
+        model = SafetyDataSheet
+        fields = ['id', 'product_name', 'cas_number', 'manufacturer_name',
+                  'imported_at', 'import_status', 'original_filename',
+                  'mixture', 'profile_name', 'profile_transaction_id']
+
+
+class SafetyDataSheetSerializer(serializers.ModelSerializer):
+    """Full serializer for SDS detail/create views."""
+    profile_name = serializers.CharField(source='mixture.name', read_only=True, default='')
+    profile_transaction_id = serializers.CharField(source='mixture.transaction_id', read_only=True, default='')
+    composition_list = serializers.SerializerMethodField()
+    hazard_statements_list = serializers.SerializerMethodField()
+    precautionary_statements_list = serializers.SerializerMethodField()
+    ghs_classification_list = serializers.SerializerMethodField()
+    exposure_limits_list = serializers.SerializerMethodField()
+
+    def get_composition_list(self, obj):
+        try:
+            return json.loads(obj.composition)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_hazard_statements_list(self, obj):
+        try:
+            return json.loads(obj.hazard_statements)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_precautionary_statements_list(self, obj):
+        try:
+            return json.loads(obj.precautionary_statements)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_ghs_classification_list(self, obj):
+        try:
+            return json.loads(obj.ghs_classification)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    def get_exposure_limits_list(self, obj):
+        try:
+            return json.loads(obj.exposure_limits)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    class Meta:
+        model = SafetyDataSheet
+        fields = '__all__'
+        read_only_fields = ['imported_at']

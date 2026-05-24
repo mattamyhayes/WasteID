@@ -1865,3 +1865,107 @@ export const localDocuments = {
     return ok(doc)
   },
 }
+
+
+// ─── SDS Local Store ────────────────────────────────────────────────────────
+
+const SDS_STORAGE_KEY = 'wasteid_sds_v1'
+
+function loadSdsStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SDS_STORAGE_KEY) : null
+    if (!raw) return { records: [], nextId: 1 }
+    return JSON.parse(raw)
+  } catch {
+    return { records: [], nextId: 1 }
+  }
+}
+
+function saveSdsStore(store) {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(SDS_STORAGE_KEY, JSON.stringify(store))
+  }
+}
+
+export const localSds = {
+  list(mixtureId) {
+    const store = loadSdsStore()
+    const records = mixtureId
+      ? store.records.filter(r => r.mixture === Number(mixtureId))
+      : store.records
+    return ok({ results: records })
+  },
+
+  get(id) {
+    const store = loadSdsStore()
+    const record = store.records.find(r => r.id === Number(id))
+    if (!record) return reject('SDS not found.', 404)
+    return ok(record)
+  },
+
+  create(data) {
+    const store = loadSdsStore()
+    const mixtureStore = loadStore()
+
+    let mixture = null
+    if (data.mixture_id || data.mixture) {
+      const mid = Number(data.mixture_id || data.mixture)
+      mixture = mixtureStore.mixtures.find(m => m.id === mid)
+    }
+
+    const record = {
+      id: store.nextId++,
+      mixture: mixture ? mixture.id : null,
+      profile_name: mixture ? mixture.name : '',
+      profile_transaction_id: mixture ? mixture.transaction_id : '',
+      profile_document: data.profile_document_id ? Number(data.profile_document_id) : null,
+      imported_at: new Date().toISOString(),
+      import_status: 'complete',
+      original_filename: data.original_filename || '',
+      product_name: data.product_name || data.original_filename || 'Unknown Product',
+      cas_number: data.cas_number || '',
+      manufacturer_name: data.manufacturer_name || '',
+      // Section 1
+      product_code: data.product_code || '',
+      synonyms: data.synonyms || '[]',
+      recommended_use: data.recommended_use || '',
+      restrictions_on_use: data.restrictions_on_use || '',
+      manufacturer_address: data.manufacturer_address || '',
+      manufacturer_phone: data.manufacturer_phone || '',
+      emergency_phone: data.emergency_phone || '',
+      sds_revision_date: data.sds_revision_date || null,
+      sds_version: data.sds_version || '',
+      // Section 2
+      ghs_classification: data.ghs_classification || '[]',
+      signal_word: data.signal_word || '',
+      hazard_statements: data.hazard_statements || '[]',
+      precautionary_statements: data.precautionary_statements || '[]',
+      hazard_pictograms: data.hazard_pictograms || '[]',
+      other_hazards: data.other_hazards || '',
+      // Section 3
+      composition: data.composition || '[]',
+      // Sections 4-16 (store as provided)
+      ...Object.fromEntries(
+        Object.entries(data).filter(([k]) => !['mixture_id', 'mixture', 'profile_document_id', 'file'].includes(k))
+      ),
+    }
+
+    store.records.push(record)
+    saveSdsStore(store)
+    return ok(record)
+  },
+
+  delete(id) {
+    const store = loadSdsStore()
+    const idx = store.records.findIndex(r => r.id === Number(id))
+    if (idx === -1) return reject('SDS not found.', 404)
+    store.records.splice(idx, 1)
+    saveSdsStore(store)
+    return ok({})
+  },
+
+  importSds(data) {
+    // In local mode, the import simply creates a record with the provided data
+    return localSds.create(data)
+  },
+}

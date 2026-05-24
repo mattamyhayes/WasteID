@@ -1,7 +1,7 @@
 import axios from 'axios'
 import localChemicals from '../data/chemicals.json'
 import { localJourney } from '../lib/journeyStore.js'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace, localDocuments } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace, localDocuments, localSds } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -277,4 +277,33 @@ export const profileDocuments = {
   get: (docId) => useLocalMixtures
     ? localDocuments.get(docId)
     : client.get(`/profile-documents/${docId}/`),
+}
+
+export const sds = {
+  list: (mixtureId) => useLocalMixtures
+    ? localSds.list(mixtureId)
+    : client.get('/sds/', { params: mixtureId ? { mixture: mixtureId } : {} }),
+  get: (id) => useLocalMixtures
+    ? localSds.get(id)
+    : client.get(`/sds/${id}/`),
+  delete: (id) => useLocalMixtures
+    ? localSds.delete(id)
+    : client.delete(`/sds/${id}/`),
+  import: (data) => {
+    if (useLocalMixtures) {
+      return localSds.importSds(data)
+    }
+    // If there's a file, use FormData
+    if (data.file) {
+      const formData = new FormData()
+      formData.append('file', data.file)
+      if (data.mixture_id) formData.append('mixture_id', data.mixture_id)
+      if (data.profile_document_id) formData.append('profile_document_id', data.profile_document_id)
+      if (data.sds_data) formData.append('sds_data', JSON.stringify(data.sds_data))
+      return client.post('/sds/import/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
+    return client.post('/sds/import/', data)
+  },
 }

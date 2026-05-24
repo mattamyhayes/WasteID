@@ -625,3 +625,180 @@ class ProfileDocument(models.Model):
 
     def __str__(self):
         return f"{self.stored_filename} ({self.short_name})"
+
+
+class SafetyDataSheet(models.Model):
+    """
+    Comprehensive electronic representation of a Safety Data Sheet (SDS)
+    following the GHS/OSHA 16-section standard format (29 CFR 1910.1200).
+    All data elements are stored for search, reports, and profile auto-population.
+    """
+
+    # Linkage
+    profile_document = models.OneToOneField(
+        ProfileDocument, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='parsed_sds',
+        help_text='Source document this SDS was parsed from'
+    )
+    mixture = models.ForeignKey(
+        Mixture, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='sds_records',
+        help_text='Profile this SDS is associated with'
+    )
+
+    # Import metadata
+    imported_at = models.DateTimeField(auto_now_add=True)
+    import_status = models.CharField(max_length=20, default='complete', choices=[
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('complete', 'Complete'),
+        ('error', 'Error'),
+    ])
+    import_errors = models.TextField(blank=True, help_text='JSON array of import error messages')
+    original_filename = models.CharField(max_length=300, blank=True)
+
+    # Section 1: Identification
+    product_name = models.CharField(max_length=500, help_text='Product identifier / trade name')
+    product_code = models.CharField(max_length=100, blank=True, help_text='Product code or catalog number')
+    synonyms = models.TextField(blank=True, help_text='Other names / synonyms (JSON array)')
+    recommended_use = models.TextField(blank=True, help_text='Recommended use of the chemical')
+    restrictions_on_use = models.TextField(blank=True)
+    manufacturer_name = models.CharField(max_length=300, blank=True)
+    manufacturer_address = models.TextField(blank=True)
+    manufacturer_phone = models.CharField(max_length=50, blank=True)
+    emergency_phone = models.CharField(max_length=50, blank=True)
+    sds_revision_date = models.DateField(null=True, blank=True)
+    sds_version = models.CharField(max_length=50, blank=True)
+
+    # Section 2: Hazard(s) Identification
+    ghs_classification = models.TextField(default='[]', help_text='JSON array of GHS hazard classifications')
+    signal_word = models.CharField(max_length=20, blank=True, help_text='Danger or Warning')
+    hazard_statements = models.TextField(default='[]', help_text='JSON array of H-statements')
+    precautionary_statements = models.TextField(default='[]', help_text='JSON array of P-statements')
+    hazard_pictograms = models.TextField(default='[]', help_text='JSON array of GHS pictogram codes')
+    other_hazards = models.TextField(blank=True)
+
+    # Section 3: Composition / Information on Ingredients
+    composition = models.TextField(default='[]', help_text='JSON array of {name, cas_number, concentration, formula}')
+
+    # Section 4: First-Aid Measures
+    first_aid_inhalation = models.TextField(blank=True)
+    first_aid_skin = models.TextField(blank=True)
+    first_aid_eye = models.TextField(blank=True)
+    first_aid_ingestion = models.TextField(blank=True)
+    first_aid_notes = models.TextField(blank=True)
+
+    # Section 5: Fire-Fighting Measures
+    extinguishing_media = models.TextField(blank=True)
+    special_fire_hazards = models.TextField(blank=True)
+    firefighter_equipment = models.TextField(blank=True)
+
+    # Section 6: Accidental Release Measures
+    personal_precautions = models.TextField(blank=True)
+    environmental_precautions = models.TextField(blank=True)
+    containment_cleanup = models.TextField(blank=True)
+
+    # Section 7: Handling and Storage
+    handling_precautions = models.TextField(blank=True)
+    storage_conditions = models.TextField(blank=True)
+    incompatible_materials = models.TextField(blank=True)
+
+    # Section 8: Exposure Controls / Personal Protection
+    exposure_limits = models.TextField(default='[]', help_text='JSON array of {substance, type, value} e.g. PEL, TLV, STEL')
+    engineering_controls = models.TextField(blank=True)
+    respiratory_protection = models.TextField(blank=True)
+    hand_protection = models.TextField(blank=True)
+    eye_protection = models.TextField(blank=True)
+    skin_protection = models.TextField(blank=True)
+
+    # Section 9: Physical and Chemical Properties
+    physical_state = models.CharField(max_length=50, blank=True)
+    color = models.CharField(max_length=100, blank=True)
+    odor = models.CharField(max_length=200, blank=True)
+    odor_threshold = models.CharField(max_length=100, blank=True)
+    ph = models.CharField(max_length=50, blank=True)
+    melting_point = models.CharField(max_length=100, blank=True)
+    boiling_point = models.CharField(max_length=100, blank=True)
+    flash_point = models.CharField(max_length=100, blank=True)
+    evaporation_rate = models.CharField(max_length=100, blank=True)
+    flammability = models.CharField(max_length=200, blank=True)
+    upper_explosive_limit = models.CharField(max_length=100, blank=True)
+    lower_explosive_limit = models.CharField(max_length=100, blank=True)
+    vapor_pressure = models.CharField(max_length=100, blank=True)
+    vapor_density = models.CharField(max_length=100, blank=True)
+    relative_density = models.CharField(max_length=100, blank=True)
+    solubility = models.TextField(blank=True)
+    partition_coefficient = models.CharField(max_length=100, blank=True)
+    auto_ignition_temp = models.CharField(max_length=100, blank=True)
+    decomposition_temp = models.CharField(max_length=100, blank=True)
+    viscosity = models.CharField(max_length=100, blank=True)
+    molecular_weight = models.CharField(max_length=100, blank=True)
+    molecular_formula = models.CharField(max_length=200, blank=True)
+
+    # Section 10: Stability and Reactivity
+    chemical_stability = models.TextField(blank=True)
+    conditions_to_avoid = models.TextField(blank=True)
+    incompatible_materials_sec10 = models.TextField(blank=True)
+    hazardous_decomposition = models.TextField(blank=True)
+    possibility_of_reactions = models.TextField(blank=True)
+
+    # Section 11: Toxicological Information
+    acute_toxicity = models.TextField(default='[]', help_text='JSON array of {route, species, value, unit}')
+    skin_corrosion_irritation = models.TextField(blank=True)
+    eye_damage_irritation = models.TextField(blank=True)
+    respiratory_sensitization = models.TextField(blank=True)
+    skin_sensitization = models.TextField(blank=True)
+    germ_cell_mutagenicity = models.TextField(blank=True)
+    carcinogenicity = models.TextField(blank=True)
+    reproductive_toxicity = models.TextField(blank=True)
+    specific_target_organ_single = models.TextField(blank=True)
+    specific_target_organ_repeated = models.TextField(blank=True)
+    aspiration_hazard = models.TextField(blank=True)
+
+    # Section 12: Ecological Information
+    aquatic_toxicity = models.TextField(default='[]', help_text='JSON array of {species, duration, value, unit}')
+    persistence_degradability = models.TextField(blank=True)
+    bioaccumulative_potential = models.TextField(blank=True)
+    mobility_in_soil = models.TextField(blank=True)
+    other_ecological_info = models.TextField(blank=True)
+
+    # Section 13: Disposal Considerations
+    waste_disposal_method = models.TextField(blank=True)
+    epa_waste_code = models.CharField(max_length=50, blank=True, help_text='EPA hazardous waste code if applicable')
+    contaminated_packaging = models.TextField(blank=True)
+
+    # Section 14: Transport Information
+    un_number = models.CharField(max_length=20, blank=True)
+    un_proper_shipping_name = models.CharField(max_length=500, blank=True)
+    transport_hazard_class = models.CharField(max_length=50, blank=True)
+    packing_group = models.CharField(max_length=10, blank=True)
+    environmental_hazard_transport = models.TextField(blank=True)
+    special_precautions_transport = models.TextField(blank=True)
+    dot_description = models.TextField(blank=True, help_text='Full DOT shipping description')
+
+    # Section 15: Regulatory Information
+    sara_311_312 = models.TextField(blank=True, help_text='SARA 311/312 hazard categories')
+    sara_313 = models.TextField(blank=True, help_text='SARA 313 chemical list')
+    cercla_rq = models.CharField(max_length=100, blank=True, help_text='CERCLA Reportable Quantity')
+    rcra_waste_code = models.CharField(max_length=50, blank=True)
+    tsca_status = models.TextField(blank=True, help_text='TSCA inventory status')
+    california_prop65 = models.TextField(blank=True)
+    state_regulations = models.TextField(blank=True)
+    international_regulations = models.TextField(blank=True)
+
+    # Section 16: Other Information
+    revision_notes = models.TextField(blank=True)
+    preparation_date = models.DateField(null=True, blank=True)
+    disclaimer = models.TextField(blank=True)
+    other_information = models.TextField(blank=True)
+
+    # CAS number (primary, for quick lookup/search)
+    cas_number = models.CharField(max_length=50, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ['-imported_at']
+        verbose_name = 'Safety Data Sheet'
+        verbose_name_plural = 'Safety Data Sheets'
+
+    def __str__(self):
+        return f"SDS: {self.product_name} ({self.cas_number or 'no CAS'})"
