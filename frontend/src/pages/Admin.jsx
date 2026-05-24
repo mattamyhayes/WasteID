@@ -26,6 +26,12 @@ const adminLinks = [
     description: 'Import and manage form templates for auto-population.',
     icon: '📄',
   },
+  {
+    to: '/sds',
+    title: 'SDS',
+    description: 'Import and manage Safety Data Sheets.',
+    icon: '🧪',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']

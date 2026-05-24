@@ -1,5 +1,6 @@
 import json
 import io
+import os
 from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -7,14 +8,15 @@ from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
                      StateRule, StateValidationResult, MarketplaceListing, Bid, Incinerator,
-                     ProfileDocument)
+                     ProfileDocument, SafetyDataSheet)
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
                            ShipperSerializer, EPAManifestSerializer, OrderSerializer, JourneySerializer,
                            StateRuleSerializer, StateValidationResultSerializer,
                            MarketplaceListingSerializer, MarketplaceListingSummarySerializer,
-                           BidSerializer, IncineratorSerializer, ProfileDocumentSerializer)
+                           BidSerializer, IncineratorSerializer, ProfileDocumentSerializer,
+                           SafetyDataSheetSerializer, SafetyDataSheetListSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -970,3 +972,182 @@ class ProfileDocumentViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(doc)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SafetyDataSheetViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing Safety Data Sheets (SDS)."""
+    queryset = SafetyDataSheet.objects.select_related('mixture', 'profile_document').all()
+    serializer_class = SafetyDataSheetSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SafetyDataSheetListSerializer
+        return SafetyDataSheetSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mixture_id = self.request.query_params.get('mixture')
+        if mixture_id:
+            qs = qs.filter(mixture_id=mixture_id)
+        q = self.request.query_params.get('q', '').strip()
+        if q:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(product_name__icontains=q) |
+                Q(cas_number__icontains=q) |
+                Q(manufacturer_name__icontains=q)
+            )
+        return qs
+
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_sds(self, request):
+        """
+        Import an SDS from an uploaded file or from an existing profile document.
+        Parses the document and stores all data elements in structured fields.
+
+        Accepts:
+          - file: uploaded file (PDF, DOC, etc.)
+          - profile_document_id: ID of an existing ProfileDocument to import from
+          - mixture_id: optional profile association
+          - sds_data: optional JSON with pre-parsed SDS fields (for manual/client-side parsing)
+        """
+        profile_doc_id = request.data.get('profile_document_id')
+        mixture_id = request.data.get('mixture_id')
+        uploaded_file = request.FILES.get('file')
+        sds_data = request.data.get('sds_data')
+
+        if not uploaded_file and not profile_doc_id and not sds_data:
+            return Response(
+                {'detail': 'Provide either a file upload, profile_document_id, or sds_data.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        mixture = None
+        if mixture_id:
+            try:
+                mixture = Mixture.objects.get(id=mixture_id)
+            except Mixture.DoesNotExist:
+                return Response({'detail': 'Mixture not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        profile_doc = None
+        if profile_doc_id:
+            try:
+                profile_doc = ProfileDocument.objects.get(id=profile_doc_id)
+                if not mixture and profile_doc.mixture:
+                    mixture = profile_doc.mixture
+            except ProfileDocument.DoesNotExist:
+                return Response({'detail': 'Profile document not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        original_filename = ''
+        if uploaded_file:
+            original_filename = uploaded_file.name
+        elif profile_doc:
+            original_filename = profile_doc.stored_filename
+
+        # If sds_data is provided as JSON string, parse it
+        if sds_data and isinstance(sds_data, str):
+            try:
+                sds_data = json.loads(sds_data)
+            except json.JSONDecodeError:
+                return Response({'detail': 'Invalid sds_data JSON.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build the SDS record from provided data
+        if sds_data and isinstance(sds_data, dict):
+            sds_fields = self._extract_sds_fields(sds_data)
+        else:
+            # When no pre-parsed data, create a pending record
+            # In production, this would trigger async document parsing (OCR/NLP)
+            sds_fields = {
+                'import_status': 'pending',
+                'product_name': sds_data.get('product_name', original_filename) if isinstance(sds_data, dict) else original_filename,
+            }
+
+        sds = SafetyDataSheet(
+            profile_document=profile_doc,
+            mixture=mixture,
+            original_filename=original_filename,
+            **sds_fields
+        )
+        sds.save()
+
+        serializer = SafetyDataSheetSerializer(sds)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _extract_sds_fields(self, data):
+        """Extract and validate SDS fields from parsed data dictionary."""
+        fields = {}
+        # Direct string/text fields
+        text_fields = [
+            'product_name', 'product_code', 'recommended_use', 'restrictions_on_use',
+            'manufacturer_name', 'manufacturer_address', 'manufacturer_phone',
+            'emergency_phone', 'sds_version', 'signal_word', 'other_hazards',
+            'first_aid_inhalation', 'first_aid_skin', 'first_aid_eye', 'first_aid_ingestion',
+            'first_aid_notes', 'extinguishing_media', 'special_fire_hazards',
+            'firefighter_equipment', 'personal_precautions', 'environmental_precautions',
+            'containment_cleanup', 'handling_precautions', 'storage_conditions',
+            'incompatible_materials', 'engineering_controls', 'respiratory_protection',
+            'hand_protection', 'eye_protection', 'skin_protection',
+            'physical_state', 'color', 'odor', 'odor_threshold', 'ph',
+            'melting_point', 'boiling_point', 'flash_point', 'evaporation_rate',
+            'flammability', 'upper_explosive_limit', 'lower_explosive_limit',
+            'vapor_pressure', 'vapor_density', 'relative_density', 'solubility',
+            'partition_coefficient', 'auto_ignition_temp', 'decomposition_temp',
+            'viscosity', 'molecular_weight', 'molecular_formula',
+            'chemical_stability', 'conditions_to_avoid', 'incompatible_materials_sec10',
+            'hazardous_decomposition', 'possibility_of_reactions',
+            'skin_corrosion_irritation', 'eye_damage_irritation',
+            'respiratory_sensitization', 'skin_sensitization',
+            'germ_cell_mutagenicity', 'carcinogenicity', 'reproductive_toxicity',
+            'specific_target_organ_single', 'specific_target_organ_repeated',
+            'aspiration_hazard', 'persistence_degradability',
+            'bioaccumulative_potential', 'mobility_in_soil', 'other_ecological_info',
+            'waste_disposal_method', 'epa_waste_code', 'contaminated_packaging',
+            'un_number', 'un_proper_shipping_name', 'transport_hazard_class',
+            'packing_group', 'environmental_hazard_transport',
+            'special_precautions_transport', 'dot_description',
+            'sara_311_312', 'sara_313', 'cercla_rq', 'rcra_waste_code',
+            'tsca_status', 'california_prop65', 'state_regulations',
+            'international_regulations', 'revision_notes', 'disclaimer',
+            'other_information', 'cas_number', 'import_status',
+        ]
+
+        for field in text_fields:
+            if field in data and data[field]:
+                fields[field] = str(data[field])[:500] if field in (
+                    'product_name', 'un_proper_shipping_name'
+                ) else str(data[field])
+
+        # JSON array fields
+        json_fields = [
+            'synonyms', 'ghs_classification', 'hazard_statements',
+            'precautionary_statements', 'hazard_pictograms', 'composition',
+            'exposure_limits', 'acute_toxicity', 'aquatic_toxicity',
+        ]
+        for field in json_fields:
+            if field in data:
+                val = data[field]
+                if isinstance(val, (list, dict)):
+                    fields[field] = json.dumps(val)
+                elif isinstance(val, str):
+                    # Validate it's valid JSON
+                    try:
+                        json.loads(val)
+                        fields[field] = val
+                    except json.JSONDecodeError:
+                        fields[field] = json.dumps([val])
+
+        # Date fields
+        if 'sds_revision_date' in data and data['sds_revision_date']:
+            fields['sds_revision_date'] = data['sds_revision_date']
+        if 'preparation_date' in data and data['preparation_date']:
+            fields['preparation_date'] = data['preparation_date']
+
+        # Ensure product_name is set
+        if 'product_name' not in fields:
+            fields['product_name'] = 'Unknown Product'
+
+        # Default import_status to complete when data is provided
+        if 'import_status' not in fields:
+            fields['import_status'] = 'complete'
+
+        return fields

@@ -4,7 +4,7 @@ from .views import (ChemicalViewSet, MixtureViewSet, MixtureComponentViewSet,
                     WasteDeterminationViewSet, CustomerViewSet, CustomerLocationViewSet,
                     ShipperViewSet, EPAManifestViewSet, OrderViewSet, JourneyViewSet,
                     StateRuleViewSet, MarketplaceListingViewSet, BidViewSet, IncineratorViewSet,
-                    ProfileDocumentViewSet)
+                    ProfileDocumentViewSet, SafetyDataSheetViewSet)
 
 router = DefaultRouter()
 router.register(r'chemicals', ChemicalViewSet)
@@ -22,6 +22,7 @@ router.register(r'marketplace-listings', MarketplaceListingViewSet)
 router.register(r'bids', BidViewSet)
 router.register(r'incinerators', IncineratorViewSet)
 router.register(r'profile-documents', ProfileDocumentViewSet)
+router.register(r'sds', SafetyDataSheetViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
