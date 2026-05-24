@@ -20,6 +20,12 @@ const adminLinks = [
     description: 'Open the EPA hazardous waste manifest form.',
     icon: '📋',
   },
+  {
+    to: '/forms',
+    title: 'Form Manager',
+    description: 'Import and manage form templates for auto-population.',
+    icon: '📄',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']
