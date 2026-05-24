@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { listForms, getForm, populateFormFields, getUnmappedFields } from '../lib/formStore'
 import { jsPDF } from 'jspdf'
 
+const EXPORT_FOOTER_HEIGHT_MM = 8
+
 /**
  * ExportFormModal - Allows user to select a form template, fill missing fields,
  * and export a PDF that looks like the original form with data populated.
@@ -92,6 +94,8 @@ export default function ExportFormModal({ profile, onClose }) {
           doc.text(text, xMm + 1, yMm + 3)
         }
       })
+
+      addMirroredFormFooter(doc, pageWidth, pageHeight, profile)
 
       // Save the PDF
       const filename = `${selectedForm.name.replace(/[^a-zA-Z0-9]/g, '_')}_${profile.transaction_id || profile.name || 'export'}.pdf`
@@ -244,4 +248,33 @@ function drawFormStructure(doc, form, pageWidth, pageHeight) {
   doc.setFontSize(6)
   doc.setTextColor(150, 150, 150)
   doc.text(`Generated from template: ${form.file_name}`, 5, pageHeight - 5)
+}
+
+function getContentProducerName(profile) {
+  const determinations = Array.isArray(profile?.determinations) ? profile.determinations : []
+  const latestDetermination = determinations[determinations.length - 1]
+  return latestDetermination?.reviewer_name?.trim()
+    || profile?.customer_contact?.trim()
+    || profile?.contact_name?.trim()
+    || profile?.customer_name?.trim()
+    || profile?.name?.trim()
+    || 'Unknown'
+}
+
+function addMirroredFormFooter(doc, pageWidth, pageHeight, profile) {
+  const footerText = `Electronic form created by www.waste-id.com, content produced by ${getContentProducerName(profile)}`
+  const footerY = pageHeight - EXPORT_FOOTER_HEIGHT_MM
+  const footerLines = doc.splitTextToSize(footerText, pageWidth - 12)
+
+  doc.setFillColor(255, 255, 255)
+  doc.rect(0, footerY, pageWidth, EXPORT_FOOTER_HEIGHT_MM, 'F')
+
+  doc.setDrawColor(180, 180, 180)
+  doc.setLineWidth(0.2)
+  doc.line(0, footerY, pageWidth, footerY)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7)
+  doc.setTextColor(90, 90, 90)
+  doc.text(footerLines, pageWidth / 2, footerY + 3.1, { align: 'center', baseline: 'middle' })
 }
