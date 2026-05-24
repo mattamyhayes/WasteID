@@ -95,7 +95,7 @@ export default function SDSAdd() {
     setLoading(true)
     try {
       const importData = {
-        product_name: productName.trim() || (mode === 'upload' ? selectedFile?.name : ''),
+        product_name: productName.trim() || (mode === 'upload' ? selectedFile?.name : (existingDocs.find(d => d.id === Number(existingDocId))?.short_name || '')),
         cas_number: casNumber.trim(),
         manufacturer_name: manufacturerName.trim(),
         original_filename: mode === 'upload' ? selectedFile.name : existingDocs.find(d => d.id === Number(existingDocId))?.stored_filename || '',
