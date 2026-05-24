@@ -19,6 +19,8 @@ import Admin from './pages/Admin'
 import Reports from './pages/Reports'
 import Marketplace from './pages/Marketplace'
 import Incinerators from './pages/Incinerators'
+import FormManager from './pages/FormManager'
+import FormEditor from './pages/FormEditor'
 
 export default function App() {
   return (
@@ -47,6 +49,9 @@ export default function App() {
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/incinerators" element={<Incinerators />} />
+          <Route path="/forms" element={<FormManager />} />
+          <Route path="/forms/new" element={<FormEditor />} />
+          <Route path="/forms/edit/:id" element={<FormEditor />} />
         </Routes>
       </main>
       <Footer />

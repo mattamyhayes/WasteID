@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/client'
 import DocumentList from '../components/DocumentList'
 import FileUpload from '../components/FileUpload'
+import ExportFormModal from '../components/ExportFormModal'
 
 const TILES = [
   { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
@@ -48,6 +49,7 @@ export default function Review() {
   const [compareLoading, setCompareLoading] = useState(null)
   const [determinationLoading, setDeterminationLoading] = useState(null)
   const [docsModal, setDocsModal] = useState(null) // { id, name, transaction_id }
+  const [exportFormProfile, setExportFormProfile] = useState(null) // profile object for form export
 
   const load = async () => {
     setLoading(true)
@@ -442,6 +444,13 @@ export default function Review() {
                                   📎 Docs
                                 </button>
                                 <button
+                                className="btn btn-secondary"
+                                style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#fefce8', color: '#a16207', border: '1px solid #fde047' }}
+                                onClick={() => setExportFormProfile(m)}
+                                >
+                                📤 Export
+                                </button>
+                                <button
                                   className="btn btn-secondary"
                                   style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
                                   disabled={determinationLoading === m.id}
@@ -553,6 +562,14 @@ export default function Review() {
             </div>
           )}
         </>
+      )}
+
+      {/* Export Form Modal */}
+      {exportFormProfile && (
+        <ExportFormModal
+          profile={exportFormProfile}
+          onClose={() => setExportFormProfile(null)}
+        />
       )}
 
       {/* Documents Modal */}
