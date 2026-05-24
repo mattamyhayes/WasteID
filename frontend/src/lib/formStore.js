@@ -180,6 +180,17 @@ export function populateFormFields(profile, form, extraData = {}) {
   })
 }
 
+function getWasteCodesFromProfile(profile) {
+  const det = profile.determinations?.[profile.determinations.length - 1]
+  if (!det) return ''
+  try { return JSON.parse(det.waste_codes || '[]').join(', ') } catch { return '' }
+}
+
+function getHazardousStatusFromProfile(profile) {
+  const det = profile.determinations?.[profile.determinations.length - 1]
+  return det ? (det.is_hazardous_waste ? 'Yes' : 'No') : ''
+}
+
 /**
  * Resolve a data element key to a value from the profile data.
  */
@@ -198,15 +209,8 @@ function resolveDataElement(key, profile) {
     epa_generator_status: profile.epa_generator_status || '',
     profile_name: profile.name || '',
     profile_id: profile.transaction_id || '',
-    waste_codes: (() => {
-      const det = profile.determinations?.[profile.determinations.length - 1]
-      if (!det) return ''
-      try { return JSON.parse(det.waste_codes || '[]').join(', ') } catch { return '' }
-    })(),
-    is_hazardous: (() => {
-      const det = profile.determinations?.[profile.determinations.length - 1]
-      return det ? (det.is_hazardous_waste ? 'Yes' : 'No') : ''
-    })(),
+    waste_codes: getWasteCodesFromProfile(profile),
+    is_hazardous: getHazardousStatusFromProfile(profile),
     process_description: profile.process_description || '',
     shipment_size_unit: profile.shipment_size_unit || '',
     shipment_size_qty: profile.shipment_size_qty ? String(profile.shipment_size_qty) : '',

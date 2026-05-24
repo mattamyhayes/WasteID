@@ -118,6 +118,8 @@ export default function FormEditor() {
 
   const renderPreview = () => {
     if (!filePreview) return null
+    // Only allow data: URLs for security (prevents injection of arbitrary URLs)
+    if (!filePreview.startsWith('data:')) return null
     const isImage = filePreview.startsWith('data:image')
     if (isImage) {
       return (
@@ -126,7 +128,8 @@ export default function FormEditor() {
         </div>
       )
     }
-    // PDF preview
+    // PDF preview - only allow data:application/pdf
+    if (!filePreview.startsWith('data:application/pdf')) return null
     return (
       <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
         <embed src={filePreview} type="application/pdf" width="100%" height="400px" />
