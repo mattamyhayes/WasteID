@@ -282,45 +282,6 @@ export default function SDSAdd() {
         )}
       </div>
 
-      {/* SDS Information */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>2. SDS Information</h2>
-        <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '1rem' }}>
-          {parsedData
-            ? 'These fields were auto-populated from the PDF. You can override any value below.'
-            : 'Enter key identifying information. After import, the system will parse all 16 sections of the SDS and store them electronically.'
-          }
-        </p>
-        <div className="form-group">
-          <label style={{ fontWeight: 600 }}>Product Name *</label>
-          <input
-            className="form-control"
-            value={productName}
-            onChange={e => setProductName(e.target.value)}
-            placeholder="e.g., Acetone, Hydrochloric Acid 37%"
-          />
-        </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="form-group" style={{ flex: '1 1 200px' }}>
-            <label style={{ fontWeight: 600 }}>CAS Number</label>
-            <input
-              className="form-control"
-              value={casNumber}
-              onChange={e => setCasNumber(e.target.value)}
-              placeholder="e.g., 67-64-1"
-            />
-          </div>
-          <div className="form-group" style={{ flex: '1 1 200px' }}>
-            <label style={{ fontWeight: 600 }}>Manufacturer</label>
-            <input
-              className="form-control"
-              value={manufacturerName}
-              onChange={e => setManufacturerName(e.target.value)}
-              placeholder="e.g., Fisher Scientific"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Parsed Data Preview */}
       {parsedData && Object.keys(parsedData).filter(k => k !== 'import_status').length > 3 && (
@@ -342,7 +303,7 @@ export default function SDSAdd() {
 
       {/* Profile Association */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>3. Associate with Profile (Optional)</h2>
+        <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>2. Associate with Profile (Optional)</h2>
         <div className="form-group">
           <label style={{ fontWeight: 600 }}>Profile</label>
           {loadingProfiles ? (

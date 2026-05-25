@@ -388,7 +388,9 @@ export default function NewDetermination() {
       {/* Document Upload Section – always available; auto-saves profile on first upload */}
       <div style={{ marginBottom: '1.25rem' }}>
         <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)} />
-        {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} />}
+        {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} onCompositionImported={(newComponents, sdsRecord) => {
+          setComponents(prev => [...prev, ...newComponents])
+        }} />}
       </div>
 
       {/* Waste Profile */}
