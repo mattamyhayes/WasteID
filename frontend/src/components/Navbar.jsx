@@ -7,7 +7,6 @@ export const navLinks = [
   { to: '/orders', label: 'Orders', icon: '📦' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
   { to: '/reports', label: 'Reports', icon: '📂' },
-  { to: '/incinerators', label: 'Incinerators', icon: '🔥' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },
 ]
 

@@ -15,6 +15,12 @@ const adminLinks = [
     icon: '🚢',
   },
   {
+    to: '/incinerators',
+    title: 'Incinerators',
+    description: 'Manage incinerator and disposal facility profiles.',
+    icon: '🔥',
+  },
+  {
     to: '/epa-form',
     title: 'EPA Form',
     description: 'Open the EPA hazardous waste manifest form.',
