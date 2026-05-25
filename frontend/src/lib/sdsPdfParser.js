@@ -694,7 +694,7 @@ export async function parseSdsPdf(file) {
   const { text, pages } = await extractTextFromPdf(file)
 
   if (!text || text.trim().length < 50) {
-    throw new Error('Could not extract text from PDF. The file may be image-based (scanned) and require OCR processing.')
+    throw new Error('Could not extract text from PDF. The file may be image-based (scanned). Please ensure you upload a text-based PDF file, or enter the SDS data manually using the form fields.')
   }
 
   const sections = splitIntoSections(text)
