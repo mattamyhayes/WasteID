@@ -133,28 +133,34 @@ export function deleteForm(id) {
  * Analyze an uploaded document and detect form fields (blank lines, boxes, etc.)
  * This simulates OCR/field detection. In production, this would call an AI service.
  * For now it generates a set of common form fields based on the document name/type.
+ * Section headers (fieldType: 'section_header') are included to preserve form structure.
  * @param {object} form - The form object with file_data
  * @returns {Array} Array of detected field objects
  */
 export function detectFormFields(form) {
-  // In a production system, this would use OCR + AI to detect blank fields.
+  // In a production system, this would use OCR + AI to detect blank fields and section headers.
   // For the MVP, we generate a reasonable set of fields that the user can customize.
+  // Section headers are non-fillable elements that provide structure and context.
   const commonFields = [
-    { id: 1, label: 'Company/Facility Name', fieldType: 'text', mapping: '', x: 5, y: 8, width: 40, height: 3 },
-    { id: 2, label: 'Address', fieldType: 'text', mapping: '', x: 5, y: 12, width: 40, height: 3 },
-    { id: 3, label: 'City', fieldType: 'text', mapping: '', x: 5, y: 16, width: 20, height: 3 },
-    { id: 4, label: 'State', fieldType: 'text', mapping: '', x: 26, y: 16, width: 10, height: 3 },
-    { id: 5, label: 'Zip Code', fieldType: 'text', mapping: '', x: 37, y: 16, width: 10, height: 3 },
-    { id: 6, label: 'Phone', fieldType: 'text', mapping: '', x: 50, y: 8, width: 20, height: 3 },
-    { id: 7, label: 'EPA ID Number', fieldType: 'text', mapping: '', x: 50, y: 12, width: 20, height: 3 },
-    { id: 8, label: 'Contact Name', fieldType: 'text', mapping: '', x: 50, y: 16, width: 20, height: 3 },
-    { id: 9, label: 'Waste Description', fieldType: 'textarea', mapping: '', x: 5, y: 22, width: 65, height: 6 },
-    { id: 10, label: 'Waste Codes', fieldType: 'text', mapping: '', x: 5, y: 30, width: 30, height: 3 },
-    { id: 11, label: 'Container Type', fieldType: 'text', mapping: '', x: 36, y: 30, width: 15, height: 3 },
-    { id: 12, label: 'Quantity', fieldType: 'text', mapping: '', x: 52, y: 30, width: 10, height: 3 },
-    { id: 13, label: 'Special Handling Instructions', fieldType: 'textarea', mapping: '', x: 5, y: 35, width: 65, height: 5 },
-    { id: 14, label: 'Date', fieldType: 'date', mapping: '', x: 5, y: 42, width: 15, height: 3 },
-    { id: 15, label: 'Signature/Printed Name', fieldType: 'text', mapping: '', x: 25, y: 42, width: 30, height: 3 },
+    { id: 1, label: 'Generator Information', fieldType: 'section_header', mapping: '', x: 5, y: 5, width: 90, height: 3 },
+    { id: 2, label: 'Company/Facility Name', fieldType: 'text', mapping: '', x: 5, y: 8, width: 40, height: 3 },
+    { id: 3, label: 'Address', fieldType: 'text', mapping: '', x: 5, y: 12, width: 40, height: 3 },
+    { id: 4, label: 'City', fieldType: 'text', mapping: '', x: 5, y: 16, width: 20, height: 3 },
+    { id: 5, label: 'State', fieldType: 'text', mapping: '', x: 26, y: 16, width: 10, height: 3 },
+    { id: 6, label: 'Zip Code', fieldType: 'text', mapping: '', x: 37, y: 16, width: 10, height: 3 },
+    { id: 7, label: 'Phone', fieldType: 'text', mapping: '', x: 50, y: 8, width: 20, height: 3 },
+    { id: 8, label: 'EPA ID Number', fieldType: 'text', mapping: '', x: 50, y: 12, width: 20, height: 3 },
+    { id: 9, label: 'Contact Name', fieldType: 'text', mapping: '', x: 50, y: 16, width: 20, height: 3 },
+    { id: 10, label: 'Waste Information', fieldType: 'section_header', mapping: '', x: 5, y: 20, width: 90, height: 3 },
+    { id: 11, label: 'Waste Description', fieldType: 'textarea', mapping: '', x: 5, y: 22, width: 65, height: 6 },
+    { id: 12, label: 'Waste Codes', fieldType: 'text', mapping: '', x: 5, y: 30, width: 30, height: 3 },
+    { id: 13, label: 'Container Type', fieldType: 'text', mapping: '', x: 36, y: 30, width: 15, height: 3 },
+    { id: 14, label: 'Quantity', fieldType: 'text', mapping: '', x: 52, y: 30, width: 10, height: 3 },
+    { id: 15, label: 'Shipping & Handling', fieldType: 'section_header', mapping: '', x: 5, y: 33, width: 90, height: 3 },
+    { id: 16, label: 'Special Handling Instructions', fieldType: 'textarea', mapping: '', x: 5, y: 35, width: 65, height: 5 },
+    { id: 17, label: 'Certification & Signatures', fieldType: 'section_header', mapping: '', x: 5, y: 40, width: 90, height: 3 },
+    { id: 18, label: 'Date', fieldType: 'date', mapping: '', x: 5, y: 42, width: 15, height: 3 },
+    { id: 19, label: 'Signature/Printed Name', fieldType: 'text', mapping: '', x: 25, y: 42, width: 30, height: 3 },
   ]
   return commonFields
 }

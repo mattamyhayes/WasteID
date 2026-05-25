@@ -81,6 +81,19 @@ export default function ExportFormModal({ profile, onClose }) {
       doc.setTextColor(0, 0, 150)
 
       filledFields.forEach(field => {
+        // Section headers are rendered as bold labels, not as data fields
+        if (field.fieldType === 'section_header') {
+          const xMm = (field.x / 100) * pageWidth
+          const yMm = (field.y / 100) * pageHeight
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(11)
+          doc.setTextColor(20, 83, 45)
+          doc.text(field.label, xMm + 1, yMm + 3)
+          doc.setFont('helvetica', 'normal')
+          doc.setFontSize(10)
+          doc.setTextColor(0, 0, 150)
+          return
+        }
         if (!field.value) return
         // Convert percentage-based positions to mm
         const xMm = (field.x / 100) * pageWidth
@@ -238,10 +251,26 @@ function drawFormStructure(doc, form, pageWidth, pageHeight) {
     const w = (field.width / 100) * pageWidth
     const h = (field.height / 100) * pageHeight
 
-    // Draw field box
-    doc.rect(x, y, w, h)
-    // Draw field label above the box
-    doc.text(field.label, x + 0.5, y - 0.5)
+    if (field.fieldType === 'section_header') {
+      // Draw section header as bold text with underline
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(20, 83, 45)
+      doc.text(field.label, x + 0.5, y + 2.5)
+      doc.setDrawColor(20, 83, 45)
+      doc.setLineWidth(0.4)
+      doc.line(x, y + h, x + w, y + h)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(100, 100, 100)
+      doc.setDrawColor(180, 180, 180)
+      doc.setLineWidth(0.3)
+    } else {
+      // Draw field box
+      doc.rect(x, y, w, h)
+      // Draw field label above the box
+      doc.text(field.label, x + 0.5, y - 0.5)
+    }
   })
 
   // Footer

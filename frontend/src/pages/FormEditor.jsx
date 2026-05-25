@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getForm, createForm, updateForm, detectFormFields, DATA_ELEMENTS } from '../lib/formStore'
 
+/**
+ * Resolve a field's mapping to the display name of the WasteID data element.
+ */
+function getMappingDisplayName(mapping) {
+  if (!mapping || mapping === '_form_specific') return ''
+  const element = DATA_ELEMENTS.find(d => d.key === mapping)
+  return element ? `{${element.label}}` : `{${mapping}}`
+}
+
 export default function FormEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -16,6 +25,7 @@ export default function FormEditor() {
   const [converted, setConverted] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     if (isEdit) {
@@ -220,16 +230,29 @@ export default function FormEditor() {
               </thead>
               <tbody>
                 {fields.map((field, idx) => (
-                  <tr key={field.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <tr key={field.id} style={{
+                    borderBottom: '1px solid #e5e7eb',
+                    background: field.fieldType === 'section_header' ? '#f0fdf4' : undefined,
+                  }}>
                     <td style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', color: '#6b7280' }}>{idx + 1}</td>
                     <td style={{ padding: '0.4rem 0.5rem' }}>
-                      <input
-                        className="form-control"
-                        value={field.label}
-                        onChange={e => handleFieldChange(field.id, 'label', e.target.value)}
-                        placeholder="Field label"
-                        style={{ fontSize: '0.88rem', padding: '0.3rem 0.5rem' }}
-                      />
+                      {field.fieldType === 'section_header' ? (
+                        <input
+                          className="form-control"
+                          value={field.label}
+                          onChange={e => handleFieldChange(field.id, 'label', e.target.value)}
+                          placeholder="Section header"
+                          style={{ fontSize: '0.88rem', padding: '0.3rem 0.5rem', fontWeight: 700, color: '#166534' }}
+                        />
+                      ) : (
+                        <input
+                          className="form-control"
+                          value={field.label}
+                          onChange={e => handleFieldChange(field.id, 'label', e.target.value)}
+                          placeholder="Field label"
+                          style={{ fontSize: '0.88rem', padding: '0.3rem 0.5rem' }}
+                        />
+                      )}
                     </td>
                     <td style={{ padding: '0.4rem 0.5rem' }}>
                       <select
@@ -243,38 +266,43 @@ export default function FormEditor() {
                         <option value="date">Date</option>
                         <option value="checkbox">Checkbox</option>
                         <option value="number">Number</option>
+                        <option value="section_header">Section Header</option>
                       </select>
                     </td>
                     <td style={{ padding: '0.4rem 0.5rem' }}>
-                      <select
-                        className="form-control"
-                        value={field.mapping}
-                        onChange={e => handleFieldChange(field.id, 'mapping', e.target.value)}
-                        style={{ fontSize: '0.85rem', padding: '0.3rem 0.4rem' }}
-                      >
-                        <option value="">— Select data element —</option>
-                        <option value="_form_specific">⚡ Form-Specific (manual entry)</option>
-                        <optgroup label="Generator/Customer">
-                          {DATA_ELEMENTS.filter(d => d.source === 'customer').map(d => (
-                            <option key={d.key} value={d.key}>{d.label}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Profile/Waste">
-                          {DATA_ELEMENTS.filter(d => d.source === 'profile').map(d => (
-                            <option key={d.key} value={d.key}>{d.label}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Determination">
-                          {DATA_ELEMENTS.filter(d => d.source === 'determination').map(d => (
-                            <option key={d.key} value={d.key}>{d.label}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Manifest/Shipping">
-                          {DATA_ELEMENTS.filter(d => d.source === 'manifest').map(d => (
-                            <option key={d.key} value={d.key}>{d.label}</option>
-                          ))}
-                        </optgroup>
-                      </select>
+                      {field.fieldType === 'section_header' ? (
+                        <span style={{ fontSize: '0.82rem', color: '#6b7280', fontStyle: 'italic' }}>— Section Header (no mapping) —</span>
+                      ) : (
+                        <select
+                          className="form-control"
+                          value={field.mapping}
+                          onChange={e => handleFieldChange(field.id, 'mapping', e.target.value)}
+                          style={{ fontSize: '0.85rem', padding: '0.3rem 0.4rem' }}
+                        >
+                          <option value="">— Select data element —</option>
+                          <option value="_form_specific">⚡ Form-Specific (manual entry)</option>
+                          <optgroup label="Generator/Customer">
+                            {DATA_ELEMENTS.filter(d => d.source === 'customer').map(d => (
+                              <option key={d.key} value={d.key}>{d.label}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Profile/Waste">
+                            {DATA_ELEMENTS.filter(d => d.source === 'profile').map(d => (
+                              <option key={d.key} value={d.key}>{d.label}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Determination">
+                            {DATA_ELEMENTS.filter(d => d.source === 'determination').map(d => (
+                              <option key={d.key} value={d.key}>{d.label}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Manifest/Shipping">
+                            {DATA_ELEMENTS.filter(d => d.source === 'manifest').map(d => (
+                              <option key={d.key} value={d.key}>{d.label}</option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      )}
                     </td>
                     <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
                       <button
@@ -293,8 +321,51 @@ export default function FormEditor() {
             <button className="btn btn-primary" onClick={handleSave}>
               {saved ? '✓ Saved' : '💾 Save Fields'}
             </button>
+            <button className="btn btn-secondary" onClick={() => setShowPreview(!showPreview)}>
+              {showPreview ? '🔽 Hide Preview' : '👁️ Preview Output'}
+            </button>
             <button className="btn btn-secondary" onClick={() => navigate('/forms')}>Back to Form List</button>
           </div>
+
+          {/* Preview Panel - shows WasteID field names where data would be populated */}
+          {showPreview && (
+            <div style={{ marginTop: '1.5rem', border: '2px solid #86efac', borderRadius: 8, padding: '1.25rem', background: '#f0fdf4' }}>
+              <h3 style={{ color: '#166534', fontSize: '1rem', marginBottom: '0.25rem' }}>📋 Form Output Preview</h3>
+              <p style={{ color: '#6b7280', fontSize: '0.82rem', marginBottom: '1rem' }}>
+                This preview shows what the form output will look like. WasteID data element names are shown in place of actual data to help verify the mapping.
+              </p>
+              <div style={{ background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, padding: '1rem', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                {fields.map((field) => {
+                  if (field.fieldType === 'section_header') {
+                    return (
+                      <div key={field.id} style={{ borderBottom: '2px solid #166534', marginTop: '1rem', marginBottom: '0.5rem', paddingBottom: '0.25rem' }}>
+                        <strong style={{ color: '#166534', fontSize: '0.95rem' }}>{field.label}</strong>
+                      </div>
+                    )
+                  }
+                  const mappingDisplay = field.mapping === '_form_specific'
+                    ? '[Manual Entry]'
+                    : field.mapping
+                      ? getMappingDisplayName(field.mapping)
+                      : '[Unmapped]'
+                  return (
+                    <div key={field.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0.5rem', borderBottom: '1px dashed #e5e7eb' }}>
+                      <span style={{ color: '#374151' }}>{field.label}:</span>
+                      <span style={{
+                        color: field.mapping && field.mapping !== '_form_specific' ? '#1d4ed8' : field.mapping === '_form_specific' ? '#b45309' : '#dc2626',
+                        fontWeight: 500,
+                      }}>
+                        {mappingDisplay}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                🔵 Blue = WasteID auto-populated data &nbsp;|&nbsp; 🟠 Orange = Manual entry required &nbsp;|&nbsp; 🔴 Red = Not yet mapped
+              </p>
+            </div>
+          )}
         </div>
       )}
 
