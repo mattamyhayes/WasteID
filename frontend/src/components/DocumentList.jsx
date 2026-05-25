@@ -61,7 +61,10 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
 
   const handleImportSds = async (docId) => {
     const doc = getDocument(docId)
-    if (!doc) return
+    if (!doc) {
+      setImportError('Document not found. It may have been deleted.')
+      return
+    }
     setImporting(docId)
     setImportError('')
     setImportSuccess(null)
