@@ -51,7 +51,7 @@ export default function Navbar() {
         <img
           src={wasteIdLeaf}
           alt="WasteID leaf"
-          style={{ width: 22, height: 22, verticalAlign: 'middle', marginRight: 8 }}
+          style={{ width: '22px', height: '22px', verticalAlign: 'middle', marginRight: '8px' }}
         />
         <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#fff' }}>ID</span>
       </Link>
