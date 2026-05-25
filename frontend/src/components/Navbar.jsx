@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import logo from '../assets/branding/wasteid-logo.svg'
 
 export const navLinks = [
   { to: '/profile', label: 'New Profile', icon: '🚀' },
@@ -47,18 +46,8 @@ export default function Navbar() {
         top: 0,
         zIndex: 100,
       }}>
-      <Link to="/" style={{ color: '#fff', flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-        <img
-          src={logo}
-          alt="WasteID logo - Hazardous waste process platform"
-          style={{
-            height: '34px',
-            width: 'auto',
-            background: '#fff',
-            borderRadius: 8,
-            padding: '0.2rem 0.45rem',
-          }}
-        />
+      <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#fff', flexShrink: 0 }}>
+        🌿 <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#fff' }}>ID</span>
       </Link>
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
