@@ -49,7 +49,7 @@ export default function Navbar() {
         zIndex: 100,
       }}>
       <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#fff', flexShrink: 0 }}>
-        🌿 <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#14532d' }}>ID</span>
+        🌿 <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#fff' }}>ID</span>
       </Link>
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
