@@ -50,7 +50,7 @@ export default function Navbar() {
       <Link to="/" style={{ color: '#fff', flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
         <img
           src={logo}
-          alt="WasteID"
+          alt="WasteID logo - Hazardous waste process platform"
           style={{
             height: '34px',
             width: 'auto',
