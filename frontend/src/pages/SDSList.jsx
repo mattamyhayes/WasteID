@@ -80,7 +80,9 @@ export default function SDSList() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
+                <th style={{ ...thStyle, width: 50 }}></th>
                 <th style={thStyle}>SDS ID</th>
+                <th style={thStyle}>Product Name</th>
                 <th style={thStyle}>File Name</th>
                 <th style={thStyle}>CAS #</th>
                 <th style={thStyle}>Manufacturer</th>
@@ -95,8 +97,16 @@ export default function SDSList() {
                 <tr key={record.id}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                   onMouseLeave={e => e.currentTarget.style.background = ''}>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <Link to={`/sds/${record.id}/edit`} className="btn btn-secondary" style={{ padding: '0.2rem 0.45rem', fontSize: '0.78rem' }} title="Edit record">
+                      ✏️
+                    </Link>
+                  </td>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>
                     {record.sds_id || `SDS-${String(record.id).padStart(5, '0')}`}
+                  </td>
+                  <td style={{ ...tdStyle, fontWeight: 500 }}>
+                    {record.product_name || '—'}
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600 }}>
                     <a
