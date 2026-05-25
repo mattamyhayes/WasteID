@@ -89,7 +89,7 @@ export default function SDSEdit() {
           <h1 style={{ color: '#14532d', marginBottom: '0.25rem' }}>✏️ Edit SDS Record</h1>
           <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
             <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#166534' }}>{sdsId}</span>
-            {' — '}{record.product_name}
+            {' — '}{record.product_name || 'Unnamed Product'}
           </p>
         </div>
         <Link to="/sds" className="btn btn-secondary">← Back to SDS List</Link>
