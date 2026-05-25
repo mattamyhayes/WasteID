@@ -1962,6 +1962,26 @@ export const localSds = {
     return ok(record)
   },
 
+  update(id, data) {
+    const store = loadSdsStore()
+    const idx = store.records.findIndex(r => r.id === Number(id))
+    if (idx === -1) return reject('SDS not found.', 404)
+    const mixtureStore = loadStore()
+
+    // If profile association changed, update profile fields
+    if ('mixture_id' in data) {
+      const mid = data.mixture_id ? Number(data.mixture_id) : null
+      const mixture = mid ? mixtureStore.mixtures.find(m => m.id === mid) : null
+      data.mixture = mid
+      data.profile_name = mixture ? mixture.name : ''
+      data.profile_transaction_id = mixture ? mixture.transaction_id : ''
+    }
+
+    store.records[idx] = { ...store.records[idx], ...data }
+    saveSdsStore(store)
+    return ok(store.records[idx])
+  },
+
   delete(id) {
     const store = loadSdsStore()
     const idx = store.records.findIndex(r => r.id === Number(id))

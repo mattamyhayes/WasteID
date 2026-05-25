@@ -286,6 +286,9 @@ export const sds = {
   get: (id) => useLocalMixtures
     ? localSds.get(id)
     : client.get(`/sds/${id}/`),
+  update: (id, data) => useLocalMixtures
+    ? localSds.update(id, data)
+    : client.patch(`/sds/${id}/`, data),
   delete: (id) => useLocalMixtures
     ? localSds.delete(id)
     : client.delete(`/sds/${id}/`),
