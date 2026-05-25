@@ -38,7 +38,7 @@ export default function Navbar() {
     <nav
       ref={navRef}
       style={{
-        background: '#14532d',
+        background: '#000',
         color: '#fff',
         height: 'var(--navbar-height)',
         display: 'flex',
@@ -50,8 +50,8 @@ export default function Navbar() {
         top: 0,
         zIndex: 100,
       }}>
-      <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#bbf7d0', flexShrink: 0 }}>
-        🌿 WasteID
+      <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#fff', flexShrink: 0 }}>
+        🌿 <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#14532d' }}>ID</span>
       </Link>
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
