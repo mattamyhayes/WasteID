@@ -53,7 +53,7 @@ export default function Navbar() {
           alt="WasteID leaf"
           style={{ width: '22px', height: '22px', verticalAlign: 'middle', marginRight: '8px' }}
         />
-        <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#fff' }}>ID</span>
+        <span style={{ color: '#fff' }}>WasteID</span>
       </Link>
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
