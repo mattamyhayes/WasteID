@@ -90,7 +90,7 @@ export default function Home() {
         <div className="container">
           <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🌿</div>
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, marginBottom: '1rem', lineHeight: 1.2 }}>
-            Hazardous Waste Compliance,<br />Simplified End-to-End
+            Hazardous Waste Processes,<br />Simplified End-to-End
           </h1>
           <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', maxWidth: 640, margin: '0 auto 0.75rem', opacity: 0.95, lineHeight: 1.75 }}>
             WasteID connects generators, brokers, shippers, and incinerators on one platform —
@@ -212,7 +212,7 @@ export default function Home() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="demo-message">What are your biggest compliance challenges?</label>
+                <label htmlFor="demo-message">What are your biggest process challenges?</label>
                 <textarea
                   id="demo-message"
                   name="message"
