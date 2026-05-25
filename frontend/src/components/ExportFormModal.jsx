@@ -98,6 +98,24 @@ export default function ExportFormModal({ profile, onClose }) {
         // Convert percentage-based positions to mm
         const xMm = (field.x / 100) * pageWidth
         const yMm = (field.y / 100) * pageHeight
+
+        if (field.fieldType === 'checkbox') {
+          // Draw a checkbox: checked = ☑, unchecked = ☐
+          const isChecked = field.value && field.value.toLowerCase() !== 'no' && field.value !== '0' && field.value !== 'false'
+          if (isChecked) {
+            const boxSize = Math.min((field.width / 100) * pageWidth, (field.height / 100) * pageHeight, 4)
+            doc.setDrawColor(0, 0, 150)
+            doc.setLineWidth(0.4)
+            doc.rect(xMm + 0.5, yMm + 0.5, boxSize, boxSize)
+            doc.setFont('helvetica', 'bold')
+            doc.setFontSize(boxSize * 2.5)
+            doc.text('✓', xMm + 0.8, yMm + boxSize)
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(10)
+          }
+          return
+        }
+
         const text = String(field.value)
 
         if (field.fieldType === 'textarea') {
