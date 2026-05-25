@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sds, profileDocuments, mixtures } from '../api/client'
+import { parseSdsPdf } from '../lib/sdsPdfParser'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
 const MAX_FILE_SIZE = 25 * 1024 * 1024
@@ -13,10 +14,20 @@ function validateFile(file) {
   return null
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function SDSAdd() {
   const navigate = useNavigate()
   const [mode, setMode] = useState('upload') // 'upload' or 'existing'
   const [loading, setLoading] = useState(false)
+  const [parsing, setParsing] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -33,7 +44,11 @@ export default function SDSAdd() {
   const [profiles, setProfiles] = useState([])
   const [loadingProfiles, setLoadingProfiles] = useState(true)
 
-  // SDS data fields for manual entry (used when parsing isn't automated)
+  // Parsed SDS data
+  const [parsedData, setParsedData] = useState(null)
+  const [parseError, setParseError] = useState('')
+
+  // SDS data fields for manual entry / override
   const [productName, setProductName] = useState('')
   const [casNumber, setCasNumber] = useState('')
   const [manufacturerName, setManufacturerName] = useState('')
@@ -61,12 +76,39 @@ export default function SDSAdd() {
     try {
       const res = await profileDocuments.list()
       const allDocs = res.data.results || res.data || []
-      // Filter to only SDS documents
       setExistingDocs(allDocs.filter(d => d.file_type === 'SDS'))
     } catch {
       // Non-critical
     } finally {
       setLoadingDocs(false)
+    }
+  }
+
+  // Auto-parse PDF when file is selected
+  const handleFileSelected = async (file) => {
+    setSelectedFile(file)
+    setParsedData(null)
+    setParseError('')
+
+    if (!file) return
+
+    const ext = file.name.includes('.') ? '.' + file.name.split('.').pop().toLowerCase() : ''
+    if (ext !== '.pdf') {
+      setParseError('Auto-parsing is only available for PDF files. Please enter the data manually.')
+      return
+    }
+
+    setParsing(true)
+    try {
+      const data = await parseSdsPdf(file)
+      setParsedData(data)
+      if (data.product_name) setProductName(data.product_name)
+      if (data.cas_number) setCasNumber(data.cas_number)
+      if (data.manufacturer_name) setManufacturerName(data.manufacturer_name)
+    } catch (err) {
+      setParseError(`PDF parsing: ${err.message || 'Could not extract data from PDF.'}`)
+    } finally {
+      setParsing(false)
     }
   }
 
@@ -107,7 +149,6 @@ export default function SDSAdd() {
         if (mixtureId) importData.mixture_id = mixtureId
       } else {
         importData.profile_document_id = existingDocId
-        // Find the mixture associated with the selected doc
         const doc = existingDocs.find(d => d.id === Number(existingDocId))
         if (doc && doc.mixture) {
           importData.mixture_id = doc.mixture
@@ -116,12 +157,29 @@ export default function SDSAdd() {
         }
       }
 
-      // Include sds_data for structured import
-      importData.sds_data = {
+      // Merge all parsed data into sds_data
+      const sdsData = {
+        ...parsedData,
         product_name: importData.product_name,
         cas_number: importData.cas_number,
         manufacturer_name: importData.manufacturer_name,
         import_status: 'complete',
+      }
+
+      importData.sds_data = sdsData
+
+      // For local mode, spread parsed data to top level
+      if (parsedData) {
+        Object.assign(importData, parsedData)
+        importData.product_name = sdsData.product_name
+        importData.cas_number = sdsData.cas_number
+        importData.manufacturer_name = sdsData.manufacturer_name
+      }
+
+      // Store the file data for viewing later (local mode)
+      if (mode === 'upload' && selectedFile) {
+        const fileDataUrl = await fileToDataUrl(selectedFile)
+        importData.file_data = fileDataUrl
       }
 
       await sds.import(importData)
@@ -173,12 +231,31 @@ export default function SDSAdd() {
               <label style={{ fontWeight: 600 }}>SDS File *</label>
               <input
                 type="file"
-                onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                onChange={e => handleFileSelected(e.target.files?.[0] || null)}
                 accept={ALLOWED_EXTENSIONS.join(',')}
                 className="form-control"
               />
               <small style={{ color: '#6b7280' }}>Accepted: PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, PNG, JPG, TIFF (max 25 MB)</small>
             </div>
+
+            {parsing && (
+              <div style={{ padding: '0.75rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', color: '#1e40af', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                ⏳ Parsing PDF... Extracting SDS data from all sections...
+              </div>
+            )}
+
+            {parseError && (
+              <div style={{ padding: '0.75rem', background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', color: '#92400e', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                ⚠️ {parseError}
+              </div>
+            )}
+
+            {parsedData && (
+              <div style={{ padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0', color: '#166534', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                ✓ PDF parsed successfully! Extracted {Object.keys(parsedData).filter(k => parsedData[k] && k !== 'import_status').length} data fields.
+                Fields auto-populated below.
+              </div>
+            )}
           </div>
         )}
 
@@ -209,7 +286,10 @@ export default function SDSAdd() {
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>2. SDS Information</h2>
         <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '1rem' }}>
-          Enter key identifying information. After import, the system will parse all 16 sections of the SDS and store them electronically.
+          {parsedData
+            ? 'These fields were auto-populated from the PDF. You can override any value below.'
+            : 'Enter key identifying information. After import, the system will parse all 16 sections of the SDS and store them electronically.'
+          }
         </p>
         <div className="form-group">
           <label style={{ fontWeight: 600 }}>Product Name *</label>
@@ -242,6 +322,24 @@ export default function SDSAdd() {
         </div>
       </div>
 
+      {/* Parsed Data Preview */}
+      {parsedData && Object.keys(parsedData).filter(k => k !== 'import_status').length > 3 && (
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>📄 Parsed Data Preview</h2>
+          <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            The following data was extracted from the PDF and will be stored electronically:
+          </p>
+          <div style={{ maxHeight: 300, overflow: 'auto', background: '#f9fafb', borderRadius: 6, padding: '0.75rem', border: '1px solid #e5e7eb' }}>
+            {Object.entries(parsedData).filter(([k, v]) => v && k !== 'import_status').map(([key, value]) => (
+              <div key={key} style={{ marginBottom: '0.3rem', fontSize: '0.85rem' }}>
+                <strong style={{ color: '#374151' }}>{key.replace(/_/g, ' ')}:</strong>{' '}
+                <span style={{ color: '#4b5563' }}>{String(value).substring(0, 200)}{String(value).length > 200 ? '…' : ''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Profile Association */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ color: '#166534', marginBottom: '1rem', fontSize: '1.1rem' }}>3. Associate with Profile (Optional)</h2>
@@ -270,10 +368,10 @@ export default function SDSAdd() {
         <button
           className="btn btn-primary"
           onClick={handleImport}
-          disabled={loading}
+          disabled={loading || parsing}
           style={{ fontSize: '1rem', padding: '0.6rem 2rem' }}
         >
-          {loading ? '⏳ Importing…' : '📥 Import SDS'}
+          {loading ? '⏳ Importing…' : parsing ? '⏳ Parsing…' : '📥 Import SDS'}
         </button>
         <button
           className="btn btn-secondary"

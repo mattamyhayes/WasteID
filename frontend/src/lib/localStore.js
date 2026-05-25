@@ -1913,8 +1913,11 @@ export const localSds = {
       mixture = mixtureStore.mixtures.find(m => m.id === mid)
     }
 
+    const sdsId = `SDS-${String(store.nextId).padStart(5, '0')}`
+
     const record = {
       id: store.nextId++,
+      sds_id: sdsId,
       mixture: mixture ? mixture.id : null,
       profile_name: mixture ? mixture.name : '',
       profile_transaction_id: mixture ? mixture.transaction_id : '',
@@ -1922,6 +1925,7 @@ export const localSds = {
       imported_at: new Date().toISOString(),
       import_status: 'complete',
       original_filename: data.original_filename || '',
+      file_data: data.file_data || null,
       product_name: data.product_name || data.original_filename || 'Unknown Product',
       cas_number: data.cas_number || '',
       manufacturer_name: data.manufacturer_name || '',
@@ -1946,8 +1950,11 @@ export const localSds = {
       composition: data.composition || '[]',
       // Sections 4-16 (store as provided)
       ...Object.fromEntries(
-        Object.entries(data).filter(([k]) => !['mixture_id', 'mixture', 'profile_document_id', 'file'].includes(k))
+        Object.entries(data).filter(([k]) => !['mixture_id', 'mixture', 'profile_document_id', 'file', 'sds_data'].includes(k))
       ),
+      // Ensure id and sds_id are not overwritten
+      id: store.nextId - 1,
+      sds_id: sdsId,
     }
 
     store.records.push(record)
