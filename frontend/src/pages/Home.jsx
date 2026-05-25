@@ -2,7 +2,16 @@ import { useState } from 'react'
 
 const audiences = [
   {
-    icon: '🏭',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 21h18" />
+        <path d="M5 21V10l5 3V9l4 2V7l5 4v10" />
+        <path d="M7 21v-4h3v4" />
+        <path d="M14 21v-6h3v6" />
+        <path d="M7 7h3" />
+        <path d="M17 11h2" />
+      </svg>
+    ),
     role: 'Generators',
     headline: 'Eliminate Manual SDS Data Entry',
     benefits: [
@@ -13,7 +22,14 @@ const audiences = [
     ],
   },
   {
-    icon: '🤝',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="4" y="5" width="16" height="14" rx="2" />
+        <path d="M8 9h8" />
+        <path d="M8 13h5" />
+        <path d="M14 12.5l1.6 1.6 2.4-2.8" />
+      </svg>
+    ),
     role: 'Brokers',
     headline: 'Simplify Profile Output & Management',
     benefits: [
@@ -24,7 +40,14 @@ const audiences = [
     ],
   },
   {
-    icon: '🚛',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 7h11v7H3z" />
+        <path d="M14 10h4l3 3v1h-7z" />
+        <circle cx="7" cy="17" r="1.8" />
+        <circle cx="17" cy="17" r="1.8" />
+      </svg>
+    ),
     role: 'Shippers',
     headline: 'Streamline the Manifest Process',
     benefits: [
@@ -35,7 +58,11 @@ const audiences = [
     ],
   },
   {
-    icon: '🔥',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 3c1.8 2.3 2.7 4.2 2.7 6.1 0 1.3-.5 2.4-1.3 3.2.1-2-.8-3.5-2.2-4.9-2 2.1-3.9 4.1-3.9 7.1A4.8 4.8 0 0 0 12 20a4.8 4.8 0 0 0 4.7-4.8c0-1.8-.7-3.1-1.7-4.6" />
+      </svg>
+    ),
     role: 'Incinerators',
     headline: 'Win More Business, Faster',
     benefits: [
@@ -45,15 +72,6 @@ const audiences = [
       'Expand your network through the WasteID marketplace and bid on new waste streams.',
     ],
   },
-]
-
-const platformFeatures = [
-  { icon: '📄', title: 'Automated SDS Import', desc: 'Upload a Safety Data Sheet and WasteID extracts chemical composition, hazard codes, and regulatory data automatically.' },
-  { icon: '⚖️', title: 'RCRA Determination Engine', desc: 'Step-by-step EPA RCRA hazardous waste analysis covering listed wastes (P/U/F/K) and all D001–D043 characteristics.' },
-  { icon: '📋', title: 'Profile Management', desc: 'Create, store, and share waste profiles with generators, brokers, and disposal facilities in a single platform.' },
-  { icon: '🚢', title: 'Manifest Automation', desc: 'Generate EPA Uniform Hazardous Waste Manifests pre-filled from approved profiles — no re-entry required.' },
-  { icon: '🏬', title: 'Disposal Marketplace', desc: 'Connect generators with qualified incinerators and disposal facilities. Bid, select, and track in real time.' },
-  { icon: '📊', title: 'Audit-Ready Reporting', desc: 'Export professional PDF and CSV reports with full documented reasoning to satisfy inspectors and auditors.' },
 ]
 
 const ROLES = ['Generator', 'Broker / TSD', 'Shipper / Transporter', 'Incinerator / Disposal Facility', 'Consultant / Other']
@@ -84,20 +102,20 @@ export default function Home() {
       <div style={{
         background: 'linear-gradient(135deg, #14532d 0%, #166534 60%, #15803d 100%)',
         color: '#fff',
-        padding: 'clamp(3rem, 8vw, 6rem) 1.5rem clamp(2.5rem, 6vw, 5rem)',
+        padding: 'clamp(2.5rem, 6vw, 4.5rem) 1.5rem clamp(2rem, 5vw, 3.5rem)',
         textAlign: 'center',
       }}>
         <div className="container">
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🌿</div>
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, marginBottom: '1rem', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🌿</div>
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, marginBottom: '0.85rem', lineHeight: 1.2 }}>
             Hazardous Waste Processes,<br />Simplified End-to-End
           </h1>
-          <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', maxWidth: 640, margin: '0 auto 0.75rem', opacity: 0.95, lineHeight: 1.75 }}>
+          <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', maxWidth: 640, margin: '0 auto 0.5rem', opacity: 0.95, lineHeight: 1.7 }}>
             WasteID connects generators, brokers, shippers, and incinerators on one platform —
             automating SDS data entry, waste profiling, manifesting, and disposal.
           </p>
-          <p style={{ fontSize: '1rem', maxWidth: 560, margin: '0 auto 2.25rem', opacity: 0.8, lineHeight: 1.6 }}>
-            EPA RCRA compliant determinations in minutes, not days.
+          <p style={{ fontSize: '1rem', maxWidth: 560, margin: '0 auto 1.75rem', opacity: 0.8, lineHeight: 1.6, fontWeight: 600 }}>
+            One Platform. Every Step.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="#demo" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.75rem 1.9rem' }}>
@@ -111,26 +129,41 @@ export default function Home() {
       </div>
 
       {/* ── Audience Value Props ── */}
-      <div id="learn-more" style={{ background: '#f0fdf4', padding: 'clamp(2.5rem, 6vw, 5rem) 1.5rem' }}>
+      <div id="learn-more" style={{ background: '#f0fdf4', padding: 'clamp(2rem, 5vw, 3.5rem) 1.5rem' }}>
         <div className="container">
-          <h2 style={{ textAlign: 'center', color: '#14532d', marginBottom: '0.5rem', fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
+          <h2 style={{ textAlign: 'center', color: '#14532d', marginBottom: '0.35rem', fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
             Built for Everyone in the Waste Supply Chain
           </h2>
-          <p style={{ textAlign: 'center', color: '#4b7a56', marginBottom: '2.5rem', maxWidth: 600, margin: '0 auto 2.5rem' }}>
+          <p style={{ textAlign: 'center', color: '#4b7a56', marginBottom: '1.75rem', maxWidth: 600, margin: '0 auto 1.75rem' }}>
             Whether you generate, broker, ship, or dispose of hazardous waste — WasteID reduces paperwork,
             errors, and delays at every step.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
             {audiences.map(({ icon, role, headline, benefits }) => (
-              <div key={role} className="card" style={{ borderTop: '4px solid #16a34a' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '2rem' }}>{icon}</span>
+              <div key={role} className="card" style={{ borderTop: '4px solid #16a34a', padding: '1.2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '0.7rem' }}>
+                  <span
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
+                      color: '#fff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: '0 8px 16px rgba(20,83,45,0.15)',
+                    }}
+                  >
+                    <span style={{ width: 24, height: 24, display: 'inline-flex' }}>{icon}</span>
+                  </span>
                   <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{role}</div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{role}</div>
                     <h3 style={{ margin: 0, fontSize: '1rem', color: '#14532d', lineHeight: 1.3 }}>{headline}</h3>
                   </div>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#374151', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', color: '#374151', fontSize: '0.9rem', lineHeight: 1.65 }}>
                   {benefits.map(b => <li key={b} style={{ marginBottom: '0.35rem' }}>{b}</li>)}
                 </ul>
               </div>
@@ -139,37 +172,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Platform Features ── */}
-      <div style={{ padding: 'clamp(2.5rem, 6vw, 5rem) 1.5rem' }}>
-        <div className="container">
-          <h2 style={{ textAlign: 'center', color: '#14532d', marginBottom: '0.5rem', fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
-            One Platform. Every Step.
-          </h2>
-          <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '2.5rem', maxWidth: 560, margin: '0 auto 2.5rem' }}>
-            From the first SDS upload to the final disposal manifest, WasteID handles your entire compliance workflow.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-            {platformFeatures.map(({ icon, title, desc }) => (
-              <div key={title} className="card" style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>{icon}</span>
-                <div>
-                  <h3 style={{ margin: '0 0 0.35rem', color: '#14532d', fontSize: '0.97rem' }}>{title}</h3>
-                  <p style={{ margin: 0, fontSize: '0.87rem', color: '#6b7280', lineHeight: 1.6 }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </div>
-
       {/* ── Request a Demo ── */}
-      <div id="demo" style={{ background: '#f0fdf4', padding: 'clamp(2.5rem, 6vw, 5rem) 1.5rem' }}>
+      <div id="demo" style={{ background: '#f0fdf4', padding: 'clamp(2rem, 5vw, 3.5rem) 1.5rem' }}>
         <div className="container" style={{ maxWidth: 680 }}>
-          <h2 style={{ textAlign: 'center', color: '#14532d', marginBottom: '0.5rem', fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
+          <h2 style={{ textAlign: 'center', color: '#14532d', marginBottom: '0.35rem', fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
             Request a Demo
           </h2>
-          <p style={{ textAlign: 'center', color: '#4b7a56', marginBottom: '2rem', lineHeight: 1.7 }}>
+          <p style={{ textAlign: 'center', color: '#4b7a56', marginBottom: '1.5rem', lineHeight: 1.7 }}>
             See WasteID in action with a personalized walkthrough for your role in the waste supply chain.
             Fill out the form and our team will reach out within one business day.
           </p>
@@ -237,14 +246,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Disclaimer ── */}
-      <div className="container" style={{ padding: '2rem 1.5rem' }}>
-        <div className="alert alert-warning">
-          <strong>⚠️ Disclaimer:</strong> WasteID is a decision-support tool for informational purposes only. It does not
-          constitute legal advice or replace laboratory testing (SW-846 methods). Always verify determinations with a
-          qualified environmental professional and consult applicable state regulations.
-        </div>
-      </div>
     </div>
   )
 }
