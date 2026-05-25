@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import wasteIdLeaf from '../assets/branding/wasteid-leaf.svg'
 
 export const navLinks = [
   { to: '/profile', label: 'New Profile', icon: '🚀' },
@@ -47,7 +48,12 @@ export default function Navbar() {
         zIndex: 100,
       }}>
       <Link to="/" style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#fff', flexShrink: 0 }}>
-        🌿 <span style={{ color: '#fff' }}>Waste</span><span style={{ color: '#fff' }}>ID</span>
+        <img
+          src={wasteIdLeaf}
+          alt="WasteID leaf"
+          style={{ width: '22px', height: '22px', verticalAlign: 'middle', marginRight: '8px' }}
+        />
+        <span style={{ color: '#fff' }}>WasteID</span>
       </Link>
 
       {/* Nav links (desktop: inline row; mobile: dropdown) */}
