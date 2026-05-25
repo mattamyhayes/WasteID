@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 const audiences = [
   {
@@ -161,11 +160,6 @@ export default function Home() {
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-            <Link to="/profile" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.7rem 2rem' }}>
-              🚀 Get Started — Create a Profile
-            </Link>
-          </div>
         </div>
       </div>
 

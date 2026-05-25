@@ -32,6 +32,12 @@ const adminLinks = [
     description: 'Import and manage Safety Data Sheets.',
     icon: '🧪',
   },
+  {
+    to: '/marketplace',
+    title: 'Marketplace',
+    description: 'Manage and review marketplace listings and bids.',
+    icon: '🏬',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']
