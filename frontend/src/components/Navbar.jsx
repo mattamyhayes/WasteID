@@ -7,8 +7,6 @@ export const navLinks = [
   { to: '/review', label: 'Review', icon: '📋' },
   { to: '/orders', label: 'Orders', icon: '📦' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
-  { to: '/scheduling', label: 'Scheduling', icon: '📅' },
-  { to: '/journey', label: 'Journey', icon: '🗺️' },
   { to: '/reports', label: 'Reports', icon: '📂' },
   { to: '/incinerators', label: 'Incinerators', icon: '🔥' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },

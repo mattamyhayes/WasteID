@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { mixtures as mixturesApi } from '../api/client'
 import { calcShipByInfo, parseLocalDate } from '../lib/shipByUtils'
 
@@ -121,7 +121,10 @@ export default function Shipping() {
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 1200 }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ color: '#14532d' }}>Shipping</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <h1 style={{ color: '#14532d', margin: 0 }}>Shipping</h1>
+          <Link to="/scheduling" className="btn btn-secondary">📅 Scheduling</Link>
+        </div>
         <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '0.25rem' }}>
           Signed orders ready for shipping. Use the Actions column to generate shipping documents.
         </p>

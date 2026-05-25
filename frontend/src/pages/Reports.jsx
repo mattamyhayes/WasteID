@@ -613,9 +613,12 @@ export default function Reports() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Reports</h1>
-        {activeTab === 'profiles' && (
-          <Link to="/profile" className="btn btn-primary">+ New Profile</Link>
-        )}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Link to="/journey" className="btn btn-secondary">🗺️ Journey</Link>
+          {activeTab === 'profiles' && (
+            <Link to="/profile" className="btn btn-primary">+ New Profile</Link>
+          )}
+        </div>
       </div>
 
       {/* Tab switcher */}
