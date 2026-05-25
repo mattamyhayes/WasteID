@@ -34,6 +34,16 @@ export default function SDSList() {
     }
   }
 
+  const handleViewFile = (record) => {
+    if (record.file_data) {
+      window.open(record.file_data, '_blank')
+    } else if (record.file_url) {
+      window.open(record.file_url, '_blank')
+    } else {
+      alert('No file available to view. The original PDF file data was not stored with this record.')
+    }
+  }
+
   const thStyle = {
     padding: '0.75rem 0.5rem', textAlign: 'left', borderBottom: '2px solid #d1d5db',
     color: '#374151', fontWeight: 600, fontSize: '0.88rem',
@@ -70,7 +80,8 @@ export default function SDSList() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
-                <th style={thStyle}>Product Name</th>
+                <th style={thStyle}>SDS ID</th>
+                <th style={thStyle}>File Name</th>
                 <th style={thStyle}>CAS #</th>
                 <th style={thStyle}>Manufacturer</th>
                 <th style={thStyle}>Date Imported</th>
@@ -84,7 +95,19 @@ export default function SDSList() {
                 <tr key={record.id}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                   onMouseLeave={e => e.currentTarget.style.background = ''}>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{record.product_name}</td>
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>
+                    {record.sds_id || `SDS-${String(record.id).padStart(5, '0')}`}
+                  </td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>
+                    <a
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); handleViewFile(record) }}
+                      style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}
+                      title="Click to view original PDF"
+                    >
+                      {record.original_filename || record.product_name}
+                    </a>
+                  </td>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem' }}>{record.cas_number || '—'}</td>
                   <td style={tdStyle}>{record.manufacturer_name || '—'}</td>
                   <td style={{ ...tdStyle, color: '#6b7280' }}>
