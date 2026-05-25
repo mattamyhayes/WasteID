@@ -66,7 +66,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
 
   return (
     <div className="card" style={{ marginBottom: '1.25rem' }}>
-      <h2 style={{ marginBottom: '0.75rem', color: '#166534' }}>📎 Upload Documents</h2>
+      <h2 style={{ marginBottom: '0.75rem', color: '#166534' }}>Upload Documents</h2>
       <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Upload SDS (Safety Data Sheet) or Analytical files for this profile. Accepted formats: PDF, images, Word, Excel.
       </p>
@@ -88,7 +88,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
           </select>
         </div>
 
-        <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 200 }}>
+        <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 180 }}>
           <label>File *</label>
           <input
             ref={fileInputRef}
@@ -99,14 +99,16 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
           />
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={handleUpload}
-          disabled={uploading || !file || !docType}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          {uploading ? 'Uploading…' : '⬆ Upload'}
-        </button>
+        <div style={{ marginBottom: 0, flexShrink: 0 }}>
+          <button
+            className="btn btn-primary"
+            onClick={handleUpload}
+            disabled={uploading || !file || !docType}
+            style={{ whiteSpace: 'nowrap', height: '2.4rem' }}
+          >
+            {uploading ? 'Uploading…' : '⬆ Upload'}
+          </button>
+        </div>
       </div>
 
       <small style={{ color: '#6b7280', marginTop: '0.5rem', display: 'block' }}>

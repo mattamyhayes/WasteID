@@ -5,7 +5,7 @@ import { parseSdsPdf } from '../lib/sdsPdfParser'
 import { sds } from '../api/client'
 import FileUpload from './FileUpload'
 
-export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported }) {
+export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components }) {
   const navigate = useNavigate()
   const [docs, setDocs] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -132,6 +132,8 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
               _casNumber: entry.cas_number || '',
               _concentration: entry.concentration || '',
               _fromSds: sdsRecord.sds_id || sdsRecord.id,
+              _source: 'imported',
+              _sourceDocId: doc.id,
             }))
             onCompositionImported(newComponents, sdsRecord)
           }
@@ -151,6 +153,12 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     if (!str) return 0
     const match = str.match(/(\d+\.?\d*)/)
     return match ? parseFloat(match[1]) : 0
+  }
+
+  // Check if a document has related imported components
+  const docHasImportedData = (docId) => {
+    if (!components || !Array.isArray(components)) return false
+    return components.some(c => c._sourceDocId === docId)
   }
 
   const formatSize = (bytes) => {
@@ -282,6 +290,8 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
                       className="btn btn-secondary"
                       style={{ fontSize: '0.78rem', padding: '0.2rem 0.45rem', color: '#dc2626', borderColor: '#fca5a5' }}
                       onClick={() => setConfirmDelete(doc.id)}
+                      disabled={docHasImportedData(doc.id)}
+                      title={docHasImportedData(doc.id) ? 'Remove imported composition data before deleting this document' : 'Delete document'}
                     >
                       🗑 Delete
                     </button>
