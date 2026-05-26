@@ -10,6 +10,7 @@ const UNIT_LABELS = {
 /**
  * Build/edit mixture components.
  * Set `editable` to true when components should support inline quantity/unit edits.
+ * Components may have `_source` field: 'imported' | 'manual' | 'modified'
  * @param {Array} components
  * @param {Function} onChange
  * @param {boolean} [editable=false]
@@ -34,6 +35,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       unit,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
+      _source: 'manual',
     }
     onChange([...components, comp])
     setSelectedChem(null)
@@ -55,9 +57,15 @@ export default function MixtureBuilder({ components, onChange, editable = false 
 
   const handleSaveEdit = (index) => {
     if (!editQty || isNaN(parseFloat(editQty))) return
-    const updated = components.map((comp, i) =>
-      i === index ? { ...comp, quantity: parseFloat(editQty), unit: editUnit } : comp
-    )
+    const updated = components.map((comp, i) => {
+      if (i !== index) return comp
+      const newComp = { ...comp, quantity: parseFloat(editQty), unit: editUnit }
+      // If an imported row is edited, mark it as modified
+      if (comp._source === 'imported') {
+        newComp._source = 'modified'
+      }
+      return newComp
+    })
     onChange(updated)
     setEditingIndex(null)
   }
@@ -73,6 +81,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
           <table>
             <thead>
               <tr>
+                <th style={{ width: 32 }}></th>
                 <th>Chemical</th>
                 <th>EPA Code</th>
                 <th>Quantity</th>
@@ -83,6 +92,21 @@ export default function MixtureBuilder({ components, onChange, editable = false 
             <tbody>
               {components.map((comp, i) => (
                 <tr key={i}>
+                  <td style={{ width: 32, textAlign: 'center', fontSize: '1rem' }} title={
+                    comp._source === 'imported' ? 'Imported from document'
+                      : comp._source === 'modified' ? 'Imported (modified)'
+                      : 'Manually entered'
+                  }>
+                    <span role="img" aria-label={
+                      comp._source === 'imported' ? 'Imported from document'
+                        : comp._source === 'modified' ? 'Imported then modified'
+                        : 'Manually entered'
+                    }>
+                      {comp._source === 'imported' ? '📥'
+                        : comp._source === 'modified' ? '✏️'
+                        : '✍'}
+                    </span>
+                  </td>
                   <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
                   <td>
                     {comp._epaCode
