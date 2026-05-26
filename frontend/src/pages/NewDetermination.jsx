@@ -448,7 +448,8 @@ export default function NewDetermination() {
           <div className="form-group">
             <label>Generation Date</label>
             <input className="form-control" type="date" value={generationDate}
-              onChange={e => setGenerationDate(e.target.value)} />
+              onChange={e => setGenerationDate(e.target.value)}
+              style={{ maxWidth: '220px' }} />
             <small style={{ color: '#6b7280' }}>Date the waste was generated. Used to calculate the ship-by deadline.</small>
           </div>
 
