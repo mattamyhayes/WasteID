@@ -142,7 +142,20 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
         }
       }
     } catch (err) {
-      setImportError(err?.message || 'Failed to import SDS. Please try again.')
+      // Save an error record to the SDS store so the admin can see and troubleshoot it
+      try {
+        const errorImportData = {
+          product_name: doc.file_name.replace(/\.pdf$/i, ''),
+          original_filename: doc.file_name,
+          import_status: 'error',
+          mixture_id: profileId,
+          file_data: doc.data,
+        }
+        await sds.import(errorImportData)
+      } catch {
+        // Non-critical – if the error record itself can't be created, just continue
+      }
+      setImportError('Unable to upload or import file due to incorrect format or poorly defined file')
     } finally {
       setImporting(null)
     }
@@ -191,7 +204,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       )}
 
       {importError && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '0.75rem', color: '#b91c1c', fontSize: '0.88rem' }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '0.6rem 0.9rem', marginBottom: '0.75rem', color: '#b91c1c', fontSize: '0.9rem', fontWeight: 600 }}>
           ⚠ {importError}
         </div>
       )}

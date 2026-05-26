@@ -77,7 +77,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div className="form-group" style={{ flex: '0 0 200px', marginBottom: 0 }}>
           <label>Document Type *</label>
           <select className="form-control" value={docType} onChange={e => setDocType(e.target.value)}>
@@ -98,22 +98,21 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.tif,.tiff,.csv,.txt,.rtf"
           />
         </div>
-
-        <div style={{ marginBottom: 0, flexShrink: 0 }}>
-          <button
-            className="btn btn-primary"
-            onClick={handleUpload}
-            disabled={uploading || !file || !docType}
-            style={{ whiteSpace: 'nowrap', height: '2.4rem' }}
-          >
-            {uploading ? 'Uploading…' : '⬆ Upload'}
-          </button>
-        </div>
       </div>
 
-      <small style={{ color: '#6b7280', marginTop: '0.5rem', display: 'block' }}>
-        Max file size: 25 MB. Executable files (.exe, .bat, .sh, etc.) are blocked for security.
-      </small>
+      <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button
+          className="btn btn-primary"
+          onClick={handleUpload}
+          disabled={uploading || !file || !docType}
+          style={{ fontSize: '0.85rem', padding: '0.35rem 0.9rem' }}
+        >
+          {uploading ? 'Uploading…' : '⬆ Upload'}
+        </button>
+        <small style={{ color: '#6b7280' }}>
+          Max file size: 25 MB. Executable files (.exe, .bat, .sh, etc.) are blocked for security.
+        </small>
+      </div>
     </div>
   )
 }
