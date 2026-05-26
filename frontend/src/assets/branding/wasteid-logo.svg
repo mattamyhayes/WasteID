@@ -6,10 +6,13 @@
     </linearGradient>
   </defs>
 
-  <g transform="translate(6,8)">
-    <ellipse cx="30" cy="32" rx="22" ry="14" transform="rotate(-28 30 32)" fill="url(#leafGradient)"/>
-    <ellipse cx="24" cy="47" rx="20" ry="12" transform="rotate(18 24 47)" fill="url(#leafGradient)"/>
-    <path d="M8 58c10-7 19-11 33-14" fill="none" stroke="#166534" stroke-width="3" stroke-linecap="round"/>
+  <!-- Leaf icon -->
+  <g transform="translate(10,12)">
+    <path d="M36 8C36 8 14 20 14 44c0 12 6 20 16 24" fill="url(#leafGradient)" opacity="0.85"/>
+    <path d="M36 8C36 8 58 20 58 44c0 12-6 20-16 24" fill="url(#leafGradient)"/>
+    <path d="M36 16v48" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M36 30c-6 4-12 10-14 18" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M36 36c6 4 10 8 12 14" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round"/>
   </g>
 
   <text x="88" y="60" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="44" font-weight="800" fill="#14532d" letter-spacing="-1.2">

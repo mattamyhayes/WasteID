@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 
 const audiences = [
   {
@@ -79,21 +80,26 @@ const ROLES = ['Generator', 'Broker / TSD', 'Shipper / Transporter', 'Incinerato
 export default function Home() {
   const [form, setForm] = useState({ name: '', company: '', role: '', email: '', phone: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
 
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    const subject = encodeURIComponent(`WasteID Demo Request — ${form.company || form.name}`)
-    // Truncate message to keep mailto URL within typical 2000-char browser limits
-    const truncatedMessage = form.message.slice(0, 500)
-    const body = encodeURIComponent(
-      `Name: ${form.name}\nCompany: ${form.company}\nRole: ${form.role}\nEmail: ${form.email}\nPhone: ${form.phone}\n\nMessage:\n${truncatedMessage}`
-    )
-    window.location.href = `mailto:sales@waste-id.com?subject=${subject}&body=${body}`
-    setSubmitted(true)
+    setSending(true)
+    setError('')
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || ''
+      await axios.post(`${baseUrl}/api/demo-request/`, form)
+      setSubmitted(true)
+    } catch (err) {
+      setError('Something went wrong. Please try again or email sales@waste-id.com directly.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -108,14 +114,11 @@ export default function Home() {
         <div className="container">
           <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🌿</div>
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, marginBottom: '0.85rem', lineHeight: 1.2 }}>
-            Hazardous Waste Processes,<br />Simplified End-to-End
+            One Platform. Every Step.
           </h1>
-          <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', maxWidth: 640, margin: '0 auto 0.5rem', opacity: 0.95, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', maxWidth: 640, margin: '0 auto 1.75rem', opacity: 0.95, lineHeight: 1.7 }}>
             WasteID connects generators, brokers, shippers, and incinerators on one platform —
             automating SDS data entry, waste profiling, manifesting, and disposal.
-          </p>
-          <p style={{ fontSize: '1rem', maxWidth: 560, margin: '0 auto 1.75rem', opacity: 0.8, lineHeight: 1.6, fontWeight: 600 }}>
-            One Platform. Every Step.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="#demo" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '0.75rem 1.9rem' }}>
@@ -185,8 +188,7 @@ export default function Home() {
 
           {submitted ? (
             <div className="alert alert-success" style={{ textAlign: 'center', fontSize: '1.05rem' }}>
-              📧 <strong>Almost there!</strong> Your email client has been opened with the request pre-filled.
-              Please send the email to complete your demo request — our team will follow up at <strong>{form.email}</strong>.
+              ✅ <strong>Demo request sent!</strong> Our team will follow up at <strong>{form.email}</strong> within one business day.
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 12, padding: 'clamp(1.5rem, 4vw, 2.5rem)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
@@ -216,8 +218,8 @@ export default function Home() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="demo-phone">Phone (optional)</label>
-                <input id="demo-phone" name="phone" type="tel" className="form-control" value={form.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" />
+                <label htmlFor="demo-phone">Phone *</label>
+                <input id="demo-phone" name="phone" type="tel" className="form-control" required value={form.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" />
               </div>
 
               <div className="form-group">
@@ -234,12 +236,14 @@ export default function Home() {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '1.05rem', padding: '0.75rem', justifyContent: 'center' }}>
-                📅 Send Demo Request
+              {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+              <button type="submit" className="btn btn-primary" disabled={sending} style={{ width: '100%', fontSize: '1.05rem', padding: '0.75rem', justifyContent: 'center' }}>
+                {sending ? '⏳ Sending...' : '📅 Send Demo Request'}
               </button>
 
               <p style={{ marginTop: '0.75rem', fontSize: '0.82rem', color: '#9ca3af', textAlign: 'center' }}>
-                This will open your email client to send a message to <a href="mailto:sales@waste-id.com" style={{ color: '#16a34a' }}>sales@waste-id.com</a>. We never share your data.
+                We never share your data.
               </p>
             </form>
           )}

@@ -1,9 +1,12 @@
 import json
 import io
+import logging
 import os
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpResponse
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
@@ -1151,3 +1154,47 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             fields['import_status'] = 'complete'
 
         return fields
+
+
+logger = logging.getLogger(__name__)
+
+
+@api_view(['POST'])
+def demo_request(request):
+    """Send a demo request email to sales@waste-id.com from the server."""
+    data = request.data
+    name = data.get('name', '')
+    company = data.get('company', '')
+    role = data.get('role', '')
+    email = data.get('email', '')
+    phone = data.get('phone', '')
+    message = data.get('message', '')
+
+    if not name or not company or not email or not phone:
+        return Response(
+            {'error': 'Name, company, email, and phone are required.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    subject = f'WasteID Demo Request — {company}'
+    body = (
+        f'Name: {name}\n'
+        f'Company: {company}\n'
+        f'Role: {role}\n'
+        f'Email: {email}\n'
+        f'Phone: {phone}\n\n'
+        f'Message:\n{message}'
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['sales@waste-id.com'],
+            fail_silently=False,
+        )
+    except Exception as e:
+        logger.warning('Failed to send demo request email: %s', e)
+
+    return Response({'status': 'ok'}, status=status.HTTP_200_OK)
