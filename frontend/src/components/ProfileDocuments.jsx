@@ -116,10 +116,10 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
               if (Array.isArray(compositionEntries) && compositionEntries.length > 0) {
                 const newComponents = compositionEntries.map(entry => ({
                   chemical: null,
-                  custom_name: entry.name || `CAS ${entry.cas_number}`,
+                  custom_name: entry.name || (entry.cas_number ? `CAS ${entry.cas_number}` : 'Unknown Component'),
                   quantity: parseConcentration(entry.concentration),
                   unit: 'pct_weight',
-                  _displayName: entry.name || `CAS ${entry.cas_number}`,
+                  _displayName: entry.name || (entry.cas_number ? `CAS ${entry.cas_number}` : 'Unknown Component'),
                   _epaCode: '',
                   _casNumber: entry.cas_number || '',
                   _concentration: entry.concentration || '',
