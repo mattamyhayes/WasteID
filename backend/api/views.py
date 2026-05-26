@@ -1,9 +1,12 @@
 import json
 import io
+import logging
 import os
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpResponse
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
@@ -1153,10 +1156,7 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
         return fields
 
 
-from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.decorators import api_view
-from rest_framework.response import Response as DRFResponse
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -1171,7 +1171,7 @@ def demo_request(request):
     message = data.get('message', '')
 
     if not name or not company or not email or not phone:
-        return DRFResponse(
+        return Response(
             {'error': 'Name, company, email, and phone are required.'},
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -1194,9 +1194,7 @@ def demo_request(request):
             recipient_list=['sales@waste-id.com'],
             fail_silently=False,
         )
-    except Exception:
-        # If email sending fails (e.g. no email backend configured), still accept
-        # the request so the form doesn't appear broken in development.
-        pass
+    except Exception as e:
+        logger.warning('Failed to send demo request email: %s', e)
 
-    return DRFResponse({'status': 'ok'}, status=status.HTTP_200_OK)
+    return Response({'status': 'ok'}, status=status.HTTP_200_OK)
