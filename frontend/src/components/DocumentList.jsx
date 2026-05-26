@@ -145,7 +145,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       // Save an error record to the SDS store so the admin can see and troubleshoot it
       try {
         const errorImportData = {
-          product_name: doc.file_name.replace(/\.pdf$/i, ''),
+          product_name: doc.file_name.replace(/\.[^.]+$/i, ''),
           original_filename: doc.file_name,
           import_status: 'error',
           mixture_id: profileId,
