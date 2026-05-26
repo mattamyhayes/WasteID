@@ -5,7 +5,6 @@ import wasteIdLeaf from '../assets/branding/wasteid-leaf.svg'
 export const navLinks = [
   { to: '/profile', label: 'New Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
-  { to: '/orders', label: 'Orders', icon: '📦' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
   { to: '/reports', label: 'Reports', icon: '📂' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },

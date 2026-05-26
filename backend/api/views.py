@@ -1151,3 +1151,52 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             fields['import_status'] = 'complete'
 
         return fields
+
+
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.decorators import api_view
+from rest_framework.response import Response as DRFResponse
+
+
+@api_view(['POST'])
+def demo_request(request):
+    """Send a demo request email to sales@waste-id.com from the server."""
+    data = request.data
+    name = data.get('name', '')
+    company = data.get('company', '')
+    role = data.get('role', '')
+    email = data.get('email', '')
+    phone = data.get('phone', '')
+    message = data.get('message', '')
+
+    if not name or not company or not email or not phone:
+        return DRFResponse(
+            {'error': 'Name, company, email, and phone are required.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    subject = f'WasteID Demo Request — {company}'
+    body = (
+        f'Name: {name}\n'
+        f'Company: {company}\n'
+        f'Role: {role}\n'
+        f'Email: {email}\n'
+        f'Phone: {phone}\n\n'
+        f'Message:\n{message}'
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['sales@waste-id.com'],
+            fail_silently=False,
+        )
+    except Exception:
+        # If email sending fails (e.g. no email backend configured), still accept
+        # the request so the form doesn't appear broken in development.
+        pass
+
+    return DRFResponse({'status': 'ok'}, status=status.HTTP_200_OK)

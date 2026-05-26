@@ -5,7 +5,10 @@
       <stop offset="100%" stop-color="#15803d"/>
     </linearGradient>
   </defs>
-  <ellipse cx="30" cy="24" rx="22" ry="14" transform="rotate(-28 30 24)" fill="url(#leafGradient)"/>
-  <ellipse cx="24" cy="40" rx="20" ry="12" transform="rotate(18 24 40)" fill="url(#leafGradient)"/>
-  <path d="M8 52c10-7 19-11 33-14" fill="none" stroke="#166534" stroke-width="3" stroke-linecap="round"/>
+  <!-- Leaf icon -->
+  <path d="M32 6C32 6 12 18 12 40c0 10 5 16 14 20" fill="url(#leafGradient)" opacity="0.85"/>
+  <path d="M32 6C32 6 52 18 52 40c0 10-5 16-14 20" fill="url(#leafGradient)"/>
+  <path d="M32 14v40" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M32 26c-5 3-10 8-12 15" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 32c5 3 9 7 11 12" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round"/>
 </svg>

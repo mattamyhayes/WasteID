@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom'
 
 const adminLinks = [
   {
+    to: '/orders',
+    title: 'Orders',
+    description: 'View and manage waste disposal orders.',
+    icon: '📦',
+  },
+  {
     to: '/generators',
     title: 'Generators',
     description: 'Manage generator profiles and locations.',
