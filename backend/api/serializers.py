@@ -4,7 +4,7 @@ from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination,
                      Customer, CustomerLocation, Shipper, EPAManifest,
                      Order, Journey, OrderJourney, StateRule, StateValidationResult,
                      MarketplaceListing, Bid, Incinerator, ProfileDocument,
-                     SafetyDataSheet)
+                     SafetyDataSheet, ContactUsSubmission)
 
 
 class CustomerLocationSerializer(serializers.ModelSerializer):
@@ -22,6 +22,24 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'contact_name', 'contact_email', 'contact_phone',
                   'epa_generator_status', 'billing_address', 'notes', 'created_at', 'updated_at', 'locations']
         read_only_fields = ['created_at', 'updated_at']
+
+
+class ContactUsSubmissionSerializer(serializers.ModelSerializer):
+    recipient_emails_list = serializers.SerializerMethodField()
+
+    def get_recipient_emails_list(self, obj):
+        try:
+            return json.loads(obj.recipient_emails)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    class Meta:
+        model = ContactUsSubmission
+        fields = [
+            'id', 'name', 'company', 'role', 'email', 'phone',
+            'message', 'recipient_emails', 'recipient_emails_list', 'submitted_at',
+        ]
+        read_only_fields = ['id', 'submitted_at', 'recipient_emails']
 
 
 class ChemicalSerializer(serializers.ModelSerializer):

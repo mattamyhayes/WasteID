@@ -45,6 +45,26 @@ class CustomerLocation(models.Model):
         return f"{self.customer.name} - {self.name}"
 
 
+class ContactUsSubmission(models.Model):
+    name = models.CharField(max_length=200)
+    company = models.CharField(max_length=200)
+    role = models.CharField(max_length=200, blank=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=50)
+    message = models.TextField(blank=True)
+    recipient_emails = models.TextField(default='[]', help_text='JSON array of recipient email addresses')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+
+    def get_recipient_emails(self):
+        return json.loads(self.recipient_emails)
+
+    def __str__(self):
+        return f"{self.name} ({self.company})"
+
+
 class Chemical(models.Model):
     CATEGORY_CHOICES = [
         ('P', 'P-list (Acutely Hazardous)'),

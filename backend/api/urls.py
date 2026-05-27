@@ -4,7 +4,8 @@ from .views import (ChemicalViewSet, MixtureViewSet, MixtureComponentViewSet,
                     WasteDeterminationViewSet, CustomerViewSet, CustomerLocationViewSet,
                     ShipperViewSet, EPAManifestViewSet, OrderViewSet, JourneyViewSet,
                     StateRuleViewSet, MarketplaceListingViewSet, BidViewSet, IncineratorViewSet,
-                    ProfileDocumentViewSet, SafetyDataSheetViewSet, demo_request)
+                    ProfileDocumentViewSet, SafetyDataSheetViewSet, demo_request,
+                    contact_us_submissions)
 
 router = DefaultRouter()
 router.register(r'chemicals', ChemicalViewSet)
@@ -26,5 +27,6 @@ router.register(r'sds', SafetyDataSheetViewSet)
 
 urlpatterns = [
     path('demo-request/', demo_request, name='demo-request'),
+    path('contact-us-submissions/', contact_us_submissions, name='contact-us-submissions'),
     path('', include(router.urls)),
 ]
