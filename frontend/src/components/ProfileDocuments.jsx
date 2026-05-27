@@ -112,7 +112,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
           // If composition data was parsed, notify parent
           if (parsedData.composition && onCompositionImported) {
             try {
-              const compositionEntries = JSON.parse(parsedData.composition)
+              const compositionEntries = normalizeCompositionEntries(parsedData.composition)
               if (Array.isArray(compositionEntries) && compositionEntries.length > 0) {
                 const newComponents = compositionEntries.map(entry => ({
                   chemical: null,
@@ -159,9 +159,32 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
 
   // Parse concentration string like "10-20%" or "15%" into a number
   function parseConcentration(str) {
-    if (!str) return 0
-    const match = str.match(/(\d+\.?\d*)/)
+    if (str === null || str === undefined) return 0
+    const text = String(str)
+    const range = text.match(/(\d+\.?\d*)\s*[-–—]\s*(\d+\.?\d*)/)
+    if (range) {
+      const low = parseFloat(range[1])
+      const high = parseFloat(range[2])
+      if (!isNaN(low) && !isNaN(high)) return (low + high) / 2
+    }
+    const match = text.match(/(\d+\.?\d*)/)
     return match ? parseFloat(match[1]) : 0
+  }
+
+  function normalizeCompositionEntries(composition) {
+    if (!composition) return []
+    if (Array.isArray(composition)) return composition
+    if (typeof composition === 'string') {
+      const trimmed = composition.trim()
+      if (!trimmed) return []
+      try {
+        const parsed = JSON.parse(trimmed)
+        return Array.isArray(parsed) ? parsed : []
+      } catch {
+        return []
+      }
+    }
+    return []
   }
 
   const handleDelete = async (docId, docName) => {
