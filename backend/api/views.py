@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from .models import (Chemical, Mixture, MixtureComponent, WasteDetermination, Customer,
                      CustomerLocation, Shipper, EPAManifest, Order, Journey, OrderJourney,
                      StateRule, StateValidationResult, MarketplaceListing, Bid, Incinerator,
-                     ProfileDocument, SafetyDataSheet)
+                     ProfileDocument, SafetyDataSheet, ContactUsSubmission)
 from .serializers import (ChemicalSerializer, MixtureSerializer,
                            MixtureComponentSerializer, WasteDeterminationSerializer,
                            MixtureCreateSerializer, CustomerSerializer, CustomerLocationSerializer,
@@ -19,7 +19,8 @@ from .serializers import (ChemicalSerializer, MixtureSerializer,
                            StateRuleSerializer, StateValidationResultSerializer,
                            MarketplaceListingSerializer, MarketplaceListingSummarySerializer,
                            BidSerializer, IncineratorSerializer, ProfileDocumentSerializer,
-                           SafetyDataSheetSerializer, SafetyDataSheetListSerializer)
+                           SafetyDataSheetSerializer, SafetyDataSheetListSerializer,
+                           ContactUsSubmissionSerializer)
 from .determination import determine_hazardous_waste
 
 
@@ -1159,6 +1160,13 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
 logger = logging.getLogger(__name__)
 
 
+@api_view(['GET'])
+def contact_us_submissions(request):
+    submissions = ContactUsSubmission.objects.all()
+    serializer = ContactUsSubmissionSerializer(submissions, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 def demo_request(request):
     """Send a demo request email to sales@waste-id.com from the server."""
@@ -1186,12 +1194,24 @@ def demo_request(request):
         f'Message:\n{message}'
     )
 
+    recipient_list = ['sales@waste-id.com']
+
+    ContactUsSubmission.objects.create(
+        name=name,
+        company=company,
+        role=role,
+        email=email,
+        phone=phone,
+        message=message,
+        recipient_emails=json.dumps(recipient_list),
+    )
+
     try:
         send_mail(
             subject=subject,
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['sales@waste-id.com'],
+            recipient_list=recipient_list,
             fail_silently=False,
         )
     except Exception as e:
