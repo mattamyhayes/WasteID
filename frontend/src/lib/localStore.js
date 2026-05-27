@@ -1993,6 +1993,281 @@ export const localSds = {
 
   importSds(data) {
     // In local mode, the import simply creates a record with the provided data
-    return localSds.create(data)
+    const result = localSds.create(data)
+    // Auto-run characteristic determination after import
+    if (result && result.data && result.data.id) {
+      localSds.determine(result.data.id)
+      // Re-read to get updated record
+      const updated = loadSdsStore()
+      const rec = updated.records.find(r => r.id === result.data.id)
+      if (rec) return ok(rec)
+    }
+    return result
+  },
+
+  determine(id) {
+    const store = loadSdsStore()
+    const record = store.records.find(r => r.id === Number(id))
+    if (!record) return reject('SDS not found.', 404)
+
+    const findings = {
+      characteristics: [],
+      waste_codes: [],
+      dot_regulated: false,
+      reasoning: [],
+      regulatory_references: [
+        '40 CFR 261.21 - Characteristic of Ignitability',
+        '40 CFR 261.22 - Characteristic of Corrosivity',
+        '40 CFR 261.23 - Characteristic of Reactivity',
+        '40 CFR 261.24 - Toxicity Characteristic (TCLP Table 1)',
+        '40 CFR 261 Subpart C - Characteristics of Hazardous Waste',
+      ],
+      recommendations: [],
+    }
+
+    // Physical State
+    const physState = record.physical_state || ''
+    const isLiquid = /liquid|fluid|solution|emulsion/i.test(physState)
+    findings.physical_state = physState || 'Not specified'
+    findings.reasoning.push({
+      section: 'Physical State',
+      source: 'SDS Section 9',
+      value: physState || 'Not specified',
+      determination: `Material identified as: ${physState || 'Not specified'}`,
+    })
+
+    // D001 Ignitability - parse flash point
+    const flashRaw = record.flash_point || ''
+    let flashC = null
+    if (flashRaw) {
+      const cMatch = flashRaw.match(/(-?\d+\.?\d*)\s*°?\s*C/i)
+      const fMatch = flashRaw.match(/(-?\d+\.?\d*)\s*°?\s*F/i)
+      if (cMatch) flashC = parseFloat(cMatch[1])
+      else if (fMatch) flashC = (parseFloat(fMatch[1]) - 32) * 5 / 9
+      else { const numMatch = flashRaw.match(/(-?\d+\.?\d*)/); if (numMatch) flashC = parseFloat(numMatch[1]) }
+    }
+
+    const ignDetail = {
+      characteristic: 'D001 - Ignitability',
+      regulation: '40 CFR 261.21',
+      raw_value: flashRaw,
+      parsed_value_c: flashC,
+      physical_state: physState,
+      is_liquid: isLiquid || !physState,
+      threshold: 'Flash point < 60°C (140°F) for liquids',
+      result: 'NOT_DETERMINED',
+      detail: '',
+    }
+    if (flashC !== null) {
+      if (isLiquid || !physState) {
+        if (flashC < 60.0) {
+          ignDetail.result = 'HAZARDOUS'
+          ignDetail.detail = `Flash point ${flashC.toFixed(1)}°C is below 60°C threshold. Material is characteristic hazardous waste D001 (Ignitability) per 40 CFR 261.21.`
+          findings.characteristics.push('D001')
+          findings.waste_codes.push('D001')
+        } else {
+          ignDetail.result = 'NOT_HAZARDOUS'
+          ignDetail.detail = `Flash point ${flashC.toFixed(1)}°C is at or above 60°C threshold. Does not meet ignitability characteristic.`
+        }
+      } else {
+        ignDetail.result = 'NOT_APPLICABLE_SOLID'
+        ignDetail.detail = `Flash point ${flashC.toFixed(1)}°C noted, but material is solid. Flash point test applies primarily to liquids.`
+      }
+    } else {
+      ignDetail.result = 'INSUFFICIENT_DATA'
+      ignDetail.detail = 'Flash point not reported or could not be parsed from SDS Section 9. Laboratory testing per ASTM D93 or D3278 recommended.'
+    }
+    findings.reasoning.push(ignDetail)
+
+    // D002 Corrosivity - parse pH
+    const phRaw = record.ph || ''
+    let phValue = null
+    if (phRaw) { const m = phRaw.match(/(\d+\.?\d*)/); if (m) phValue = parseFloat(m[1]) }
+
+    const corrDetail = {
+      characteristic: 'D002 - Corrosivity',
+      regulation: '40 CFR 261.22',
+      raw_value: phRaw,
+      parsed_value: phValue,
+      threshold: 'pH ≤ 2.0 or pH ≥ 12.5 (aqueous liquids)',
+      result: 'NOT_DETERMINED',
+      detail: '',
+    }
+    if (phValue !== null) {
+      if (phValue <= 2.0) {
+        corrDetail.result = 'HAZARDOUS'
+        corrDetail.detail = `pH ${phValue} is ≤ 2.0 (highly acidic). Material is characteristic hazardous waste D002 (Corrosivity) per 40 CFR 261.22.`
+        findings.characteristics.push('D002')
+        if (!findings.waste_codes.includes('D002')) findings.waste_codes.push('D002')
+      } else if (phValue >= 12.5) {
+        corrDetail.result = 'HAZARDOUS'
+        corrDetail.detail = `pH ${phValue} is ≥ 12.5 (highly alkaline). Material is characteristic hazardous waste D002 (Corrosivity) per 40 CFR 261.22.`
+        findings.characteristics.push('D002')
+        if (!findings.waste_codes.includes('D002')) findings.waste_codes.push('D002')
+      } else {
+        corrDetail.result = 'NOT_HAZARDOUS'
+        corrDetail.detail = `pH ${phValue} is between 2.0 and 12.5. Does not meet corrosivity characteristic.`
+      }
+    } else {
+      corrDetail.result = 'INSUFFICIENT_DATA'
+      corrDetail.detail = 'pH not reported or could not be parsed from SDS Section 9. Testing recommended for aqueous/liquid wastes.'
+    }
+    findings.reasoning.push(corrDetail)
+
+    // D003 Reactivity
+    const stabilityText = `${record.chemical_stability || ''} ${record.conditions_to_avoid || ''} ${record.possibility_of_reactions || ''}`.toLowerCase()
+    const reactiveKeywords = ['unstable', 'explosive', 'shock sensitive', 'water reactive', 'reacts violently', 'self-reactive', 'organic peroxide', 'detonation', 'generates toxic gas', 'cyanide', 'sulfide']
+    const foundReactive = reactiveKeywords.filter(kw => stabilityText.includes(kw))
+
+    const reactDetail = {
+      characteristic: 'D003 - Reactivity',
+      regulation: '40 CFR 261.23',
+      indicators_found: foundReactive,
+      stability_info: record.chemical_stability || '',
+      result: 'NOT_DETERMINED',
+      detail: '',
+    }
+    if (foundReactive.length > 0) {
+      reactDetail.result = 'POTENTIALLY_HAZARDOUS'
+      reactDetail.detail = `Reactivity indicators found in SDS Section 10: ${foundReactive.join(', ')}. Material may be D003 (Reactivity) per 40 CFR 261.23.`
+      findings.characteristics.push('D003')
+      if (!findings.waste_codes.includes('D003')) findings.waste_codes.push('D003')
+    } else if (record.chemical_stability && /stable/i.test(record.chemical_stability) && !/unstable/i.test(record.chemical_stability)) {
+      reactDetail.result = 'NOT_HAZARDOUS'
+      reactDetail.detail = 'Material reported as stable in SDS Section 10. No reactivity indicators identified.'
+    } else {
+      reactDetail.result = 'INSUFFICIENT_DATA'
+      reactDetail.detail = 'No conclusive stability/reactivity information found in SDS Section 10.'
+    }
+    findings.reasoning.push(reactDetail)
+
+    // D004-D043 Toxicity - match composition against TCLP Table 1
+    let compList = []
+    try { compList = typeof record.composition === 'string' ? JSON.parse(record.composition || '[]') : (record.composition || []) } catch { compList = [] }
+
+    // Import TCLP thresholds (simplified local version)
+    const TCLP = {
+      'D004': { name: 'Arsenic', threshold: 5.0, cas: '7440-38-2' },
+      'D005': { name: 'Barium', threshold: 100.0, cas: '7440-39-3' },
+      'D006': { name: 'Cadmium', threshold: 1.0, cas: '7440-43-9' },
+      'D007': { name: 'Chromium', threshold: 5.0, cas: '7440-47-3' },
+      'D008': { name: 'Lead', threshold: 5.0, cas: '7439-92-1' },
+      'D009': { name: 'Mercury', threshold: 0.2, cas: '7439-97-6' },
+      'D010': { name: 'Selenium', threshold: 1.0, cas: '7782-49-2' },
+      'D011': { name: 'Silver', threshold: 5.0, cas: '7440-22-4' },
+      'D018': { name: 'Benzene', threshold: 0.5, cas: '71-43-2' },
+      'D019': { name: 'Carbon tetrachloride', threshold: 0.5, cas: '56-23-5' },
+      'D020': { name: 'Chlordane', threshold: 0.03, cas: '57-74-9' },
+      'D021': { name: 'Chlorobenzene', threshold: 100.0, cas: '108-90-7' },
+      'D022': { name: 'Chloroform', threshold: 6.0, cas: '67-66-3' },
+      'D035': { name: 'Methyl ethyl ketone', threshold: 200.0, cas: '78-93-3' },
+      'D039': { name: 'Tetrachloroethylene', threshold: 0.7, cas: '127-18-4' },
+      'D040': { name: 'Trichloroethylene', threshold: 0.5, cas: '79-01-6' },
+      'D043': { name: 'Vinyl chloride', threshold: 0.2, cas: '75-01-4' },
+    }
+
+    const tclpMatches = []
+    for (const entry of compList) {
+      if (!entry || typeof entry !== 'object') continue
+      const cas = (entry.cas_number || '').trim()
+      const name = (entry.name || '').toLowerCase()
+      const concStr = entry.concentration || ''
+
+      let concPct = null
+      const rangeM = concStr.match(/(\d+\.?\d*)\s*[-–]\s*(\d+\.?\d*)\s*%/)
+      const singleM = concStr.match(/(\d+\.?\d*)\s*%/)
+      if (rangeM) concPct = parseFloat(rangeM[2])
+      else if (singleM) concPct = parseFloat(singleM[1])
+
+      for (const [dCode, info] of Object.entries(TCLP)) {
+        if ((cas && cas === info.cas) || (name && (info.name.toLowerCase().includes(name) || name.includes(info.name.toLowerCase())))) {
+          const match = { chemical_name: entry.name || info.name, cas_number: cas || info.cas, d_code: dCode, regulatory_limit_mgl: info.threshold, concentration_pct: concPct }
+          if (concPct != null && concPct > 0) {
+            const estimate = (concPct / 100) * 1000000 / 20
+            match.tclp_estimate_mgl = Math.round(estimate * 100) / 100
+            match.exceeds_limit = estimate >= info.threshold
+          } else {
+            match.tclp_estimate_mgl = null
+            match.exceeds_limit = null
+          }
+          tclpMatches.push(match)
+          break
+        }
+      }
+    }
+
+    const toxicCodes = tclpMatches.filter(m => m.exceeds_limit === true).map(m => m.d_code)
+    const toxDetail = {
+      characteristic: 'D004-D043 - Toxicity (TCLP)',
+      regulation: '40 CFR 261.24',
+      method: 'EPA Method 1311 (TCLP)',
+      composition_chemicals_matched: tclpMatches.length,
+      matches: tclpMatches,
+      result: 'NOT_DETERMINED',
+      detail: '',
+    }
+    if (toxicCodes.length > 0) {
+      toxDetail.result = 'HAZARDOUS'
+      toxDetail.detail = `SDS composition contains chemicals exceeding TCLP regulatory limits: ${toxicCodes.join(', ')}. Confirm with TCLP testing (EPA Method 1311).`
+      findings.characteristics.push(...toxicCodes)
+      findings.waste_codes.push(...toxicCodes.filter(c => !findings.waste_codes.includes(c)))
+    } else if (tclpMatches.length > 0) {
+      const hasUnknown = tclpMatches.some(m => m.exceeds_limit === null)
+      if (hasUnknown) {
+        toxDetail.result = 'TESTING_RECOMMENDED'
+        toxDetail.detail = `SDS composition contains ${tclpMatches.length} chemical(s) from 40 CFR 261.24 Table 1 but concentrations could not be fully determined. TCLP testing recommended.`
+      } else {
+        toxDetail.result = 'NOT_HAZARDOUS'
+        toxDetail.detail = 'Estimated TCLP concentrations are below regulatory limits.'
+      }
+    } else {
+      toxDetail.result = 'NO_LISTED_CHEMICALS'
+      toxDetail.detail = 'No chemicals from 40 CFR 261.24 Table 1 identified in SDS Section 3 composition.'
+    }
+    findings.reasoning.push(toxDetail)
+
+    // Section 14 - DOT / UN Number
+    const unNum = record.un_number || ''
+    const hasUN = /(?:UN\s*)?(\d{4})/.test(unNum) && !/0000/.test(unNum)
+    const dotDetail = {
+      section: 'DOT / Transport Hazard (Section 14)',
+      un_number: unNum,
+      proper_shipping_name: record.un_proper_shipping_name || '',
+      transport_hazard_class: record.transport_hazard_class || '',
+      dot_description: record.dot_description || '',
+      has_un_number: hasUN,
+      result: hasUN ? 'DOT_REGULATED' : 'NOT_REGULATED',
+      detail: hasUN
+        ? `UN Number ${unNum} assigned. Material is DOT-regulated for transport. A UN number strongly suggests hazardous properties.`
+        : 'No UN number identified in SDS Section 14.',
+    }
+    if (hasUN) findings.dot_regulated = true
+    findings.reasoning.push(dotDetail)
+
+    // Summary
+    findings.is_characteristic_hazardous = findings.waste_codes.length > 0
+
+    const recs = []
+    if (findings.is_characteristic_hazardous) {
+      recs.push(`⚠️ SDS indicates CHARACTERISTIC HAZARDOUS WASTE with code(s): ${findings.waste_codes.join(', ')}.`)
+      recs.push('Manage as hazardous waste per 40 CFR Parts 262-265.')
+    } else {
+      recs.push('Based on SDS data, no definitive characteristic hazardous waste indicators were confirmed.')
+    }
+    if (findings.dot_regulated) {
+      recs.push('Material is DOT-regulated (has UN number). Follow DOT requirements for shipment.')
+    }
+    recs.push('DISCLAIMER: This determination is based on SDS information only. Actual waste characterization requires representative sampling and laboratory testing.')
+    findings.recommendations = recs
+
+    // Store on record
+    const idx = store.records.findIndex(r => r.id === Number(id))
+    if (idx !== -1) {
+      store.records[idx].hazardous_determination = JSON.stringify(findings)
+      store.records[idx].hazardous_determination_data = findings
+      saveSdsStore(store)
+    }
+
+    return ok(findings)
   },
 }

@@ -1,4 +1,5 @@
 import json
+import re
 from .models import Chemical, MixtureComponent
 
 F_LIST_SOLVENTS = {
@@ -341,3 +342,512 @@ def determine_hazardous_waste(mixture, additional_props=None):
         'reasoning': reasoning,
         'recommendations': '\n'.join(recs),
     }
+
+
+# ─── SDS-Based Characteristic Hazardous Waste Determination ───────────────────
+
+def _parse_numeric_value(text):
+    """Extract a numeric value from a text string (e.g., '23 °C' -> 23.0)."""
+    if not text:
+        return None
+    # Match negative/positive numbers with optional decimal
+    match = re.search(r'(-?\d+(?:\.\d+)?)', str(text)[:100])
+    if match:
+        try:
+            return float(match.group(1))
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def _parse_temperature_celsius(text):
+    """Parse a temperature value, converting from Fahrenheit if needed."""
+    if not text:
+        return None
+    text = str(text)[:200]
+
+    # Check if value is given in Fahrenheit
+    fahrenheit_match = re.search(r'(-?\d+(?:\.\d+)?)\s*°?\s*F', text, re.IGNORECASE)
+    celsius_match = re.search(r'(-?\d+(?:\.\d+)?)\s*°?\s*C', text, re.IGNORECASE)
+
+    if celsius_match:
+        try:
+            return float(celsius_match.group(1))
+        except (ValueError, TypeError):
+            pass
+
+    if fahrenheit_match:
+        try:
+            f_val = float(fahrenheit_match.group(1))
+            return (f_val - 32) * 5.0 / 9.0
+        except (ValueError, TypeError):
+            pass
+
+    # Try bare number
+    return _parse_numeric_value(text)
+
+
+def _is_liquid(physical_state):
+    """Determine if material is a liquid based on physical state description."""
+    if not physical_state:
+        return None  # Unknown
+    state_lower = str(physical_state).lower()
+    liquid_keywords = ['liquid', 'fluid', 'solution', 'emulsion', 'suspension']
+    solid_keywords = ['solid', 'powder', 'granul', 'crystal', 'pellet', 'flake', 'paste']
+    gas_keywords = ['gas', 'vapor', 'aerosol']
+
+    for kw in liquid_keywords:
+        if kw in state_lower:
+            return True
+    for kw in solid_keywords + gas_keywords:
+        if kw in state_lower:
+            return False
+    return None
+
+
+def _has_un_number(un_number_text):
+    """Check if a valid UN number is present (indicates DOT-regulated hazardous material)."""
+    if not un_number_text:
+        return False
+    text = str(un_number_text).strip()
+    # UN numbers are 4-digit identifiers
+    match = re.search(r'(?:UN\s*)?(\d{4})', text, re.IGNORECASE)
+    if match:
+        number = match.group(1)
+        # UN0000 is not a valid assignment; also filter out placeholder text
+        if number != '0000':
+            return True
+    return False
+
+
+def _match_composition_to_tclp(composition):
+    """
+    Match SDS composition chemicals against TCLP Table 1 (40 CFR 261.24).
+    Returns list of matches with D-codes where concentration may exceed regulatory limits.
+    """
+    matches = []
+    if not composition:
+        return matches
+
+    # Parse composition JSON
+    if isinstance(composition, str):
+        try:
+            comp_list = json.loads(composition)
+        except (json.JSONDecodeError, TypeError):
+            return matches
+    elif isinstance(composition, list):
+        comp_list = composition
+    else:
+        return matches
+
+    for entry in comp_list:
+        if not isinstance(entry, dict):
+            continue
+
+        cas = entry.get('cas_number', '').strip()
+        name = entry.get('name', '').lower().strip()
+        concentration_str = entry.get('concentration', '')
+
+        # Parse concentration percentage
+        concentration_pct = None
+        if concentration_str:
+            # Handle range like "10-30%" - use upper bound
+            range_match = re.search(r'(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*%', str(concentration_str)[:100])
+            single_match = re.search(r'(\d+(?:\.\d+)?)\s*%', str(concentration_str)[:100])
+            if range_match:
+                try:
+                    concentration_pct = float(range_match.group(2))
+                except ValueError:
+                    pass
+            elif single_match:
+                try:
+                    concentration_pct = float(single_match.group(1))
+                except ValueError:
+                    pass
+
+        # Match against TCLP thresholds by CAS number or exact name match
+        for d_code, info in TCLP_THRESHOLDS.items():
+            matched = False
+            if cas and info.get('cas') and cas == info['cas']:
+                matched = True
+            elif name and info['name'].lower() == name:
+                matched = True
+
+            if matched:
+                match_entry = {
+                    'chemical_name': entry.get('name', info['name']),
+                    'cas_number': cas or info.get('cas', ''),
+                    'd_code': d_code,
+                    'regulatory_limit_mgl': info['threshold'],
+                    'concentration_pct': concentration_pct,
+                }
+                # TCLP estimation: assumes 1 g/mL density and standard 20:1 liquid-to-solid
+                # dilution ratio per EPA Method 1311. (pct/100) converts to fraction,
+                # * 1,000,000 converts to mg/kg, / 20 applies TCLP dilution factor.
+                if concentration_pct is not None and concentration_pct > 0:
+                    tclp_estimate = (concentration_pct / 100.0) * 1_000_000 / 20.0
+                    match_entry['tclp_estimate_mgl'] = round(tclp_estimate, 2)
+                    match_entry['exceeds_limit'] = tclp_estimate >= info['threshold']
+                else:
+                    match_entry['tclp_estimate_mgl'] = None
+                    match_entry['exceeds_limit'] = None
+
+                matches.append(match_entry)
+                break  # Only match each component once
+
+    return matches
+
+
+def determine_from_sds(sds_record):
+    """
+    Perform hazardous waste characteristic determination from SDS data.
+
+    Uses:
+    - Section 9 (Physical and Chemical Properties): flash point, pH, physical state
+    - Section 14 (Transport Information): UN number for DOT-regulated status
+    - Section 3 (Composition): chemicals matched against 40 CFR 261.24 Table 1
+    - Section 10 (Stability/Reactivity): reactivity indicators
+
+    Returns a dict with characteristic determination results per 40 CFR 261 Subpart C.
+    """
+    findings = {
+        'characteristics': [],
+        'waste_codes': [],
+        'dot_regulated': False,
+        'reasoning': [],
+        'regulatory_references': [],
+        'recommendations': [],
+    }
+
+    # ─── Physical State Determination ─────────────────────────────────────────
+    physical_state = getattr(sds_record, 'physical_state', '') or ''
+    is_liquid = _is_liquid(physical_state)
+    state_desc = physical_state if physical_state else 'Not specified'
+    findings['physical_state'] = state_desc
+    findings['reasoning'].append({
+        'section': 'Physical State',
+        'source': 'SDS Section 9',
+        'value': state_desc,
+        'determination': f'Material identified as: {state_desc}',
+    })
+
+    # ─── D001 Ignitability (40 CFR 261.21) ────────────────────────────────────
+    flash_point_raw = getattr(sds_record, 'flash_point', '') or ''
+    flash_point_c = _parse_temperature_celsius(flash_point_raw)
+
+    ignitability_detail = {
+        'characteristic': 'D001 - Ignitability',
+        'regulation': '40 CFR 261.21',
+        'raw_value': flash_point_raw,
+        'parsed_value_c': flash_point_c,
+        'physical_state': state_desc,
+        'is_liquid': is_liquid,
+        'threshold': 'Flash point < 60°C (140°F) for liquids',
+        'result': 'NOT_DETERMINED',
+        'detail': '',
+    }
+
+    if flash_point_c is not None:
+        if is_liquid is None or is_liquid is True:
+            # Apply liquid rule: flash point < 60°C
+            if flash_point_c < 60.0:
+                ignitability_detail['result'] = 'HAZARDOUS'
+                ignitability_detail['detail'] = (
+                    f'Flash point {flash_point_c:.1f}°C is below 60°C threshold. '
+                    f'Material is characteristic hazardous waste D001 (Ignitability) per 40 CFR 261.21.'
+                )
+                findings['characteristics'].append('D001')
+                if 'D001' not in findings['waste_codes']:
+                    findings['waste_codes'].append('D001')
+            else:
+                ignitability_detail['result'] = 'NOT_HAZARDOUS'
+                ignitability_detail['detail'] = (
+                    f'Flash point {flash_point_c:.1f}°C is at or above 60°C threshold. '
+                    f'Does not meet ignitability characteristic.'
+                )
+        elif is_liquid is False:
+            ignitability_detail['result'] = 'NOT_APPLICABLE_SOLID'
+            ignitability_detail['detail'] = (
+                f'Flash point {flash_point_c:.1f}°C noted, but material is solid. '
+                f'Flash point test applies primarily to liquids. '
+                f'Solids are ignitable if they can cause fire through friction, absorption of moisture, '
+                f'or spontaneous chemical changes per 40 CFR 261.21(a)(2).'
+            )
+    else:
+        ignitability_detail['result'] = 'INSUFFICIENT_DATA'
+        ignitability_detail['detail'] = (
+            'Flash point not reported or could not be parsed from SDS Section 9. '
+            'Laboratory testing per ASTM D93 or D3278 (SW-846 Method 1010B/1020C) recommended.'
+        )
+
+    findings['reasoning'].append(ignitability_detail)
+
+    # ─── D002 Corrosivity (40 CFR 261.22) ─────────────────────────────────────
+    ph_raw = getattr(sds_record, 'ph', '') or ''
+    ph_value = _parse_numeric_value(ph_raw)
+
+    corrosivity_detail = {
+        'characteristic': 'D002 - Corrosivity',
+        'regulation': '40 CFR 261.22',
+        'raw_value': ph_raw,
+        'parsed_value': ph_value,
+        'threshold': 'pH ≤ 2.0 or pH ≥ 12.5 (aqueous liquids)',
+        'result': 'NOT_DETERMINED',
+        'detail': '',
+    }
+
+    if ph_value is not None:
+        if ph_value <= 2.0:
+            corrosivity_detail['result'] = 'HAZARDOUS'
+            corrosivity_detail['detail'] = (
+                f'pH {ph_value} is ≤ 2.0 (highly acidic). '
+                f'Material is characteristic hazardous waste D002 (Corrosivity) per 40 CFR 261.22.'
+            )
+            findings['characteristics'].append('D002')
+            if 'D002' not in findings['waste_codes']:
+                findings['waste_codes'].append('D002')
+        elif ph_value >= 12.5:
+            corrosivity_detail['result'] = 'HAZARDOUS'
+            corrosivity_detail['detail'] = (
+                f'pH {ph_value} is ≥ 12.5 (highly alkaline). '
+                f'Material is characteristic hazardous waste D002 (Corrosivity) per 40 CFR 261.22.'
+            )
+            findings['characteristics'].append('D002')
+            if 'D002' not in findings['waste_codes']:
+                findings['waste_codes'].append('D002')
+        else:
+            corrosivity_detail['result'] = 'NOT_HAZARDOUS'
+            corrosivity_detail['detail'] = (
+                f'pH {ph_value} is between 2.0 and 12.5. '
+                f'Does not meet corrosivity characteristic.'
+            )
+    else:
+        corrosivity_detail['result'] = 'INSUFFICIENT_DATA'
+        corrosivity_detail['detail'] = (
+            'pH not reported or could not be parsed from SDS Section 9. '
+            'Testing per EPA Method 9040C or 9045D recommended for aqueous/liquid wastes.'
+        )
+
+    findings['reasoning'].append(corrosivity_detail)
+
+    # ─── D003 Reactivity (40 CFR 261.23) ──────────────────────────────────────
+    chemical_stability = getattr(sds_record, 'chemical_stability', '') or ''
+    conditions_to_avoid = getattr(sds_record, 'conditions_to_avoid', '') or ''
+    possibility_of_reactions = getattr(sds_record, 'possibility_of_reactions', '') or ''
+    hazardous_decomposition = getattr(sds_record, 'hazardous_decomposition', '') or ''
+
+    reactivity_indicators = []
+    reactivity_text = f'{chemical_stability} {conditions_to_avoid} {possibility_of_reactions}'.lower()
+
+    reactive_keywords = [
+        'unstable', 'explosive', 'shock sensitive', 'water reactive',
+        'reacts violently', 'self-reactive', 'organic peroxide',
+        'forbidden explosive', 'class 1', 'detonation',
+        'generates toxic gas', 'cyanide', 'sulfide',
+    ]
+    for kw in reactive_keywords:
+        if kw in reactivity_text:
+            reactivity_indicators.append(kw)
+
+    reactivity_detail = {
+        'characteristic': 'D003 - Reactivity',
+        'regulation': '40 CFR 261.23',
+        'indicators_found': reactivity_indicators,
+        'stability_info': chemical_stability,
+        'conditions_to_avoid': conditions_to_avoid,
+        'result': 'NOT_DETERMINED',
+        'detail': '',
+    }
+
+    if reactivity_indicators:
+        reactivity_detail['result'] = 'POTENTIALLY_HAZARDOUS'
+        reactivity_detail['detail'] = (
+            f'Reactivity indicators found in SDS Section 10: {", ".join(reactivity_indicators)}. '
+            f'Material may be characteristic hazardous waste D003 (Reactivity) per 40 CFR 261.23. '
+            f'Further evaluation recommended.'
+        )
+        findings['characteristics'].append('D003')
+        if 'D003' not in findings['waste_codes']:
+            findings['waste_codes'].append('D003')
+    elif chemical_stability:
+        stability_lower = chemical_stability.lower()
+        if 'stable' in stability_lower and 'unstable' not in stability_lower:
+            reactivity_detail['result'] = 'NOT_HAZARDOUS'
+            reactivity_detail['detail'] = (
+                'Material reported as stable in SDS Section 10. '
+                'No reactivity indicators identified.'
+            )
+        else:
+            reactivity_detail['result'] = 'INSUFFICIENT_DATA'
+            reactivity_detail['detail'] = (
+                'Stability information present but inconclusive. '
+                'Review SDS Section 10 and conduct reactivity testing if needed.'
+            )
+    else:
+        reactivity_detail['result'] = 'INSUFFICIENT_DATA'
+        reactivity_detail['detail'] = (
+            'No stability/reactivity information found in SDS Section 10. '
+            'Reactivity testing per 40 CFR 261.23 criteria recommended.'
+        )
+
+    findings['reasoning'].append(reactivity_detail)
+
+    # ─── D004-D043 Toxicity Characteristic (40 CFR 261.24) ────────────────────
+    composition_raw = getattr(sds_record, 'composition', '') or '[]'
+    tclp_matches = _match_composition_to_tclp(composition_raw)
+
+    toxicity_detail = {
+        'characteristic': 'D004-D043 - Toxicity (TCLP)',
+        'regulation': '40 CFR 261.24',
+        'method': 'EPA Method 1311 (TCLP)',
+        'composition_chemicals_matched': len(tclp_matches),
+        'matches': tclp_matches,
+        'result': 'NOT_DETERMINED',
+        'detail': '',
+    }
+
+    toxic_codes = []
+    for match in tclp_matches:
+        if match.get('exceeds_limit') is True:
+            d_code = match['d_code']
+            if d_code not in toxic_codes:
+                toxic_codes.append(d_code)
+
+    if toxic_codes:
+        toxicity_detail['result'] = 'HAZARDOUS'
+        toxicity_detail['detail'] = (
+            f'SDS composition contains chemicals that may exceed TCLP regulatory limits: '
+            f'{", ".join(toxic_codes)}. Based on concentration estimates from SDS Section 3 '
+            f'compared to 40 CFR 261.24 Table 1 regulatory levels. '
+            f'Confirm with TCLP testing (EPA Method 1311).'
+        )
+        findings['characteristics'].extend([c for c in toxic_codes if c not in findings['characteristics']])
+        findings['waste_codes'].extend([c for c in toxic_codes if c not in findings['waste_codes']])
+    elif tclp_matches:
+        # Chemicals from Table 1 are present but don't clearly exceed limits
+        has_unknown = any(m.get('exceeds_limit') is None for m in tclp_matches)
+        if has_unknown:
+            toxicity_detail['result'] = 'TESTING_RECOMMENDED'
+            toxicity_detail['detail'] = (
+                f'SDS composition contains {len(tclp_matches)} chemical(s) listed in '
+                f'40 CFR 261.24 Table 1, but concentrations could not be fully determined. '
+                f'TCLP testing (EPA Method 1311) recommended to confirm toxicity characteristic.'
+            )
+        else:
+            toxicity_detail['result'] = 'NOT_HAZARDOUS'
+            toxicity_detail['detail'] = (
+                f'SDS composition contains chemicals from 40 CFR 261.24 Table 1, '
+                f'but estimated TCLP concentrations are below regulatory limits.'
+            )
+    else:
+        toxicity_detail['result'] = 'NO_LISTED_CHEMICALS'
+        toxicity_detail['detail'] = (
+            'No chemicals from 40 CFR 261.24 Table 1 identified in SDS Section 3 composition. '
+            'If waste stream composition differs from the SDS product, TCLP testing may still be warranted.'
+        )
+
+    findings['reasoning'].append(toxicity_detail)
+
+    # ─── Section 14: DOT / Transport Hazard Assessment ────────────────────────
+    un_number_raw = getattr(sds_record, 'un_number', '') or ''
+    shipping_name = getattr(sds_record, 'un_proper_shipping_name', '') or ''
+    transport_class = getattr(sds_record, 'transport_hazard_class', '') or ''
+    dot_description = getattr(sds_record, 'dot_description', '') or ''
+
+    dot_detail = {
+        'section': 'DOT / Transport Hazard (Section 14)',
+        'un_number': un_number_raw,
+        'proper_shipping_name': shipping_name,
+        'transport_hazard_class': transport_class,
+        'dot_description': dot_description,
+        'has_un_number': _has_un_number(un_number_raw),
+        'result': 'NOT_DETERMINED',
+        'detail': '',
+    }
+
+    if _has_un_number(un_number_raw):
+        findings['dot_regulated'] = True
+        dot_detail['result'] = 'DOT_REGULATED'
+        dot_detail['detail'] = (
+            f'UN Number {un_number_raw} assigned in SDS Section 14. '
+            f'Material is DOT-regulated for transport. '
+            f'Proper shipping name: {shipping_name or "See SDS"}. '
+            f'This indicates the manufacturer identifies this material as hazardous for shipping. '
+            f'A UN number strongly suggests the material has hazardous properties.'
+        )
+    elif shipping_name and 'not regulated' not in shipping_name.lower():
+        dot_detail['result'] = 'REVIEW_NEEDED'
+        dot_detail['detail'] = (
+            f'Shipping name identified ({shipping_name}) but no clear UN number parsed. '
+            f'Review SDS Section 14 for full DOT classification.'
+        )
+    else:
+        dot_detail['result'] = 'NOT_REGULATED'
+        dot_detail['detail'] = (
+            'No UN number identified in SDS Section 14. '
+            'Material may not be DOT-regulated for transport, but this does not '
+            'preclude RCRA hazardous waste classification.'
+        )
+
+    findings['reasoning'].append(dot_detail)
+
+    # ─── Summary and Recommendations ─────────────────────────────────────────
+    is_characteristic_hazardous = len(findings['waste_codes']) > 0
+    findings['is_characteristic_hazardous'] = is_characteristic_hazardous
+
+    # Build regulatory references
+    findings['regulatory_references'] = [
+        '40 CFR 261.21 - Characteristic of Ignitability',
+        '40 CFR 261.22 - Characteristic of Corrosivity',
+        '40 CFR 261.23 - Characteristic of Reactivity',
+        '40 CFR 261.24 - Toxicity Characteristic (TCLP Table 1)',
+        '40 CFR 261 Subpart C - Characteristics of Hazardous Waste',
+    ]
+
+    # Build recommendations
+    recs = []
+    if is_characteristic_hazardous:
+        recs.append(
+            f'⚠️ SDS indicates CHARACTERISTIC HAZARDOUS WASTE with code(s): '
+            f'{", ".join(findings["waste_codes"])}.'
+        )
+        recs.append(
+            'Manage as hazardous waste per 40 CFR Parts 262-265. '
+            'Proper storage, labeling, manifesting, and disposal at a permitted TSDF required.'
+        )
+    else:
+        recs.append(
+            'Based on SDS data, no definitive characteristic hazardous waste indicators were confirmed.'
+        )
+
+    if findings['dot_regulated']:
+        recs.append(
+            'Material is DOT-regulated (has UN number). '
+            'Follow DOT packaging, marking, and labeling requirements for shipment.'
+        )
+
+    # Check for data gaps
+    data_gaps = []
+    if flash_point_c is None and (is_liquid is None or is_liquid is True):
+        data_gaps.append('Flash point (ignitability)')
+    if ph_value is None:
+        data_gaps.append('pH (corrosivity)')
+    if not tclp_matches:
+        data_gaps.append('TCLP testing (toxicity)')
+
+    if data_gaps:
+        recs.append(
+            f'Data gaps identified: {", ".join(data_gaps)}. '
+            f'Laboratory testing per SW-846 methods recommended for complete characterization.'
+        )
+
+    recs.append(
+        'DISCLAIMER: This determination is based on SDS information only. '
+        'Actual waste characterization requires representative sampling and '
+        'laboratory testing per 40 CFR 261 Subpart C methods. '
+        'Consult a qualified environmental professional.'
+    )
+
+    findings['recommendations'] = recs
+
+    return findings

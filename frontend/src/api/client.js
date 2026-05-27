@@ -303,6 +303,9 @@ export const sds = {  list: (mixtureId) => useLocalMixtures
   delete: (id) => useLocalMixtures
     ? localSds.delete(id)
     : client.delete(`/sds/${id}/`),
+  determine: (id) => useLocalMixtures
+    ? localSds.determine(id)
+    : client.post(`/sds/${id}/determine/`),
   import: (data) => {
     if (useLocalMixtures) {
       return localSds.importSds(data)
