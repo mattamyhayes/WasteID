@@ -357,6 +357,7 @@ class SafetyDataSheetSerializer(serializers.ModelSerializer):
     precautionary_statements_list = serializers.SerializerMethodField()
     ghs_classification_list = serializers.SerializerMethodField()
     exposure_limits_list = serializers.SerializerMethodField()
+    hazardous_determination_data = serializers.SerializerMethodField()
 
     def get_composition_list(self, obj):
         try:
@@ -387,6 +388,15 @@ class SafetyDataSheetSerializer(serializers.ModelSerializer):
             return json.loads(obj.exposure_limits)
         except (json.JSONDecodeError, TypeError, ValueError):
             return []
+
+    def get_hazardous_determination_data(self, obj):
+        """Parse the hazardous_determination JSON field into a dict."""
+        if not obj.hazardous_determination:
+            return None
+        try:
+            return json.loads(obj.hazardous_determination)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return None
 
     class Meta:
         model = SafetyDataSheet

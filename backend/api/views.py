@@ -21,7 +21,7 @@ from .serializers import (ChemicalSerializer, MixtureSerializer,
                            BidSerializer, IncineratorSerializer, ProfileDocumentSerializer,
                            SafetyDataSheetSerializer, SafetyDataSheetListSerializer,
                            ContactUsSubmissionSerializer)
-from .determination import determine_hazardous_waste
+from .determination import determine_hazardous_waste, determine_from_sds
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -1077,6 +1077,21 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
         )
         sds.save()
 
+        # Auto-populate mixture components from SDS composition if linked to a mixture
+        if mixture and sds_fields.get('import_status') == 'complete':
+            composition = sds_fields.get('composition', '')
+            if composition:
+                self._populate_mixture_components(mixture, composition)
+
+        # Auto-run characteristic hazardous determination on imported SDS
+        if sds_fields.get('import_status') == 'complete':
+            try:
+                det_result = determine_from_sds(sds)
+                sds.hazardous_determination = json.dumps(det_result)
+                sds.save(update_fields=['hazardous_determination'])
+            except Exception:
+                pass  # Non-critical: determination can be re-run manually
+
         serializer = SafetyDataSheetSerializer(sds)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1158,6 +1173,121 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             fields['import_status'] = 'complete'
 
         return fields
+
+    def _populate_mixture_components(self, mixture, composition_json):
+        """
+        Auto-populate MixtureComponents from SDS Section 3 composition data.
+        Matches chemicals by CAS number and creates components with concentration amounts.
+        """
+        import re as _re
+
+        if not mixture or not composition_json:
+            return
+
+        # Parse composition
+        if isinstance(composition_json, str):
+            try:
+                comp_list = json.loads(composition_json)
+            except (json.JSONDecodeError, TypeError):
+                return
+        elif isinstance(composition_json, list):
+            comp_list = composition_json
+        else:
+            return
+
+        for entry in comp_list:
+            if not isinstance(entry, dict):
+                continue
+
+            cas = entry.get('cas_number', '').strip()
+            name = entry.get('name', '').strip()
+            concentration_str = entry.get('concentration', '')
+
+            if not cas and not name:
+                continue
+
+            # Parse concentration to a numeric value (use midpoint for ranges)
+            quantity = None
+            unit = 'pct_weight'
+            if concentration_str:
+                range_match = _re.search(
+                    r'(\d+\.?\d*)\s*[-–]\s*(\d+\.?\d*)\s*%',
+                    str(concentration_str)
+                )
+                single_match = _re.search(r'[<>≤≥]?\s*(\d+\.?\d*)\s*%', str(concentration_str))
+                if range_match:
+                    try:
+                        low = float(range_match.group(1))
+                        high = float(range_match.group(2))
+                        quantity = (low + high) / 2.0
+                    except ValueError:
+                        pass
+                elif single_match:
+                    try:
+                        quantity = float(single_match.group(1))
+                    except ValueError:
+                        pass
+
+            # Try to find matching Chemical in database by CAS number
+            chemical = None
+            if cas:
+                chemical = Chemical.objects.filter(cas_number=cas).first()
+            if not chemical and name:
+                chemical = Chemical.objects.filter(name__iexact=name).first()
+
+            # Create or update component
+            if chemical:
+                comp, created = MixtureComponent.objects.get_or_create(
+                    mixture=mixture,
+                    chemical=chemical,
+                    defaults={
+                        'quantity': quantity or 0,
+                        'unit': unit,
+                    }
+                )
+                if not created and quantity and quantity > 0:
+                    comp.quantity = quantity
+                    comp.unit = unit
+                    comp.save(update_fields=['quantity', 'unit'])
+            elif name:
+                # Create component with custom name if no matching chemical in DB
+                comp, created = MixtureComponent.objects.get_or_create(
+                    mixture=mixture,
+                    custom_name=name,
+                    chemical=None,
+                    defaults={
+                        'quantity': quantity or 0,
+                        'unit': unit,
+                    }
+                )
+                if not created and quantity and quantity > 0:
+                    comp.quantity = quantity
+                    comp.unit = unit
+                    comp.save(update_fields=['quantity', 'unit'])
+
+    @action(detail=True, methods=['post'], url_path='determine')
+    def determine_characteristics(self, request, pk=None):
+        """
+        Run characteristic hazardous waste determination on an SDS record.
+        Uses Section 9 (physical/chemical properties), Section 14 (transport),
+        and Section 3 (composition) to evaluate against 40 CFR 261 Subpart C.
+        """
+        sds_record = self.get_object()
+
+        result = determine_from_sds(sds_record)
+
+        # Store determination on the SDS record
+        sds_record.hazardous_determination = json.dumps(result)
+        sds_record.save(update_fields=['hazardous_determination'])
+
+        # If SDS is linked to a mixture, also populate additional_props for future determinations
+        if sds_record.mixture:
+            self._populate_mixture_components(
+                sds_record.mixture,
+                sds_record.composition
+            )
+
+        return Response(result)
 
 
 logger = logging.getLogger(__name__)

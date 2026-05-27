@@ -822,6 +822,12 @@ class SafetyDataSheet(models.Model):
     # CAS number (primary, for quick lookup/search)
     cas_number = models.CharField(max_length=50, blank=True, db_index=True)
 
+    # Hazardous waste characteristic determination results (from SDS data analysis)
+    hazardous_determination = models.TextField(
+        blank=True, default='',
+        help_text='JSON object with characteristic hazardous waste determination from SDS Section 9/14 analysis'
+    )
+
     class Meta:
         ordering = ['-imported_at']
         verbose_name = 'Safety Data Sheet'

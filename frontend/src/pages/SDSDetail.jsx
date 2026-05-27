@@ -10,6 +10,8 @@ export default function SDSDetail() {
   const [error, setError] = useState('')
   const [pageImages, setPageImages] = useState([])
   const [totalPages, setTotalPages] = useState(0)
+  const [determining, setDetermining] = useState(false)
+  const [determinationResult, setDeterminationResult] = useState(null)
 
   useEffect(() => {
     loadRecord()
@@ -20,6 +22,14 @@ export default function SDSDetail() {
     try {
       const res = await sds.get(id)
       setRecord(res.data)
+      // Load existing determination if available
+      if (res.data.hazardous_determination_data) {
+        setDeterminationResult(res.data.hazardous_determination_data)
+      } else if (res.data.hazardous_determination) {
+        try {
+          setDeterminationResult(JSON.parse(res.data.hazardous_determination))
+        } catch { /* ignore parse error */ }
+      }
       // Render PDF pages for comparison if file data is available
       if (res.data.file_data) {
         renderPdfPages(res.data.file_data)
@@ -28,6 +38,21 @@ export default function SDSDetail() {
       setError('Failed to load SDS record.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRunDetermination = async () => {
+    setDetermining(true)
+    try {
+      const res = await sds.determine(id)
+      setDeterminationResult(res.data)
+      // Reload record to get updated data
+      const updated = await sds.get(id)
+      setRecord(updated.data)
+    } catch (err) {
+      setError('Failed to run determination: ' + (err?.message || 'Unknown error'))
+    } finally {
+      setDetermining(false)
     }
   }
 
@@ -284,6 +309,168 @@ export default function SDSDetail() {
         <Field label="Disclaimer" value={record.disclaimer} />
         <Field label="Other Information" value={record.other_information} />
       </Section>
+
+      {/* Hazardous Characteristic Determination (40 CFR 261) */}
+      <div className="card" style={{ marginBottom: '1rem', border: determinationResult?.is_characteristic_hazardous ? '2px solid #dc2626' : '2px solid #16a34a' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h3 style={{ color: '#14532d', margin: 0, fontSize: '1.1rem' }}>
+            🧪 Hazardous Characteristic Determination (40 CFR 261)
+          </h3>
+          <button
+            className="btn btn-primary"
+            onClick={handleRunDetermination}
+            disabled={determining}
+            style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
+          >
+            {determining ? '⏳ Analyzing…' : determinationResult ? '🔄 Re-Run Determination' : '▶ Run Determination'}
+          </button>
+        </div>
+
+        {!determinationResult && !determining && (
+          <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+            Click "Run Determination" to analyze this SDS for characteristic hazardous waste indicators
+            using Section 9 (Physical/Chemical Properties) and Section 14 (Transport) data per 40 CFR 261 Subpart C.
+          </p>
+        )}
+
+        {determinationResult && (
+          <div>
+            {/* Summary Banner */}
+            {determinationResult.is_characteristic_hazardous ? (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem' }}>
+                <strong style={{ color: '#dc2626', fontSize: '1rem' }}>
+                  ⚠️ CHARACTERISTIC HAZARDOUS WASTE IDENTIFIED
+                </strong>
+                <p style={{ margin: '0.3rem 0 0', color: '#991b1b', fontSize: '0.9rem' }}>
+                  Waste Code(s): <strong>{determinationResult.waste_codes?.join(', ')}</strong>
+                </p>
+              </div>
+            ) : (
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem' }}>
+                <strong style={{ color: '#166534', fontSize: '1rem' }}>
+                  ✓ No Definitive Characteristic Hazardous Indicators Confirmed
+                </strong>
+                <p style={{ margin: '0.3rem 0 0', color: '#15803d', fontSize: '0.85rem' }}>
+                  Based on available SDS data. Additional testing may be required.
+                </p>
+              </div>
+            )}
+
+            {/* DOT Status */}
+            {determinationResult.dot_regulated && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '0.6rem 1rem', marginBottom: '1rem' }}>
+                <strong style={{ color: '#92400e', fontSize: '0.9rem' }}>
+                  🚛 DOT-Regulated Material (UN Number Present)
+                </strong>
+              </div>
+            )}
+
+            {/* Detailed Reasoning */}
+            <h4 style={{ color: '#374151', fontSize: '0.95rem', marginBottom: '0.5rem' }}>Determination Reasoning</h4>
+            {determinationResult.reasoning?.map((item, idx) => (
+              <div key={idx} style={{
+                background: item.result === 'HAZARDOUS' || item.result === 'POTENTIALLY_HAZARDOUS'
+                  ? '#fef2f2' : item.result === 'NOT_HAZARDOUS' || item.result === 'NOT_REGULATED'
+                  ? '#f0fdf4' : '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                padding: '0.6rem 0.8rem',
+                marginBottom: '0.5rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong style={{ fontSize: '0.88rem', color: '#1f2937' }}>
+                    {item.characteristic || item.section || 'Analysis'}
+                  </strong>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: 4,
+                    background: item.result === 'HAZARDOUS' || item.result === 'POTENTIALLY_HAZARDOUS'
+                      ? '#fee2e2' : item.result === 'NOT_HAZARDOUS' || item.result === 'NOT_REGULATED' || item.result === 'NOT_APPLICABLE_SOLID'
+                      ? '#dcfce7' : '#e5e7eb',
+                    color: item.result === 'HAZARDOUS' || item.result === 'POTENTIALLY_HAZARDOUS'
+                      ? '#dc2626' : item.result === 'NOT_HAZARDOUS' || item.result === 'NOT_REGULATED' || item.result === 'NOT_APPLICABLE_SOLID'
+                      ? '#16a34a' : '#6b7280',
+                  }}>
+                    {item.result || '—'}
+                  </span>
+                </div>
+                {item.regulation && (
+                  <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: '0.2rem' }}>
+                    Ref: {item.regulation}
+                  </div>
+                )}
+                {item.detail && (
+                  <p style={{ fontSize: '0.85rem', color: '#374151', margin: '0.4rem 0 0' }}>
+                    {item.detail}
+                  </p>
+                )}
+                {item.raw_value && (
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.2rem' }}>
+                    SDS Value: "{item.raw_value}"
+                    {item.parsed_value_c != null && ` → ${item.parsed_value_c.toFixed(1)}°C`}
+                    {item.parsed_value != null && item.parsed_value_c == null && ` → ${item.parsed_value}`}
+                  </div>
+                )}
+                {/* TCLP matches table */}
+                {item.matches && item.matches.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f3f4f6' }}>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'left', borderBottom: '1px solid #d1d5db' }}>Chemical</th>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'left', borderBottom: '1px solid #d1d5db' }}>D-Code</th>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #d1d5db' }}>Conc. %</th>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #d1d5db' }}>Est. TCLP (mg/L)</th>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #d1d5db' }}>Reg. Limit (mg/L)</th>
+                          <th style={{ padding: '0.3rem 0.5rem', textAlign: 'center', borderBottom: '1px solid #d1d5db' }}>Exceeds?</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.matches.map((m, mi) => (
+                          <tr key={mi} style={{ background: m.exceeds_limit ? '#fef2f2' : 'transparent' }}>
+                            <td style={{ padding: '0.3rem 0.5rem', borderBottom: '1px solid #e5e7eb' }}>{m.chemical_name}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>{m.d_code}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.concentration_pct != null ? m.concentration_pct : '—'}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.tclp_estimate_mgl != null ? m.tclp_estimate_mgl.toLocaleString() : '—'}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.regulatory_limit_mgl}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: 700, color: m.exceeds_limit ? '#dc2626' : m.exceeds_limit === false ? '#16a34a' : '#6b7280' }}>
+                              {m.exceeds_limit === true ? '⚠️ YES' : m.exceeds_limit === false ? '✓ No' : '?'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Recommendations */}
+            {determinationResult.recommendations && determinationResult.recommendations.length > 0 && (
+              <div style={{ marginTop: '1rem' }}>
+                <h4 style={{ color: '#374151', fontSize: '0.95rem', marginBottom: '0.5rem' }}>Recommendations</h4>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.88rem', color: '#374151' }}>
+                  {determinationResult.recommendations.map((rec, idx) => (
+                    <li key={idx} style={{ marginBottom: '0.3rem' }}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Regulatory References */}
+            {determinationResult.regulatory_references && determinationResult.regulatory_references.length > 0 && (
+              <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#f9fafb', borderRadius: 6, border: '1px solid #e5e7eb' }}>
+                <strong style={{ fontSize: '0.82rem', color: '#6b7280' }}>Regulatory References:</strong>
+                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.2rem' }}>
+                  {determinationResult.regulatory_references.join(' • ')}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
