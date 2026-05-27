@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { contactSubmissions } from '../api/client'
 
 const adminLinks = [
   {
@@ -34,7 +35,7 @@ const adminLinks = [
   },
   {
     to: '/forms',
-    title: 'Form Manager',
+    title: 'Incinerator Form Manager',
     description: 'Import and manage form templates for auto-population.',
     icon: '📄',
   },
@@ -218,6 +219,76 @@ function UserManagement() {
   )
 }
 
+function ContactFormSubmissions() {
+  const [submissions, setSubmissions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    contactSubmissions.list()
+      .then(res => setSubmissions(res.data || []))
+      .catch(() => setError('Could not load contact form submissions.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const thStyle = {
+    padding: '0.75rem 0.5rem', textAlign: 'left', borderBottom: '2px solid #d1d5db',
+    color: '#374151', fontWeight: 600, fontSize: '0.88rem',
+  }
+  const tdStyle = {
+    padding: '0.6rem 0.5rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.9rem', color: '#1f2937',
+  }
+
+  return (
+    <div style={{ marginTop: '2.5rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <h2 style={{ color: '#14532d', marginBottom: '0.25rem' }}>📬 Contact Form Submissions</h2>
+        <p style={{ color: '#6b7280', fontSize: '0.92rem' }}>Demo requests and contact form submissions from the home page.</p>
+      </div>
+
+      {loading && <div style={{ color: '#6b7280' }}>Loading…</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
+      {!loading && !error && submissions.length === 0 && (
+        <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>No submissions yet.</div>
+      )}
+      {!loading && !error && submissions.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Company</th>
+                <th style={thStyle}>Role</th>
+                <th style={thStyle}>Email</th>
+                <th style={thStyle}>Phone</th>
+                <th style={thStyle}>Message</th>
+                <th style={thStyle}>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {submissions.map(s => (
+                <tr key={s.id}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{s.name}</td>
+                  <td style={tdStyle}>{s.company}</td>
+                  <td style={tdStyle}>{s.role || '—'}</td>
+                  <td style={{ ...tdStyle, color: '#4b5563' }}>{s.email}</td>
+                  <td style={tdStyle}>{s.phone}</td>
+                  <td style={{ ...tdStyle, maxWidth: 240, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{s.message || '—'}</td>
+                  <td style={{ ...tdStyle, whiteSpace: 'nowrap', color: '#6b7280', fontSize: '0.82rem' }}>
+                    {s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Admin() {
   return (
     <div className="container" style={{ padding: '2rem 1.5rem 3rem', maxWidth: 1100 }}>
@@ -248,6 +319,7 @@ export default function Admin() {
         ))}
       </div>
 
+      <ContactFormSubmissions />
       <UserManagement />
     </div>
   )

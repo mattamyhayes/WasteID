@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Journey
+from .models import Chemical, Mixture, MixtureComponent, WasteDetermination, Customer, CustomerLocation, Shipper, EPAManifest, Journey, ContactUsSubmission
 
 
 class CustomerLocationInline(admin.TabularInline):
@@ -64,3 +64,10 @@ class JourneyAdmin(admin.ModelAdmin):
     list_filter = ['stage', 'customer']
     search_fields = ['mixture__transaction_id', 'customer__name']
     readonly_fields = ['duration_seconds']
+
+
+@admin.register(ContactUsSubmission)
+class ContactUsSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'company', 'role', 'email', 'phone', 'submitted_at']
+    search_fields = ['name', 'company', 'email']
+    readonly_fields = ['submitted_at']
