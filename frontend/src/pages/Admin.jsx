@@ -50,6 +50,12 @@ const adminLinks = [
     description: 'Manage and review marketplace listings and bids.',
     icon: '🏬',
   },
+  {
+    to: '/admin/chemicals',
+    title: 'Chemical Database',
+    description: 'View all chemical records, sources, and import history.',
+    icon: '⚗️',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']

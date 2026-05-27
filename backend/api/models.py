@@ -55,6 +55,11 @@ class Chemical(models.Model):
         ('OTHER', 'Other'),
     ]
 
+    SOURCE_CHOICES = [
+        ('epa_import', 'EPA Import'),
+        ('manual', 'Manual (Admin)'),
+    ]
+
     name = models.CharField(max_length=500)
     cas_number = models.CharField(max_length=50, blank=True)
     synonyms = models.TextField(blank=True, default='[]')  # JSON list
@@ -72,6 +77,8 @@ class Chemical(models.Model):
     tclp_threshold_mgl = models.FloatField(null=True, blank=True)
 
     notes = models.TextField(blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='epa_import')
+    added_by = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

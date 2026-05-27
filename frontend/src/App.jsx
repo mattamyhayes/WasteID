@@ -25,6 +25,7 @@ import SDSList from './pages/SDSList'
 import SDSAdd from './pages/SDSAdd'
 import SDSDetail from './pages/SDSDetail'
 import SDSEdit from './pages/SDSEdit'
+import ChemicalDatabase from './pages/ChemicalDatabase'
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/sds/add" element={<SDSAdd />} />
           <Route path="/sds/:id" element={<SDSDetail />} />
           <Route path="/sds/:id/edit" element={<SDSEdit />} />
+          <Route path="/admin/chemicals" element={<ChemicalDatabase />} />
         </Routes>
       </main>
       <Footer />
