@@ -59,7 +59,7 @@ function mergeErrors(stored, transient) {
 export function getSystemErrors() {
   const stored = readStoredErrors()
   return mergeErrors(stored, volatileErrors)
-    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0))
 }
 
 export function clearSystemErrors() {
@@ -125,7 +125,12 @@ export function installGlobalErrorLogging() {
         return originalSetItem.call(this, key, value)
       } catch (error) {
         if (!isLogging) {
-          const area = this === window.localStorage ? 'localStorage' : 'sessionStorage'
+          let area = 'storage'
+          try {
+            area = this === window.localStorage ? 'localStorage' : (this === window.sessionStorage ? 'sessionStorage' : 'storage')
+          } catch {
+            area = 'storage'
+          }
           logSystemError(error, { source: 'storage.setItem', storageArea: area, key })
         }
         throw error
