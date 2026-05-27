@@ -66,8 +66,11 @@ class ChemicalViewSet(viewsets.ReadOnlyModelViewSet):
             )
         if category:
             qs = qs.filter(category=category)
-        return qs[:100]
-
+        # When used for search (q provided), cap at 100 results for performance.
+        # Admin list view (no q) relies on DRF pagination.
+        if q:
+            return qs[:100]
+        return qs
 
 class MixtureViewSet(viewsets.ModelViewSet):
     queryset = Mixture.objects.select_related('customer', 'customer_location').prefetch_related('components__chemical', 'determinations').all()

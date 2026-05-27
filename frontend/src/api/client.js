@@ -64,6 +64,18 @@ export const chemicals = {
       return { data: { results: localChemicals } }
     }
   },
+  listAdmin: async (params = {}) => {
+    if (useLocalChemicals) {
+      const results = localChemicals.map(c => ({ ...c, source: 'epa_import', source_display: 'EPA Import', added_by: '' }))
+      return { data: { results, count: results.length } }
+    }
+    try {
+      return await client.get('/chemicals/', { params })
+    } catch (err) {
+      const results = localChemicals.map(c => ({ ...c, source: 'epa_import', source_display: 'EPA Import', added_by: '' }))
+      return { data: { results, count: results.length } }
+    }
+  },
 }
 
 export const mixtures = {

@@ -470,6 +470,8 @@ class Command(BaseCommand):
             nonlocal created, updated
             for item in data_list:
                 defaults = {k: v for k, v in item.items() if k != 'name'}
+                defaults.setdefault('source', 'epa_import')
+                defaults.setdefault('added_by', '')
                 obj, was_created = Chemical.objects.get_or_create(
                     name=item['name'],
                     defaults=defaults,

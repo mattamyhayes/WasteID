@@ -44,6 +44,7 @@ class ContactUsSubmissionSerializer(serializers.ModelSerializer):
 
 class ChemicalSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(source='get_category_display', read_only=True)
+    source_display = serializers.CharField(source='get_source_display', read_only=True)
 
     class Meta:
         model = Chemical
