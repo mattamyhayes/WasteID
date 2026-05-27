@@ -37,6 +37,9 @@ export default function ChemicalDatabase() {
 
   useEffect(() => {
     loadChemicals()
+  // search and sourceFilter are applied client-side to already-loaded records;
+  // only page and categoryFilter drive new API requests.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, categoryFilter])
 
   const loadChemicals = async () => {

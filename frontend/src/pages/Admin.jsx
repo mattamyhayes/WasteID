@@ -54,7 +54,7 @@ const adminLinks = [
     to: '/admin/chemicals',
     title: 'Chemical Database',
     description: 'View all chemical records, sources, and import history.',
-    icon: '⚗️',
+    icon: '🧪',
   },
 ]
 
