@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { validateFile, addDocument } from '../lib/documentStore'
+import { validateFile } from '../lib/documentStore'
+import { profileDocuments } from '../api/client'
 
 const DOC_TYPES = [
-  { value: 'sds', label: 'SDS (Safety Data Sheet)' },
-  { value: 'analytical', label: 'Analytical Report' },
+  { value: 'SDS', label: 'SDS (Safety Data Sheet)' },
+  { value: 'A', label: 'Analytical Report' },
 ]
 
 export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded }) {
@@ -52,13 +53,14 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
         setUploading(false)
         return
       }
-      await addDocument(resolvedProfileId, transactionId, file, docType)
+      const shortName = file.name.replace(/\.[^.]+$/, '') || `${docType === 'SDS' ? 'SDS' : 'Analytical'} Document`
+      await profileDocuments.upload(resolvedProfileId, docType, shortName, file)
       setFile(null)
       setDocType('')
       if (fileInputRef.current) fileInputRef.current.value = ''
       if (onUploaded) onUploaded()
     } catch (e) {
-      setError('Failed to upload document. Please try again.')
+      setError(e?.response?.data?.detail || 'Failed to upload document. Please try again.')
     } finally {
       setUploading(false)
     }

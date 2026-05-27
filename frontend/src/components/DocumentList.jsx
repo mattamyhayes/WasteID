@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listDocuments, deleteDocument, getDocument } from '../lib/documentStore'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
-import { sds } from '../api/client'
+import { profileDocuments, sds } from '../api/client'
 import FileUpload from './FileUpload'
 
 export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components }) {
@@ -12,55 +11,93 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
   const [importing, setImporting] = useState(null)
   const [importSuccess, setImportSuccess] = useState(null)
   const [importError, setImportError] = useState('')
+  const getDocFilename = (doc) => doc.original_filename || doc.file_name || doc.stored_filename || 'document'
 
-  const load = () => {
+  const load = async () => {
     if (!profileId) return
-    setDocs(listDocuments(profileId))
+    try {
+      const res = await profileDocuments.list(profileId)
+      setDocs(res?.data?.results || res?.data || [])
+    } catch {
+      setDocs([])
+    }
   }
 
   useEffect(() => { load() }, [profileId])
 
-  const handleView = (docId) => {
-    const doc = getDocument(docId)
-    if (!doc) return
-    // Convert data URL to blob and open via object URL to avoid XSS
-    try {
-      const parts = doc.data.split(',')
-      const mime = parts[0].match(/:(.*?);/)?.[1] || doc.mime_type
-      const byteString = atob(parts[1])
+  async function resolveDocumentFile(doc) {
+    if (doc?.file_data || doc?.data) {
+      const dataUrl = doc.file_data || doc.data
+      const parts = dataUrl.split(',')
+      if (parts.length < 2 || !parts[1]) {
+        throw new Error('Invalid file data.')
+      }
+      const mime = parts[0].match(/:(.*?);/)?.[1] || doc.mime_type || 'application/octet-stream'
+      let byteString = ''
+      try {
+        byteString = atob(parts[1])
+      } catch {
+        throw new Error('Invalid file data.')
+      }
       const ab = new ArrayBuffer(byteString.length)
       const ia = new Uint8Array(ab)
       for (let i = 0; i < byteString.length; i++) {
         ia[i] = byteString.charCodeAt(i)
       }
-      const blob = new Blob([ab], { type: mime })
+      return {
+        blob: new Blob([ab], { type: mime }),
+        mime,
+        filename: getDocFilename(doc),
+      }
+    }
+
+    const fileUrl = doc?.file_url || doc?.file
+    if (!fileUrl) throw new Error('File is not available.')
+
+    const res = await fetch(fileUrl)
+    if (!res.ok) throw new Error('Unable to fetch document file.')
+    const blob = await res.blob()
+    return {
+      blob,
+      mime: blob.type || 'application/octet-stream',
+      filename: getDocFilename(doc),
+    }
+  }
+
+  const handleView = async (docId) => {
+    const doc = docs.find(d => d.id === docId)
+    if (!doc) return
+    try {
+      const { blob, mime, filename } = await resolveDocumentFile(doc)
       const url = URL.createObjectURL(blob)
       if (mime === 'application/pdf' || mime.startsWith('image/')) {
         window.open(url, '_blank')
       } else {
-        // Trigger download for non-viewable types
         const a = document.createElement('a')
         a.href = url
-        a.download = doc.file_name
+        a.download = filename
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
       }
-      // Revoke after a delay to allow browser to use it
       setTimeout(() => URL.revokeObjectURL(url), 10000)
     } catch {
       alert('Unable to open this document.')
     }
   }
 
-  const handleDelete = (docId) => {
-    deleteDocument(docId)
-    setConfirmDelete(null)
-    load()
+  const handleDelete = async (docId) => {
+    try {
+      await profileDocuments.delete(docId)
+      setConfirmDelete(null)
+      await load()
+    } catch {
+      setImportError('Failed to delete document.')
+    }
   }
 
   const handleImportSds = async (docId) => {
-    const doc = getDocument(docId)
+    const doc = docs.find(d => d.id === docId)
     if (!doc) {
       setImportError('Document not found. It may have been deleted.')
       return
@@ -70,17 +107,9 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     setImportSuccess(null)
 
     try {
-      // Convert data URL to a File object for parsing
-      const parts = doc.data.split(',')
-      const mime = parts[0].match(/:(.*?);/)?.[1] || doc.mime_type
-      const byteString = atob(parts[1])
-      const ab = new ArrayBuffer(byteString.length)
-      const ia = new Uint8Array(ab)
-      for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i)
-      }
-      const blob = new Blob([ab], { type: mime })
-      const file = new File([blob], doc.file_name, { type: mime })
+      const { blob, mime, filename } = await resolveDocumentFile(doc)
+      const file = new File([blob], filename, { type: mime })
+      if (!doc.id) throw new Error('Document ID is missing.')
 
       // Parse the PDF to extract SDS data
       let parsedData = {}
@@ -94,16 +123,16 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
 
       // Build import data (same as SDSAdd page logic)
       const importData = {
-        product_name: parsedData.product_name || doc.file_name.replace(/\.pdf$/i, ''),
+        product_name: parsedData.product_name || filename.replace(/\.pdf$/i, ''),
         cas_number: parsedData.cas_number || '',
         manufacturer_name: parsedData.manufacturer_name || '',
-        original_filename: doc.file_name,
+        original_filename: filename,
         import_status: 'complete',
         mixture_id: profileId,
-        file_data: doc.data,
+        profile_document_id: doc.id,
         sds_data: {
           ...parsedData,
-          product_name: parsedData.product_name || doc.file_name.replace(/\.pdf$/i, ''),
+          product_name: parsedData.product_name || filename.replace(/\.pdf$/i, ''),
           cas_number: parsedData.cas_number || '',
           manufacturer_name: parsedData.manufacturer_name || '',
           import_status: 'complete',
@@ -144,12 +173,13 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     } catch (err) {
       // Save an error record to the SDS store so the admin can see and troubleshoot it
       try {
+        if (!doc.id) throw new Error('Document ID is missing.')
         const errorImportData = {
-          product_name: doc.file_name.replace(/\.[^.]+$/i, ''),
-          original_filename: doc.file_name,
+          product_name: getDocFilename(doc).replace(/\.[^.]+$/i, ''),
+          original_filename: getDocFilename(doc),
           import_status: 'error',
           mixture_id: profileId,
-          file_data: doc.data,
+          profile_document_id: doc.id,
         }
         await sds.import(errorImportData)
       } catch {
@@ -181,13 +211,14 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
   }
 
   const typeLabel = (docType) => {
-    if (docType === 'sds') return 'SDS'
-    if (docType === 'analytical') return 'Analytical'
+    if (docType === 'sds' || docType === 'SDS') return 'SDS'
+    if (docType === 'analytical' || docType === 'A') return 'Analytical'
     return docType
   }
 
   const typeBadge = (docType) => {
-    const styles = docType === 'sds'
+    const isSds = docType === 'sds' || docType === 'SDS'
+    const styles = isSds
       ? { background: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd' }
       : { background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }
     return (
@@ -253,12 +284,12 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
                 display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem',
                 background: '#f9fafb', borderRadius: 6, border: '1px solid #e5e7eb', flexWrap: 'wrap',
               }}>
-                {typeBadge(doc.doc_type)}
+                {typeBadge(doc.file_type || doc.doc_type)}
                 <span style={{ fontWeight: 500, fontSize: '0.9rem', flex: 1, minWidth: 120 }}>
-                  {doc.file_name}
+                  {doc.original_filename || doc.file_name || doc.stored_filename}
                 </span>
                 <span style={{ color: '#6b7280', fontSize: '0.8rem' }}>
-                  {formatSize(doc.file_size)}
+                  {formatSize(doc.file_size || 0)}
                 </span>
                 <span style={{ color: '#9ca3af', fontSize: '0.78rem' }}>
                   {new Date(doc.uploaded_at).toLocaleDateString()}
@@ -271,7 +302,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
                   >
                     👁 View
                   </button>
-                  {doc.doc_type === 'sds' && (
+                  {(doc.file_type === 'SDS' || doc.doc_type === 'sds') && (
                     <button
                       className="btn btn-primary"
                       style={{ fontSize: '0.78rem', padding: '0.2rem 0.45rem' }}
