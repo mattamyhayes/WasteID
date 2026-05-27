@@ -11,6 +11,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
   const [importing, setImporting] = useState(null)
   const [importSuccess, setImportSuccess] = useState(null)
   const [importError, setImportError] = useState('')
+  const getDocFilename = (doc) => doc.original_filename || doc.file_name || doc.stored_filename || 'document'
 
   const load = async () => {
     if (!profileId) return
@@ -28,8 +29,16 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     if (doc?.file_data || doc?.data) {
       const dataUrl = doc.file_data || doc.data
       const parts = dataUrl.split(',')
+      if (parts.length < 2 || !parts[1]) {
+        throw new Error('Invalid file data.')
+      }
       const mime = parts[0].match(/:(.*?);/)?.[1] || doc.mime_type || 'application/octet-stream'
-      const byteString = atob(parts[1] || '')
+      let byteString = ''
+      try {
+        byteString = atob(parts[1])
+      } catch {
+        throw new Error('Invalid file data.')
+      }
       const ab = new ArrayBuffer(byteString.length)
       const ia = new Uint8Array(ab)
       for (let i = 0; i < byteString.length; i++) {
@@ -38,7 +47,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       return {
         blob: new Blob([ab], { type: mime }),
         mime,
-        filename: doc.original_filename || doc.file_name || doc.stored_filename || 'document',
+        filename: getDocFilename(doc),
       }
     }
 
@@ -51,7 +60,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     return {
       blob,
       mime: blob.type || 'application/octet-stream',
-      filename: doc.original_filename || doc.file_name || doc.stored_filename || 'document',
+      filename: getDocFilename(doc),
     }
   }
 
@@ -100,6 +109,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     try {
       const { blob, mime, filename } = await resolveDocumentFile(doc)
       const file = new File([blob], filename, { type: mime })
+      if (!doc.id) throw new Error('Document ID is missing.')
 
       // Parse the PDF to extract SDS data
       let parsedData = {}
@@ -163,9 +173,10 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     } catch (err) {
       // Save an error record to the SDS store so the admin can see and troubleshoot it
       try {
+        if (!doc.id) throw new Error('Document ID is missing.')
         const errorImportData = {
-          product_name: (doc.original_filename || doc.file_name || doc.stored_filename || 'document').replace(/\.[^.]+$/i, ''),
-          original_filename: doc.original_filename || doc.file_name || doc.stored_filename || 'document',
+          product_name: getDocFilename(doc).replace(/\.[^.]+$/i, ''),
+          original_filename: getDocFilename(doc),
           import_status: 'error',
           mixture_id: profileId,
           profile_document_id: doc.id,
