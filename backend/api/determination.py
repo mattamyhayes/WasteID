@@ -351,7 +351,7 @@ def _parse_numeric_value(text):
     if not text:
         return None
     # Match negative/positive numbers with optional decimal
-    match = re.search(r'(-?\d+\.?\d*)', str(text))
+    match = re.search(r'(-?\d+(?:\.\d+)?)', str(text)[:100])
     if match:
         try:
             return float(match.group(1))
@@ -364,11 +364,11 @@ def _parse_temperature_celsius(text):
     """Parse a temperature value, converting from Fahrenheit if needed."""
     if not text:
         return None
-    text = str(text)
+    text = str(text)[:200]
 
     # Check if value is given in Fahrenheit
-    fahrenheit_match = re.search(r'(-?\d+\.?\d*)\s*°?\s*F', text, re.IGNORECASE)
-    celsius_match = re.search(r'(-?\d+\.?\d*)\s*°?\s*C', text, re.IGNORECASE)
+    fahrenheit_match = re.search(r'(-?\d+(?:\.\d+)?)\s*°?\s*F', text, re.IGNORECASE)
+    celsius_match = re.search(r'(-?\d+(?:\.\d+)?)\s*°?\s*C', text, re.IGNORECASE)
 
     if celsius_match:
         try:
@@ -452,8 +452,8 @@ def _match_composition_to_tclp(composition):
         concentration_pct = None
         if concentration_str:
             # Handle range like "10-30%" - use upper bound
-            range_match = re.search(r'(\d+\.?\d*)\s*[-–]\s*(\d+\.?\d*)\s*%', str(concentration_str))
-            single_match = re.search(r'(\d+\.?\d*)\s*%', str(concentration_str))
+            range_match = re.search(r'(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*%', str(concentration_str)[:100])
+            single_match = re.search(r'(\d+(?:\.\d+)?)\s*%', str(concentration_str)[:100])
             if range_match:
                 try:
                     concentration_pct = float(range_match.group(2))
@@ -465,22 +465,13 @@ def _match_composition_to_tclp(composition):
                 except ValueError:
                     pass
 
-        # Match against TCLP thresholds by CAS number or name (exact/full-word match)
+        # Match against TCLP thresholds by CAS number or exact name match
         for d_code, info in TCLP_THRESHOLDS.items():
             matched = False
             if cas and info.get('cas') and cas == info['cas']:
                 matched = True
             elif name and info['name'].lower() == name:
-                # Exact name match
                 matched = True
-            elif name and len(name) > 3:
-                # Only match if the SDS name equals or is a full word within the TCLP name
-                # Avoid partial substring matches like "toluene" in "dinitrotoluene"
-                info_name_lower = info['name'].lower()
-                if info_name_lower == name:
-                    matched = True
-                elif name == info_name_lower:
-                    matched = True
 
             if matched:
                 match_entry = {
@@ -490,7 +481,9 @@ def _match_composition_to_tclp(composition):
                     'regulatory_limit_mgl': info['threshold'],
                     'concentration_pct': concentration_pct,
                 }
-                # Estimate TCLP: (pct/100) * 1,000,000 / 20 = mg/L
+                # TCLP estimation: assumes 1 g/mL density and standard 20:1 liquid-to-solid
+                # dilution ratio per EPA Method 1311. (pct/100) converts to fraction,
+                # * 1,000,000 converts to mg/kg, / 20 applies TCLP dilution factor.
                 if concentration_pct is not None and concentration_pct > 0:
                     tclp_estimate = (concentration_pct / 100.0) * 1_000_000 / 20.0
                     match_entry['tclp_estimate_mgl'] = round(tclp_estimate, 2)

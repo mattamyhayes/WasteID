@@ -2,6 +2,7 @@ import json
 import io
 import logging
 import os
+import re
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import HttpResponse
@@ -1179,8 +1180,6 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
         Auto-populate MixtureComponents from SDS Section 3 composition data.
         Matches chemicals by CAS number and creates components with concentration amounts.
         """
-        import re as _re
-
         if not mixture or not composition_json:
             return
 
@@ -1210,11 +1209,12 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             quantity = None
             unit = 'pct_weight'
             if concentration_str:
-                range_match = _re.search(
-                    r'(\d+\.?\d*)\s*[-–]\s*(\d+\.?\d*)\s*%',
-                    str(concentration_str)
+                conc_text = str(concentration_str)[:100]  # Limit input length
+                range_match = re.search(
+                    r'(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*%',
+                    conc_text
                 )
-                single_match = _re.search(r'[<>≤≥]?\s*(\d+\.?\d*)\s*%', str(concentration_str))
+                single_match = re.search(r'[<>≤≥]?\s*(\d+(?:\.\d+)?)\s*%', conc_text)
                 if range_match:
                     try:
                         low = float(range_match.group(1))

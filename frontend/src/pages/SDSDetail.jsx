@@ -409,8 +409,8 @@ export default function SDSDetail() {
                 {item.raw_value && (
                   <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.2rem' }}>
                     SDS Value: "{item.raw_value}"
-                    {item.parsed_value_c != null && ` → ${item.parsed_value_c.toFixed(1)}°C`}
-                    {item.parsed_value != null && item.parsed_value_c == null && ` → ${item.parsed_value}`}
+                    {item.parsed_value_c !== undefined && item.parsed_value_c !== null && ` → ${item.parsed_value_c.toFixed(1)}°C`}
+                    {item.parsed_value !== undefined && item.parsed_value !== null && (item.parsed_value_c === undefined || item.parsed_value_c === null) && ` → ${item.parsed_value}`}
                   </div>
                 )}
                 {/* TCLP matches table */}
@@ -432,8 +432,8 @@ export default function SDSDetail() {
                           <tr key={mi} style={{ background: m.exceeds_limit ? '#fef2f2' : 'transparent' }}>
                             <td style={{ padding: '0.3rem 0.5rem', borderBottom: '1px solid #e5e7eb' }}>{m.chemical_name}</td>
                             <td style={{ padding: '0.3rem 0.5rem', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>{m.d_code}</td>
-                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.concentration_pct != null ? m.concentration_pct : '—'}</td>
-                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.tclp_estimate_mgl != null ? m.tclp_estimate_mgl.toLocaleString() : '—'}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.concentration_pct !== undefined && m.concentration_pct !== null ? m.concentration_pct : '—'}</td>
+                            <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.tclp_estimate_mgl !== undefined && m.tclp_estimate_mgl !== null ? m.tclp_estimate_mgl.toLocaleString() : '—'}</td>
                             <td style={{ padding: '0.3rem 0.5rem', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{m.regulatory_limit_mgl}</td>
                             <td style={{ padding: '0.3rem 0.5rem', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: 700, color: m.exceeds_limit ? '#dc2626' : m.exceeds_limit === false ? '#16a34a' : '#6b7280' }}>
                               {m.exceeds_limit === true ? '⚠️ YES' : m.exceeds_limit === false ? '✓ No' : '?'}
