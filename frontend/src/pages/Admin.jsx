@@ -57,6 +57,12 @@ const adminLinks = [
     description: 'View all chemical records, sources, and import history.',
     icon: '🧪',
   },
+  {
+    to: '/site-manager',
+    title: 'Site Manager',
+    description: 'Review system error logs, including storage failures.',
+    icon: '🛠️',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']
