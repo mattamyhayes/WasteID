@@ -5,6 +5,13 @@ let isLogging = false
 let listenersInstalled = false
 let volatileErrors = []
 
+function generateEntryId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 function readStoredErrors() {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return []
   try {
@@ -59,7 +66,7 @@ function mergeErrors(stored, transient) {
 export function getSystemErrors() {
   const stored = readStoredErrors()
   return mergeErrors(stored, volatileErrors)
-    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0))
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 }
 
 export function clearSystemErrors() {
@@ -75,7 +82,7 @@ export function clearSystemErrors() {
 export function logSystemError(error, metadata = {}) {
   const normalized = normalizeError(error)
   const entry = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    id: generateEntryId(),
     timestamp: new Date().toISOString(),
     name: normalized.name,
     message: normalized.message,
@@ -120,7 +127,7 @@ export function installGlobalErrorLogging() {
 
   if (typeof Storage !== 'undefined') {
     const originalSetItem = Storage.prototype.setItem
-    Storage.prototype.setItem = function patchedSetItem(key, value) {
+    Storage.prototype.setItem = function setItemWithErrorLogging(key, value) {
       try {
         return originalSetItem.call(this, key, value)
       } catch (error) {
