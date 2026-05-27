@@ -291,8 +291,7 @@ export const profileDocuments = {
     : client.get(`/profile-documents/${docId}/`),
 }
 
-export const sds = {
-  list: (mixtureId) => useLocalMixtures
+export const sds = {  list: (mixtureId) => useLocalMixtures
     ? localSds.list(mixtureId)
     : client.get('/sds/', { params: mixtureId ? { mixture: mixtureId } : {} }),
   get: (id) => useLocalMixtures
@@ -320,5 +319,12 @@ export const sds = {
       })
     }
     return client.post('/sds/import/', data)
+  },
+}
+
+export const contactSubmissions = {
+  list: () => {
+    if (!apiUrlConfigured) return Promise.resolve({ data: [] })
+    return client.get('/contact-us-submissions/')
   },
 }
