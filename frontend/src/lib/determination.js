@@ -44,6 +44,11 @@ function componentName(comp) {
   return 'Unknown Chemical'
 }
 
+function componentIsDetected(comp) {
+  const qty = Number(comp?.quantity)
+  return Number.isFinite(qty) && qty > 0
+}
+
 /**
  * Run the RCRA determination for an in-memory mixture.
  *
@@ -132,6 +137,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   const listedDetails = []
 
   for (const comp of components) {
+    if (!componentIsDetected(comp)) continue
     const chem = comp.chemical_detail
     const name = componentName(comp)
 
@@ -199,6 +205,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   let flashPoint = additionalProps.flash_point_c
   if (flashPoint == null) {
     for (const comp of components) {
+      if (!componentIsDetected(comp)) continue
       if (comp.override_flash_point_c != null) {
         if (flashPoint == null || comp.override_flash_point_c < flashPoint) {
           flashPoint = comp.override_flash_point_c
@@ -216,6 +223,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
     charDetails.push(`D001 (Ignitability): Flash point ${flashPoint}°C < 60°C threshold. Waste is ignitable.`)
   }
   for (const comp of components) {
+    if (!componentIsDetected(comp)) continue
     if (comp.chemical_detail && comp.chemical_detail.is_ignitable) {
       hasIgnitability = true
       if (!wasteCodes.includes('D001')) wasteCodes.push('D001')
@@ -227,6 +235,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   let ph = additionalProps.ph
   if (ph == null) {
     for (const comp of components) {
+      if (!componentIsDetected(comp)) continue
       if (comp.override_ph != null) { ph = comp.override_ph; break }
       if (comp.chemical_detail && comp.chemical_detail.ph_value != null) {
         ph = comp.chemical_detail.ph_value; break
@@ -243,6 +252,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
     )
   }
   for (const comp of components) {
+    if (!componentIsDetected(comp)) continue
     if (comp.chemical_detail && comp.chemical_detail.is_corrosive) {
       hasCorrosivity = true
       if (!wasteCodes.includes('D002')) wasteCodes.push('D002')
@@ -253,6 +263,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   // D003 - Reactivity
   let isReactive = !!additionalProps.is_reactive
   for (const comp of components) {
+    if (!componentIsDetected(comp)) continue
     if (comp.override_is_reactive || (comp.chemical_detail && comp.chemical_detail.is_reactive)) {
       isReactive = true
     }
@@ -266,6 +277,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
   // D004-D043 - Toxicity (TCLP)
   const toxicCodes = []
   for (const comp of components) {
+    if (!componentIsDetected(comp)) continue
     const chem = comp.chemical_detail
     if (!chem) continue
     if (chem.tclp_threshold_mgl != null && chem.epa_waste_code && chem.epa_waste_code.startsWith('D')) {
