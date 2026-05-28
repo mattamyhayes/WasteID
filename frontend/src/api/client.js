@@ -66,15 +66,29 @@ export const chemicals = {
   },
   listAdmin: async (params = {}) => {
     if (useLocalChemicals) {
-      const results = localChemicals.map(c => ({ ...c, source: 'epa_import', source_display: 'EPA Import', added_by: '' }))
+      const results = localChemicals.map(c => ({ ...c, source: c.source || 'epa_import', source_display: c.source === 'manual' ? 'Manual (Admin)' : 'EPA Import', added_by: c.added_by || 'Admin' }))
       return { data: { results, count: results.length } }
     }
     try {
       return await client.get('/chemicals/', { params })
     } catch (err) {
-      const results = localChemicals.map(c => ({ ...c, source: 'epa_import', source_display: 'EPA Import', added_by: '' }))
+      const results = localChemicals.map(c => ({ ...c, source: c.source || 'epa_import', source_display: c.source === 'manual' ? 'Manual (Admin)' : 'EPA Import', added_by: c.added_by || 'Admin' }))
       return { data: { results, count: results.length } }
     }
+  },
+  create: async (data) => {
+    if (useLocalChemicals) {
+      // In static mode, return a stub response
+      const newItem = { ...data, id: Date.now(), source: 'manual', source_display: 'Manual (Admin)', added_by: 'Admin', created_at: new Date().toISOString() }
+      return { data: newItem }
+    }
+    return await client.post('/chemicals/', data)
+  },
+  update: async (id, data) => {
+    if (useLocalChemicals) {
+      return { data: { ...data, id } }
+    }
+    return await client.patch(`/chemicals/${id}/`, data)
   },
 }
 

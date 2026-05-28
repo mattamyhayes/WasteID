@@ -16,12 +16,149 @@ const SOURCE_LABELS = {
   manual: 'Manual (Admin)',
 }
 
+const CATEGORY_OPTIONS = [
+  { value: 'P', label: 'P-list (Acutely Hazardous)' },
+  { value: 'U', label: 'U-list (Toxic)' },
+  { value: 'F', label: 'F-list (Non-specific source)' },
+  { value: 'K', label: 'K-list (Specific source)' },
+  { value: 'D_CHAR', label: 'Characteristic (D-code)' },
+  { value: 'OTHER', label: 'Other' },
+]
+
+const EMPTY_FORM = {
+  name: '',
+  cas_number: '',
+  epa_waste_code: '',
+  category: 'OTHER',
+  notes: '',
+  is_ignitable: false,
+  is_corrosive: false,
+  is_reactive: false,
+  is_toxic: false,
+  is_acutely_hazardous: false,
+  flash_point_c: '',
+  ph_value: '',
+  tclp_threshold_mgl: '',
+}
+
 const thStyle = {
   padding: '0.75rem 0.5rem', textAlign: 'left', borderBottom: '2px solid #d1d5db',
   color: '#374151', fontWeight: 600, fontSize: '0.88rem',
 }
 const tdStyle = {
   padding: '0.6rem 0.5rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.9rem', color: '#1f2937',
+}
+
+const overlayStyle = {
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+  background: 'rgba(0,0,0,0.45)', zIndex: 1000,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+}
+
+const modalStyle = {
+  background: '#fff', borderRadius: 8, padding: '1.75rem',
+  width: '100%', maxWidth: 580, maxHeight: '90vh', overflowY: 'auto',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+}
+
+function ChemicalFormModal({ initial, onSave, onClose, isNew }) {
+  const [form, setForm] = useState({ ...EMPTY_FORM, ...initial })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.name.trim()) { setError('Name is required.'); return }
+    setSaving(true)
+    setError('')
+    try {
+      const payload = {
+        ...form,
+        source: 'manual',
+        added_by: 'Admin',
+        flash_point_c: form.flash_point_c === '' ? null : Number(form.flash_point_c),
+        ph_value: form.ph_value === '' ? null : Number(form.ph_value),
+        tclp_threshold_mgl: form.tclp_threshold_mgl === '' ? null : Number(form.tclp_threshold_mgl),
+      }
+      await onSave(payload)
+    } catch (err) {
+      setError(err?.response?.data ? JSON.stringify(err.response.data) : 'Save failed.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={modalStyle}>
+        <h2 style={{ color: '#14532d', marginBottom: '1.25rem', fontSize: '1.1rem' }}>
+          {isNew ? '➕ Add New Chemical' : '✏️ Edit Chemical'}
+        </h2>
+        {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Name *</label>
+            <input className="form-control" value={form.name} onChange={e => set('name', e.target.value)} required />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>CAS Number</label>
+              <input className="form-control" value={form.cas_number} onChange={e => set('cas_number', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>EPA Waste Code</label>
+              <input className="form-control" value={form.epa_waste_code} onChange={e => set('epa_waste_code', e.target.value)} />
+            </div>
+          </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Category</label>
+            <select className="form-control" value={form.category} onChange={e => set('category', e.target.value)}>
+              {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Flash Point (°C)</label>
+              <input className="form-control" type="number" step="any" value={form.flash_point_c} onChange={e => set('flash_point_c', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>pH Value</label>
+              <input className="form-control" type="number" step="any" value={form.ph_value} onChange={e => set('ph_value', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>TCLP (mg/L)</label>
+              <input className="form-control" type="number" step="any" value={form.tclp_threshold_mgl} onChange={e => set('tclp_threshold_mgl', e.target.value)} />
+            </div>
+          </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.88rem' }}>Characteristics</label>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {[['is_ignitable','Ignitable'],['is_corrosive','Corrosive'],['is_reactive','Reactive'],['is_toxic','Toxic'],['is_acutely_hazardous','Acutely Hazardous']].map(([k, label]) => (
+                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.88rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={!!form[k]} onChange={e => set(k, e.target.checked)} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Notes</label>
+            <textarea className="form-control" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} />
+          </div>
+          <div style={{ fontSize: '0.82rem', color: '#6b7280', marginBottom: '1rem' }}>
+            Source will be set to <strong>Manual (Admin)</strong>.
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : (isNew ? 'Add Chemical' : 'Save Changes')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 export default function ChemicalDatabase() {
@@ -34,6 +171,10 @@ export default function ChemicalDatabase() {
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const PAGE_SIZE = 100
+
+  // modal state
+  const [showAdd, setShowAdd] = useState(false)
+  const [editItem, setEditItem] = useState(null)
 
   useEffect(() => {
     loadChemicals()
@@ -96,8 +237,36 @@ export default function ChemicalDatabase() {
     return 'EPA Import'
   }
 
+  const handleAdd = async (payload) => {
+    await chemicals.create(payload)
+    setShowAdd(false)
+    await loadChemicals()
+  }
+
+  const handleEdit = async (payload) => {
+    await chemicals.update(editItem.id, payload)
+    setEditItem(null)
+    await loadChemicals()
+  }
+
+  const openEdit = (c) => {
+    setEditItem({
+      ...c,
+      flash_point_c: c.flash_point_c ?? '',
+      ph_value: c.ph_value ?? '',
+      tclp_threshold_mgl: c.tclp_threshold_mgl ?? '',
+    })
+  }
+
   return (
     <div className="container" style={{ padding: '2rem 1.5rem 3rem', maxWidth: 1200 }}>
+      {showAdd && (
+        <ChemicalFormModal isNew onSave={handleAdd} onClose={() => setShowAdd(false)} initial={{}} />
+      )}
+      {editItem && (
+        <ChemicalFormModal onSave={handleEdit} onClose={() => setEditItem(null)} initial={editItem} />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
@@ -109,6 +278,9 @@ export default function ChemicalDatabase() {
             {totalCount > 0 && <span style={{ marginLeft: '0.5rem', fontWeight: 600 }}>{totalCount.toLocaleString()} records total.</span>}
           </p>
         </div>
+        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+          ➕ Add New Chemical
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -174,6 +346,7 @@ export default function ChemicalDatabase() {
                   <th style={thStyle}>Source</th>
                   <th style={thStyle}>Date Added</th>
                   <th style={thStyle}>Added By</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,6 +378,15 @@ export default function ChemicalDatabase() {
                     </td>
                     <td style={{ ...tdStyle, color: '#6b7280' }}>{formatDate(c.created_at)}</td>
                     <td style={{ ...tdStyle, color: '#6b7280' }}>{c.added_by || '—'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.78rem', padding: '0.2rem 0.6rem' }}
+                        onClick={() => openEdit(c)}
+                      >
+                        ✏️ Edit
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
