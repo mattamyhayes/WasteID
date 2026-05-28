@@ -81,7 +81,10 @@ TCLP_THRESHOLDS = {
 
 def _component_is_detected(comp):
     """
-    Treat zero/negative quantity components as non-detect placeholders.
+    Return True when a MixtureComponent represents a detected constituent.
+
+    Components with missing/invalid quantity or quantity <= 0 are treated as
+    non-detect placeholders and excluded from hazard code assignment.
     """
     try:
         return float(comp.quantity) > 0

@@ -44,6 +44,10 @@ function componentName(comp) {
   return 'Unknown Chemical'
 }
 
+/**
+ * Treat zero/negative quantity components as non-detect placeholders.
+ * This prevents non-detected analytical constituents from adding waste codes.
+ */
 function componentIsDetected(comp) {
   const qty = Number(comp?.quantity)
   return Number.isFinite(qty) && qty > 0
