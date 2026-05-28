@@ -63,6 +63,18 @@ const adminLinks = [
     description: 'Review system error logs, including storage failures.',
     icon: '🛠️',
   },
+  {
+    to: '/admin/contact-submissions',
+    title: 'Contact Form Submissions',
+    description: 'Review contact and demo submissions from the home page.',
+    icon: '📬',
+  },
+  {
+    to: '/admin/users',
+    title: 'User Management',
+    description: 'Manage user accounts and role assignments.',
+    icon: '👤',
+  },
 ]
 
 const ROLES = ['Admin', 'Manager', 'Analyst', 'Viewer']
@@ -75,7 +87,7 @@ const INITIAL_USERS = [
 
 let nextUserId = INITIAL_USERS.length + 1
 
-function UserManagement() {
+export function UserManagement() {
   const [users, setUsers] = useState(INITIAL_USERS)
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -225,7 +237,7 @@ function UserManagement() {
   )
 }
 
-function ContactFormSubmissions() {
+export function ContactFormSubmissions() {
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -325,8 +337,6 @@ export default function Admin() {
         ))}
       </div>
 
-      <ContactFormSubmissions />
-      <UserManagement />
     </div>
   )
 }
