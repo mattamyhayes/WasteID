@@ -79,6 +79,19 @@ TCLP_THRESHOLDS = {
 }
 
 
+def _component_is_detected(comp):
+    """
+    Return True when a MixtureComponent represents a detected constituent.
+
+    Components with missing/invalid quantity or quantity <= 0 are treated as
+    non-detect placeholders and excluded from hazard code assignment.
+    """
+    try:
+        return float(comp.quantity) > 0
+    except (TypeError, ValueError):
+        return False
+
+
 def determine_hazardous_waste(mixture, additional_props=None):
     """
     Main determination function following EPA RCRA hazardous waste identification process.
@@ -164,6 +177,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
     components = mixture.components.select_related('chemical').all()
 
     for comp in components:
+        if not _component_is_detected(comp):
+            continue
         chem = comp.chemical
         if chem and chem.epa_waste_code:
             code = chem.epa_waste_code
@@ -218,6 +233,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
     flash_point = additional_props.get('flash_point_c')
     if flash_point is None:
         for comp in components:
+            if not _component_is_detected(comp):
+                continue
             if comp.override_flash_point_c is not None:
                 if flash_point is None or comp.override_flash_point_c < flash_point:
                     flash_point = comp.override_flash_point_c
@@ -232,6 +249,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
         char_details.append(f'D001 (Ignitability): Flash point {flash_point}°C < 60°C threshold. Waste is ignitable.')
 
     for comp in components:
+        if not _component_is_detected(comp):
+            continue
         if comp.chemical and comp.chemical.is_ignitable:
             has_ignitability = True
             if 'D001' not in waste_codes:
@@ -242,6 +261,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
     ph = additional_props.get('ph')
     if ph is None:
         for comp in components:
+            if not _component_is_detected(comp):
+                continue
             if comp.override_ph is not None:
                 ph = comp.override_ph
                 break
@@ -256,6 +277,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
         char_details.append(f'D002 (Corrosivity): pH {ph} is {"≤2.0 (highly acidic)" if ph <= 2.0 else "≥12.5 (highly alkaline)"}. Waste is corrosive.')
 
     for comp in components:
+        if not _component_is_detected(comp):
+            continue
         if comp.chemical and comp.chemical.is_corrosive:
             has_corrosivity = True
             if 'D002' not in waste_codes:
@@ -265,6 +288,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
     # D003 - Reactivity
     is_reactive = additional_props.get('is_reactive', False)
     for comp in components:
+        if not _component_is_detected(comp):
+            continue
         if comp.override_is_reactive or (comp.chemical and comp.chemical.is_reactive):
             is_reactive = True
 
@@ -277,6 +302,8 @@ def determine_hazardous_waste(mixture, additional_props=None):
     # D004-D043 - Toxicity Characteristic (TCLP)
     toxic_codes = []
     for comp in components:
+        if not _component_is_detected(comp):
+            continue
         if not comp.chemical:
             continue
         chem = comp.chemical
