@@ -49,9 +49,18 @@ class CustomerLocationViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class ChemicalViewSet(viewsets.ReadOnlyModelViewSet):
+class ChemicalViewSet(viewsets.ModelViewSet):
     queryset = Chemical.objects.all()
     serializer_class = ChemicalSerializer
+
+    def perform_update(self, serializer):
+        # When an imported record is edited, mark it as manually entered
+        instance = self.get_object()
+        source = serializer.validated_data.get('source', instance.source)
+        if instance.source == 'epa_import' and source == 'epa_import':
+            serializer.save(source='manual')
+        else:
+            serializer.save()
 
     def get_queryset(self):
         qs = super().get_queryset()

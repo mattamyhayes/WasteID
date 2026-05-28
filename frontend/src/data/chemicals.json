@@ -15,7 +15,11 @@
     "flash_point_c": -28.0,
     "ph_value": null,
     "tclp_threshold_mgl": 0.7,
-    "notes": "Toxicity characteristic \u2013 1,1-dichloroethylene"
+    "notes": "Toxicity characteristic \u2013 1,1-dichloroethylene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 25,
@@ -33,7 +37,11 @@
     "flash_point_c": 13.0,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "Toxicity characteristic \u2013 1,2-dichloroethane"
+    "notes": "Toxicity characteristic \u2013 1,2-dichloroethane",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 24,
@@ -51,7 +59,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 7.5,
-    "notes": "Toxicity characteristic \u2013 1,4-dichlorobenzene"
+    "notes": "Toxicity characteristic \u2013 1,4-dichlorobenzene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 14,
@@ -69,7 +81,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 1.0,
-    "notes": "Toxicity characteristic \u2013 silvex herbicide"
+    "notes": "Toxicity characteristic \u2013 silvex herbicide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 38,
@@ -87,7 +103,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 400.0,
-    "notes": "Toxicity characteristic \u2013 2,4,5-trichlorophenol"
+    "notes": "Toxicity characteristic \u2013 2,4,5-trichlorophenol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 39,
@@ -105,7 +125,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 2.0,
-    "notes": "Toxicity characteristic \u2013 2,4,6-trichlorophenol"
+    "notes": "Toxicity characteristic \u2013 2,4,6-trichlorophenol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 13,
@@ -123,7 +147,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 10.0,
-    "notes": "Toxicity characteristic \u2013 2,4-D herbicide"
+    "notes": "Toxicity characteristic \u2013 2,4-D herbicide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 27,
@@ -141,7 +169,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.13,
-    "notes": "Toxicity characteristic \u2013 2,4-dinitrotoluene"
+    "notes": "Toxicity characteristic \u2013 2,4-dinitrotoluene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 80,
@@ -159,7 +191,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U005 \u2013 2-acetylaminofluorene; carcinogen"
+    "notes": "U005 \u2013 2-acetylaminofluorene; carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 76,
@@ -177,7 +213,11 @@
     "flash_point_c": -38.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U001 \u2013 acetaldehyde; ignitable, toxic"
+    "notes": "U001 \u2013 acetaldehyde; ignitable, toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 113,
@@ -195,7 +235,11 @@
     "flash_point_c": 39.0,
     "ph_value": 2.4,
     "tclp_threshold_mgl": null,
-    "notes": "Weak acid; corrosive and ignitable at high concentrations"
+    "notes": "Weak acid; corrosive and ignitable at high concentrations",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 77,
@@ -213,7 +257,11 @@
     "flash_point_c": -20.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U002 \u2013 acetone (F003 solvent); ignitable"
+    "notes": "U002 \u2013 acetone (F003 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 78,
@@ -231,7 +279,11 @@
     "flash_point_c": 2.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U003 \u2013 acetonitrile; ignitable, toxic"
+    "notes": "U003 \u2013 acetonitrile; ignitable, toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 79,
@@ -249,7 +301,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U004 \u2013 acetophenone"
+    "notes": "U004 \u2013 acetophenone",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 46,
@@ -267,7 +323,11 @@
     "flash_point_c": -26.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P003 \u2013 acrolein; reactive, ignitable, acutely toxic"
+    "notes": "P003 \u2013 acrolein; reactive, ignitable, acutely toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 81,
@@ -285,7 +345,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U007 \u2013 acrylamide; neurotoxin, carcinogen"
+    "notes": "U007 \u2013 acrylamide; neurotoxin, carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 82,
@@ -303,7 +367,11 @@
     "flash_point_c": 50.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U008 \u2013 acrylic acid; corrosive"
+    "notes": "U008 \u2013 acrylic acid; corrosive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 83,
@@ -321,7 +389,11 @@
     "flash_point_c": 0.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U009 \u2013 acrylonitrile; carcinogen, ignitable"
+    "notes": "U009 \u2013 acrylonitrile; carcinogen, ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 47,
@@ -339,7 +411,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P004 \u2013 aldicarb; carbamate pesticide (2-methyl-2-(methylthio)propionaldehyde O-(methylcarbamoyl)oxime)"
+    "notes": "P004 \u2013 aldicarb; carbamate pesticide (2-methyl-2-(methylthio)propionaldehyde O-(methylcarbamoyl)oxime)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 48,
@@ -357,7 +433,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P070 \u2013 aldicarb sulfoxide; carbamate pesticide metabolite"
+    "notes": "P070 \u2013 aldicarb sulfoxide; carbamate pesticide metabolite",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 49,
@@ -375,7 +455,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Aldrin \u2013 chlorinated pesticide; hazardous constituent per 40 CFR 261 Appendix VIII; no standalone P/U waste code"
+    "notes": "Aldrin \u2013 chlorinated pesticide; hazardous constituent per 40 CFR 261 Appendix VIII; no standalone P/U waste code",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 50,
@@ -393,7 +477,11 @@
     "flash_point_c": 22.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P005 \u2013 allyl alcohol"
+    "notes": "P005 \u2013 allyl alcohol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 51,
@@ -411,7 +499,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P006 \u2013 aluminum phosphide; water-reactive"
+    "notes": "P006 \u2013 aluminum phosphide; water-reactive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 117,
@@ -429,7 +521,11 @@
     "flash_point_c": null,
     "ph_value": 13.0,
     "tclp_threshold_mgl": null,
-    "notes": "Aqueous ammonia; corrosive, toxic vapors"
+    "notes": "Aqueous ammonia; corrosive, toxic vapors",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 84,
@@ -447,7 +543,11 @@
     "flash_point_c": 70.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U012 \u2013 aniline; toxic, potential carcinogen"
+    "notes": "U012 \u2013 aniline; toxic, potential carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 1,
@@ -465,7 +565,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 5.0,
-    "notes": "Toxicity characteristic \u2013 arsenic"
+    "notes": "Toxicity characteristic \u2013 arsenic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 52,
@@ -483,7 +587,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P010 \u2013 arsenic acid"
+    "notes": "P010 \u2013 arsenic acid",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 53,
@@ -501,7 +609,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P012 \u2013 arsenic trioxide"
+    "notes": "P012 \u2013 arsenic trioxide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 2,
@@ -519,7 +631,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 100.0,
-    "notes": "Toxicity characteristic \u2013 barium"
+    "notes": "Toxicity characteristic \u2013 barium",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 54,
@@ -537,7 +653,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P013 \u2013 barium cyanide"
+    "notes": "P013 \u2013 barium cyanide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 85,
@@ -555,7 +675,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U017 \u2013 benzal chloride"
+    "notes": "U017 \u2013 benzal chloride",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 15,
@@ -573,7 +697,11 @@
     "flash_point_c": -11.0,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "U019 \u2013 benzene; carcinogen, D018 overlap"
+    "notes": "U019 \u2013 benzene; carcinogen, D018 overlap",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 3,
@@ -591,7 +719,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 1.0,
-    "notes": "Toxicity characteristic \u2013 cadmium"
+    "notes": "Toxicity characteristic \u2013 cadmium",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 55,
@@ -609,7 +741,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P021 \u2013 calcium cyanide"
+    "notes": "P021 \u2013 calcium cyanide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 118,
@@ -627,7 +763,11 @@
     "flash_point_c": null,
     "ph_value": 12.4,
     "tclp_threshold_mgl": null,
-    "notes": "Slightly soluble base; corrosive at threshold pH"
+    "notes": "Slightly soluble base; corrosive at threshold pH",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 56,
@@ -645,7 +785,11 @@
     "flash_point_c": -30.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P022 \u2013 carbon disulfide; extremely flammable"
+    "notes": "P022 \u2013 carbon disulfide; extremely flammable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 16,
@@ -663,7 +807,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "U211 \u2013 carbon tetrachloride"
+    "notes": "U211 \u2013 carbon tetrachloride",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 17,
@@ -681,7 +829,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.03,
-    "notes": "Toxicity characteristic \u2013 chlordane (pesticide)"
+    "notes": "Toxicity characteristic \u2013 chlordane (pesticide)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 57,
@@ -699,7 +851,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P023 \u2013 chlorine gas; reactive, acutely toxic"
+    "notes": "P023 \u2013 chlorine gas; reactive, acutely toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 18,
@@ -717,7 +873,11 @@
     "flash_point_c": 29.0,
     "ph_value": null,
     "tclp_threshold_mgl": 100.0,
-    "notes": "Toxicity characteristic \u2013 chlorobenzene"
+    "notes": "Toxicity characteristic \u2013 chlorobenzene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 19,
@@ -735,7 +895,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 6.0,
-    "notes": "U044 \u2013 chloroform; potential carcinogen"
+    "notes": "U044 \u2013 chloroform; potential carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 4,
@@ -753,7 +917,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 5.0,
-    "notes": "Toxicity characteristic \u2013 chromium"
+    "notes": "Toxicity characteristic \u2013 chromium",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 58,
@@ -771,7 +939,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P029 \u2013 copper cyanide"
+    "notes": "P029 \u2013 copper cyanide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 23,
@@ -789,7 +961,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 200.0,
-    "notes": "Toxicity characteristic \u2013 cresol (mixed isomers)"
+    "notes": "Toxicity characteristic \u2013 cresol (mixed isomers)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 59,
@@ -807,7 +983,11 @@
     "flash_point_c": -17.8,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P031 \u2013 cyanogen; ignitable, acutely toxic"
+    "notes": "P031 \u2013 cyanogen; ignitable, acutely toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 60,
@@ -825,7 +1005,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P033 \u2013 cyanogen chloride; chemical warfare agent precursor"
+    "notes": "P033 \u2013 cyanogen chloride; chemical warfare agent precursor",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 86,
@@ -843,7 +1027,11 @@
     "flash_point_c": 44.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U057 \u2013 cyclohexanone (F003 solvent)"
+    "notes": "U057 \u2013 cyclohexanone (F003 solvent)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 61,
@@ -861,7 +1049,11 @@
     "flash_point_c": -45.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P036 \u2013 diazomethane; explosive, highly toxic"
+    "notes": "P036 \u2013 diazomethane; explosive, highly toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 87,
@@ -879,7 +1071,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U080 \u2013 methylene chloride; carcinogen"
+    "notes": "U080 \u2013 methylene chloride; carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 62,
@@ -897,7 +1093,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P037 \u2013 dieldrin organochlorine pesticide"
+    "notes": "P037 \u2013 dieldrin organochlorine pesticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 107,
@@ -915,7 +1115,11 @@
     "flash_point_c": 52.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Combustible petroleum product; flash point ~52\u00b0C"
+    "notes": "Combustible petroleum product; flash point ~52\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 88,
@@ -933,7 +1137,11 @@
     "flash_point_c": -45.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Extremely flammable solvent/anesthetic; flash point -45\u00b0C"
+    "notes": "Extremely flammable solvent/anesthetic; flash point -45\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 89,
@@ -951,7 +1159,11 @@
     "flash_point_c": 57.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U056 \u2013 DMF; reproductive toxin"
+    "notes": "U056 \u2013 DMF; reproductive toxin",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 9,
@@ -969,7 +1181,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.02,
-    "notes": "Toxicity characteristic \u2013 endrin (pesticide)"
+    "notes": "Toxicity characteristic \u2013 endrin (pesticide)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 102,
@@ -987,7 +1203,11 @@
     "flash_point_c": 13.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Common ignitable solvent; flash point 13\u00b0C"
+    "notes": "Common ignitable solvent; flash point 13\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 90,
@@ -1005,7 +1225,11 @@
     "flash_point_c": -4.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U112 \u2013 ethyl acetate (F003 solvent); ignitable"
+    "notes": "U112 \u2013 ethyl acetate (F003 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 91,
@@ -1023,7 +1247,11 @@
     "flash_point_c": 15.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U239 \u2013 ethylbenzene (F003 solvent)"
+    "notes": "U239 \u2013 ethylbenzene (F003 solvent)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 63,
@@ -1041,7 +1269,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P056 \u2013 fluorine gas; extremely reactive"
+    "notes": "P056 \u2013 fluorine gas; extremely reactive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 92,
@@ -1059,7 +1291,11 @@
     "flash_point_c": 64.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U122 \u2013 formaldehyde; carcinogen"
+    "notes": "U122 \u2013 formaldehyde; carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 106,
@@ -1077,7 +1313,11 @@
     "flash_point_c": -43.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Flammable petroleum product; flash point -43\u00b0C"
+    "notes": "Flammable petroleum product; flash point -43\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 28,
@@ -1095,7 +1335,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.008,
-    "notes": "Toxicity characteristic \u2013 heptachlor"
+    "notes": "Toxicity characteristic \u2013 heptachlor",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 105,
@@ -1113,7 +1357,11 @@
     "flash_point_c": -4.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Flammable solvent; flash point -4\u00b0C"
+    "notes": "Flammable solvent; flash point -4\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 29,
@@ -1131,7 +1379,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.13,
-    "notes": "Toxicity characteristic \u2013 hexachlorobenzene"
+    "notes": "Toxicity characteristic \u2013 hexachlorobenzene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 30,
@@ -1149,7 +1401,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "Toxicity characteristic \u2013 hexachlorobutadiene"
+    "notes": "Toxicity characteristic \u2013 hexachlorobutadiene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 31,
@@ -1167,7 +1423,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 3.0,
-    "notes": "Toxicity characteristic \u2013 hexachloroethane"
+    "notes": "Toxicity characteristic \u2013 hexachloroethane",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 104,
@@ -1185,7 +1445,11 @@
     "flash_point_c": -22.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Extremely flammable solvent; flash point -22\u00b0C"
+    "notes": "Extremely flammable solvent; flash point -22\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 110,
@@ -1203,7 +1467,11 @@
     "flash_point_c": null,
     "ph_value": 0.1,
     "tclp_threshold_mgl": null,
-    "notes": "Strong mineral acid; highly corrosive, pH ~0.1"
+    "notes": "Strong mineral acid; highly corrosive, pH ~0.1",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 64,
@@ -1221,7 +1489,11 @@
     "flash_point_c": -17.8,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P063 \u2013 hydrogen cyanide; extremely toxic"
+    "notes": "P063 \u2013 hydrogen cyanide; extremely toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 114,
@@ -1239,7 +1511,11 @@
     "flash_point_c": null,
     "ph_value": 1.2,
     "tclp_threshold_mgl": null,
-    "notes": "Highly corrosive and toxic; etches glass"
+    "notes": "Highly corrosive and toxic; etches glass",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 65,
@@ -1257,7 +1533,11 @@
     "flash_point_c": null,
     "ph_value": 1.0,
     "tclp_threshold_mgl": null,
-    "notes": "P056 \u2013 hydrofluoric acid; extremely corrosive and toxic"
+    "notes": "P056 \u2013 hydrofluoric acid; extremely corrosive and toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 122,
@@ -1275,7 +1555,11 @@
     "flash_point_c": null,
     "ph_value": 4.5,
     "tclp_threshold_mgl": null,
-    "notes": "Strong oxidizer; reactive, corrosive at high concentrations"
+    "notes": "Strong oxidizer; reactive, corrosive at high concentrations",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 66,
@@ -1293,7 +1577,11 @@
     "flash_point_c": -82.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P049 \u2013 hydrogen sulfide; ignitable, extremely toxic"
+    "notes": "P049 \u2013 hydrogen sulfide; ignitable, extremely toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 103,
@@ -1311,7 +1599,11 @@
     "flash_point_c": 12.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Common ignitable solvent; flash point 12\u00b0C"
+    "notes": "Common ignitable solvent; flash point 12\u00b0C",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 5,
@@ -1329,7 +1621,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 5.0,
-    "notes": "Toxicity characteristic \u2013 lead"
+    "notes": "Toxicity characteristic \u2013 lead",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 10,
@@ -1347,7 +1643,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.4,
-    "notes": "Toxicity characteristic \u2013 lindane"
+    "notes": "Toxicity characteristic \u2013 lindane",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 121,
@@ -1365,7 +1665,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Reducing agent; water-reactive, fire hazard"
+    "notes": "Reducing agent; water-reactive, fire hazard",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 6,
@@ -1383,7 +1687,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.2,
-    "notes": "Toxicity characteristic \u2013 mercury"
+    "notes": "Toxicity characteristic \u2013 mercury",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 67,
@@ -1401,7 +1709,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P065 \u2013 mercury fulminate; detonation hazard"
+    "notes": "P065 \u2013 mercury fulminate; detonation hazard",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 93,
@@ -1419,7 +1731,11 @@
     "flash_point_c": 11.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U154 \u2013 methanol (F003 solvent); ignitable, toxic"
+    "notes": "U154 \u2013 methanol (F003 solvent); ignitable, toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 11,
@@ -1437,7 +1753,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 10.0,
-    "notes": "Toxicity characteristic \u2013 methoxychlor (pesticide)"
+    "notes": "Toxicity characteristic \u2013 methoxychlor (pesticide)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 32,
@@ -1455,7 +1775,11 @@
     "flash_point_c": -9.0,
     "ph_value": null,
     "tclp_threshold_mgl": 200.0,
-    "notes": "Toxicity characteristic \u2013 MEK; also ignitable"
+    "notes": "Toxicity characteristic \u2013 MEK; also ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 68,
@@ -1473,7 +1797,11 @@
     "flash_point_c": -8.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P068 \u2013 methyl hydrazine; carcinogen, ignitable"
+    "notes": "P068 \u2013 methyl hydrazine; carcinogen, ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 94,
@@ -1491,7 +1819,11 @@
     "flash_point_c": 14.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U161 \u2013 MIBK (F003 solvent); ignitable"
+    "notes": "U161 \u2013 MIBK (F003 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 44,
@@ -1509,7 +1841,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P071 \u2013 organophosphate pesticide"
+    "notes": "P071 \u2013 organophosphate pesticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 108,
@@ -1527,7 +1863,11 @@
     "flash_point_c": -28.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Fuel oxygenate; ignitable, groundwater contaminant"
+    "notes": "Fuel oxygenate; ignitable, groundwater contaminant",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 95,
@@ -1545,7 +1885,11 @@
     "flash_point_c": 79.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U165 \u2013 naphthalene; possible carcinogen"
+    "notes": "U165 \u2013 naphthalene; possible carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 69,
@@ -1563,7 +1907,11 @@
     "flash_point_c": -21.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P073 \u2013 nickel carbonyl; extremely toxic, carcinogenic"
+    "notes": "P073 \u2013 nickel carbonyl; extremely toxic, carcinogenic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 111,
@@ -1581,7 +1929,11 @@
     "flash_point_c": null,
     "ph_value": 1.0,
     "tclp_threshold_mgl": null,
-    "notes": "Strong oxidizing acid; corrosive and reactive"
+    "notes": "Strong oxidizing acid; corrosive and reactive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 33,
@@ -1599,7 +1951,11 @@
     "flash_point_c": 88.0,
     "ph_value": null,
     "tclp_threshold_mgl": 2.0,
-    "notes": "U169 \u2013 nitrobenzene; D036 overlap"
+    "notes": "U169 \u2013 nitrobenzene; D036 overlap",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 70,
@@ -1617,7 +1973,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P087 \u2013 osmium tetroxide; extremely toxic oxidizer"
+    "notes": "P087 \u2013 osmium tetroxide; extremely toxic oxidizer",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 45,
@@ -1635,7 +1995,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P089 \u2013 organophosphate insecticide"
+    "notes": "P089 \u2013 organophosphate insecticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 34,
@@ -1653,7 +2017,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 100.0,
-    "notes": "Toxicity characteristic \u2013 pentachlorophenol"
+    "notes": "Toxicity characteristic \u2013 pentachlorophenol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 123,
@@ -1671,7 +2039,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Oxidizing salts; reactive, fire accelerant"
+    "notes": "Oxidizing salts; reactive, fire accelerant",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 97,
@@ -1689,7 +2061,11 @@
     "flash_point_c": 79.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U188 \u2013 phenol; corrosive, toxic"
+    "notes": "U188 \u2013 phenol; corrosive, toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 112,
@@ -1707,7 +2083,11 @@
     "flash_point_c": null,
     "ph_value": 1.5,
     "tclp_threshold_mgl": null,
-    "notes": "Mineral acid; corrosive at high concentrations"
+    "notes": "Mineral acid; corrosive at high concentrations",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 71,
@@ -1725,7 +2105,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P098 \u2013 potassium cyanide"
+    "notes": "P098 \u2013 potassium cyanide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 116,
@@ -1743,7 +2127,11 @@
     "flash_point_c": null,
     "ph_value": 14.0,
     "tclp_threshold_mgl": null,
-    "notes": "Strong base; highly corrosive"
+    "notes": "Strong base; highly corrosive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 120,
@@ -1761,7 +2149,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Alkali metal; violently water-reactive"
+    "notes": "Alkali metal; violently water-reactive",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 35,
@@ -1779,7 +2171,11 @@
     "flash_point_c": 17.0,
     "ph_value": null,
     "tclp_threshold_mgl": 5.0,
-    "notes": "U196 \u2013 pyridine (F005 solvent); D038 overlap"
+    "notes": "U196 \u2013 pyridine (F005 solvent); D038 overlap",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 7,
@@ -1797,7 +2193,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 1.0,
-    "notes": "Toxicity characteristic \u2013 selenium"
+    "notes": "Toxicity characteristic \u2013 selenium",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 8,
@@ -1815,7 +2215,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 5.0,
-    "notes": "Toxicity characteristic \u2013 silver"
+    "notes": "Toxicity characteristic \u2013 silver",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 72,
@@ -1833,7 +2237,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P105 \u2013 sodium azide; explosive, highly toxic"
+    "notes": "P105 \u2013 sodium azide; explosive, highly toxic",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 73,
@@ -1851,7 +2259,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P106 \u2013 sodium cyanide"
+    "notes": "P106 \u2013 sodium cyanide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 115,
@@ -1869,7 +2281,11 @@
     "flash_point_c": null,
     "ph_value": 14.0,
     "tclp_threshold_mgl": null,
-    "notes": "Strong base; highly corrosive, pH ~14"
+    "notes": "Strong base; highly corrosive, pH ~14",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 119,
@@ -1887,7 +2303,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Alkali metal; violently water-reactive, fire hazard"
+    "notes": "Alkali metal; violently water-reactive, fire hazard",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 74,
@@ -1905,7 +2325,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P108 \u2013 strychnine and its salts"
+    "notes": "P108 \u2013 strychnine and its salts",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 98,
@@ -1923,7 +2347,11 @@
     "flash_point_c": 31.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U239 \u2013 styrene"
+    "notes": "U239 \u2013 styrene",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 109,
@@ -1941,7 +2369,11 @@
     "flash_point_c": null,
     "ph_value": 0.3,
     "tclp_threshold_mgl": null,
-    "notes": "Strong mineral acid; highly corrosive, pH ~0.3"
+    "notes": "Strong mineral acid; highly corrosive, pH ~0.3",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 43,
@@ -1959,7 +2391,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P111 \u2013 organophosphate insecticide"
+    "notes": "P111 \u2013 organophosphate insecticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 99,
@@ -1977,7 +2413,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U210 \u2013 tetrachloroethylene (PCE); D039 overlap"
+    "notes": "U210 \u2013 tetrachloroethylene (PCE); D039 overlap",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 36,
@@ -1995,7 +2435,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.7,
-    "notes": "Toxicity characteristic \u2013 tetrachloroethylene (PCE)"
+    "notes": "Toxicity characteristic \u2013 tetrachloroethylene (PCE)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 75,
@@ -2013,7 +2457,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P115 \u2013 thallium sulfate"
+    "notes": "P115 \u2013 thallium sulfate",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 100,
@@ -2031,7 +2479,11 @@
     "flash_point_c": 4.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U220 \u2013 toluene (F005 solvent); ignitable"
+    "notes": "U220 \u2013 toluene (F005 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 12,
@@ -2049,7 +2501,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "Toxicity characteristic \u2013 toxaphene (pesticide)"
+    "notes": "Toxicity characteristic \u2013 toxaphene (pesticide)",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 37,
@@ -2067,7 +2523,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 0.5,
-    "notes": "U228 \u2013 trichloroethylene (TCE); D040 overlap, carcinogen"
+    "notes": "U228 \u2013 trichloroethylene (TCE); D040 overlap, carcinogen",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 40,
@@ -2085,7 +2545,11 @@
     "flash_point_c": -78.0,
     "ph_value": null,
     "tclp_threshold_mgl": 0.2,
-    "notes": "Toxicity characteristic \u2013 vinyl chloride; also ignitable"
+    "notes": "Toxicity characteristic \u2013 vinyl chloride; also ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 41,
@@ -2103,7 +2567,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P001 \u2013 acutely hazardous anticoagulant rodenticide"
+    "notes": "P001 \u2013 acutely hazardous anticoagulant rodenticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 101,
@@ -2121,7 +2589,11 @@
     "flash_point_c": 25.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U239 \u2013 xylene (F003 solvent); ignitable"
+    "notes": "U239 \u2013 xylene (F003 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 42,
@@ -2139,7 +2611,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "P122 \u2013 zinc phosphide rodenticide"
+    "notes": "P122 \u2013 zinc phosphide rodenticide",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 21,
@@ -2157,7 +2633,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 200.0,
-    "notes": "Toxicity characteristic \u2013 m-cresol"
+    "notes": "Toxicity characteristic \u2013 m-cresol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 96,
@@ -2175,7 +2655,11 @@
     "flash_point_c": 29.0,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "U031 \u2013 1-butanol (F003 solvent); ignitable"
+    "notes": "U031 \u2013 1-butanol (F003 solvent); ignitable",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 20,
@@ -2193,7 +2677,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 200.0,
-    "notes": "Toxicity characteristic \u2013 o-cresol"
+    "notes": "Toxicity characteristic \u2013 o-cresol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 22,
@@ -2211,7 +2699,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": 200.0,
-    "notes": "Toxicity characteristic \u2013 p-cresol"
+    "notes": "Toxicity characteristic \u2013 p-cresol",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "epa_import",
+    "source_display": "EPA Import"
   },
   {
     "id": 124,
@@ -2229,7 +2721,11 @@
     "flash_point_c": null,
     "ph_value": 7.0,
     "tclp_threshold_mgl": null,
-    "notes": "Water \u2013 common solvent / diluent"
+    "notes": "Water \u2013 common solvent / diluent",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "manual",
+    "source_display": "Manual (Admin)"
   },
   {
     "id": 125,
@@ -2247,7 +2743,11 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Inert solid material \u2013 non-hazardous"
+    "notes": "Inert solid material \u2013 non-hazardous",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "manual",
+    "source_display": "Manual (Admin)"
   },
   {
     "id": 126,
@@ -2265,6 +2765,10 @@
     "flash_point_c": null,
     "ph_value": null,
     "tclp_threshold_mgl": null,
-    "notes": "Inert liquid material \u2013 non-hazardous"
+    "notes": "Inert liquid material \u2013 non-hazardous",
+    "added_by": "Admin",
+    "created_at": "2026-05-04T00:00:00Z",
+    "source": "manual",
+    "source_display": "Manual (Admin)"
   }
 ]

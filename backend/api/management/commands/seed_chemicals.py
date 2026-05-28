@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from api.models import Chemical
 
 
@@ -456,13 +457,13 @@ class Command(BaseCommand):
              'notes': 'Oxidizing salts; reactive, fire accelerant'},
             # Common non-hazardous materials
             {'name': 'Water (H2O)', 'cas_number': '7732-18-5', 'epa_waste_code': '',
-            'category': 'OTHER', 'ph_value': 7.0,
+            'category': 'OTHER', 'ph_value': 7.0, 'source': 'manual',
             'notes': 'Water – common solvent / diluent'},
             {'name': 'Inert Solid', 'cas_number': '', 'epa_waste_code': '',
-            'category': 'OTHER',
+            'category': 'OTHER', 'source': 'manual',
             'notes': 'Inert solid material – non-hazardous'},
             {'name': 'Inert Liquid', 'cas_number': '', 'epa_waste_code': '',
-            'category': 'OTHER',
+            'category': 'OTHER', 'source': 'manual',
             'notes': 'Inert liquid material – non-hazardous'},
         ]
 
@@ -471,7 +472,7 @@ class Command(BaseCommand):
             for item in data_list:
                 defaults = {k: v for k, v in item.items() if k != 'name'}
                 defaults.setdefault('source', 'epa_import')
-                defaults.setdefault('added_by', '')
+                defaults['added_by'] = 'Admin'
                 obj, was_created = Chemical.objects.get_or_create(
                     name=item['name'],
                     defaults=defaults,
@@ -489,6 +490,10 @@ class Command(BaseCommand):
         upsert(p_list)
         upsert(u_list)
         upsert(other_chemicals)
+
+        # Set all created_at / updated_at dates to 2026-05-04 for every record
+        target_date = timezone.datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc)
+        Chemical.objects.all().update(created_at=target_date, updated_at=target_date)
 
         self.stdout.write(
             self.style.SUCCESS(
