@@ -4,6 +4,7 @@ import { mixtures, marketplace, incinerators as incineratorsApi } from '../api/c
 import DocumentList from '../components/DocumentList'
 import FileUpload from '../components/FileUpload'
 import ExportFormModal from '../components/ExportFormModal'
+import stateRulesData from '../data/stateRules.json'
 
 const TILES = [
   { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
@@ -345,6 +346,9 @@ export default function Review() {
                         <th style={thStyle} onClick={() => handleSort('hold_time')}>
                           Hold Time Remaining{sortIndicator('hold_time')}
                         </th>
+                        <th style={{ ...thStyle, cursor: 'default' }}>
+                          State Rules
+                        </th>
                         <th style={{ fontSize: '0.88rem' }}>Actions</th>
                       </tr>
                     </thead>
@@ -428,6 +432,26 @@ export default function Review() {
                               )}
                             </td>
                             <td>
+                              {(() => {
+                                const locState = m.customer_location_state || ''
+                                const rulesForState = locState ? stateRulesData.filter(r => r.state_code === locState && r.is_active) : []
+                                if (!locState) return <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>—</span>
+                                if (rulesForState.length === 0) return (
+                                  <span style={{ fontSize: '0.8rem', background: '#dcfce7', color: '#166534', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600 }}>
+                                    ✅ None
+                                  </span>
+                                )
+                                return (
+                                  <Link
+                                    to={`/state-rules?state=${locState}&mixture=${m.id}&return=${encodeURIComponent('/review')}`}
+                                    style={{ fontSize: '0.8rem', background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, textDecoration: 'none', display: 'inline-block' }}
+                                  >
+                                    ⚠️ {rulesForState.length} rule{rulesForState.length !== 1 ? 's' : ''}
+                                  </Link>
+                                )
+                              })()}
+                            </td>
+                            <td>
                               <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <Link
                                   to={latestDet ? `/results/${latestDet.id}` : `/review/${m.id}/signoff`}
@@ -458,6 +482,15 @@ export default function Review() {
                                 >
                                   {determinationLoading === m.id ? '…' : '🧪 Determine'}
                                 </button>
+                                {m.customer_location_state && stateRulesData.some(r => r.state_code === m.customer_location_state && r.is_active) && (
+                                  <Link
+                                    to={`/state-rules?state=${m.customer_location_state}&mixture=${m.id}&return=${encodeURIComponent('/review')}`}
+                                    className="btn btn-secondary"
+                                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.55rem', background: '#faf5ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
+                                  >
+                                    📜 State Eval
+                                  </Link>
+                                )}
                                 {wasteCodes.length > 0 && (
                                   <button
                                     className="btn btn-secondary"

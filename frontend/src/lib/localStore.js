@@ -8,6 +8,7 @@
 // don't need to branch on local vs remote mode.
 
 import localChemicals from '../data/chemicals.json'
+import stateRulesData from '../data/stateRules.json'
 import { determineHazardousWaste } from './determination.js'
 
 const STORAGE_KEY = 'wasteid_local_store_v2'
@@ -463,6 +464,7 @@ function hydrateMixture(rawMixture, store) {
     determinations,
     customer_name: customer?.name || '',
     customer_location_name: location?.name || '',
+    customer_location_state: location?.state?.toUpperCase()?.trim()?.slice(0, 2) || '',
     hold_days: holdDays,
     ship_by_date: info?.shipByDate ?? null,
     days_remaining_to_ship: info?.daysRemaining ?? null,
@@ -678,7 +680,7 @@ export const localMixtures = {
   },
 
   validateStateRules(id, additionalAnswers = {}) {
-    // In local mode, simulate state rules validation
+    // In local mode, simulate state rules validation using bundled state rules data
     const store = loadStore()
     const m = store.mixtures.find(x => x.id === Number(id))
     if (!m) return Promise.reject({ response: { status: 404, data: { detail: 'Mixture not found.' } } })
@@ -687,11 +689,40 @@ export const localMixtures = {
     const location = customerStore.locations.find(l => l.id === m.customer_location)
     const stateCode = location?.state?.toUpperCase()?.trim()?.slice(0, 2) || ''
 
-    // In local mode, return pass (no state rules data loaded locally)
+    if (!stateCode) {
+      return ok({
+        overall_result: 'pass',
+        rule_results: [],
+        questions: [],
+        state_code: '',
+      })
+    }
+
+    // Find applicable rules for this state
+    const applicableRules = stateRulesData.filter(r => r.state_code === stateCode && r.is_active)
+    const ruleResults = []
+    const pendingQuestions = []
+
+    for (const rule of applicableRules) {
+      const questions = rule.questions || []
+      if (questions.length === 0) {
+        ruleResults.push({ rule_id: rule.id, rule_id_code: rule.id, result: 'pass', details: rule.description, questions: [] })
+      } else {
+        const answered = additionalAnswers[rule.id] || {}
+        const unanswered = questions.filter(q => !(q.id in answered) || answered[q.id] === '')
+        if (unanswered.length > 0) {
+          ruleResults.push({ rule_id: rule.id, rule_id_code: rule.id, result: 'needs_info', details: rule.description, questions: unanswered })
+          pendingQuestions.push(...unanswered.map(q => ({ ...q, rule_id_code: rule.id })))
+        } else {
+          ruleResults.push({ rule_id: rule.id, rule_id_code: rule.id, result: 'pass', details: rule.description, questions: [] })
+        }
+      }
+    }
+
     return ok({
-      overall_result: stateCode ? 'pass' : 'pass',
-      rule_results: [],
-      questions: [],
+      overall_result: pendingQuestions.length > 0 ? 'needs_info' : 'pass',
+      rule_results: ruleResults,
+      questions: pendingQuestions,
       state_code: stateCode,
     })
   },

@@ -1,0 +1,288 @@
+[
+  {
+    "id": "CA-001",
+    "state_code": "CA",
+    "rule_category": "identification",
+    "description": "California defines hazardous waste per 22 CCR §66261.3. A waste is hazardous if it is RCRA-listed, RCRA-characteristic, OR meets California-only criteria.",
+    "rule_reference": "22 CCR §66261.3",
+    "condition": { "generator_state": "CA" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "CA-002",
+    "state_code": "CA",
+    "rule_category": "identification",
+    "description": "California Toxicity Criteria (non-RCRA): Soluble Threshold Limit Concentration (STLC) and Total Threshold Limit Concentration (TTLC) per 22 CCR §66261.24.",
+    "rule_reference": "22 CCR §66261.24",
+    "condition": { "generator_state": "CA" },
+    "questions": [
+      { "id": "ca002_wet", "text": "Has Waste Extraction Test (WET) / STLC testing been performed?", "type": "yes_no" },
+      { "id": "ca002_stlc", "text": "Provide STLC results for all applicable constituents", "type": "text" },
+      { "id": "ca002_ttlc", "text": "Provide TTLC results", "type": "text" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "CA-010",
+    "state_code": "CA",
+    "rule_category": "manifest",
+    "description": "California requires use of the Uniform Hazardous Waste Manifest AND registration with the DTSC manifest system. Non-RCRA hazardous waste ALSO requires a manifest in California.",
+    "rule_reference": "22 CCR Division 4.5",
+    "condition": { "generator_state": "CA" },
+    "questions": [
+      { "id": "ca010_dtsc", "text": "Is the facility registered with the DTSC manifest tracking system?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "CA-015",
+    "state_code": "CA",
+    "rule_category": "transport",
+    "description": "California-registered hazardous waste haulers required. DTSC hauler registration number must be on manifest.",
+    "rule_reference": "22 CCR Division 4.5",
+    "condition": { "generator_state": "CA" },
+    "questions": [
+      { "id": "ca015_hauler", "text": "Provide the transporter's California DTSC Registered Hazardous Waste Hauler number", "type": "text" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "WA-001",
+    "state_code": "WA",
+    "rule_category": "identification",
+    "description": "Washington State classifies wastes as 'dangerous waste' under WAC 173-303. This is broader than federal RCRA — includes state-only DW categories (WT02, WP02, etc.).",
+    "rule_reference": "WAC 173-303-070",
+    "condition": { "generator_state": "WA" },
+    "questions": [
+      { "id": "wa001_dw", "text": "Has a Washington State dangerous waste determination been performed per WAC 173-303-070?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "WA-002",
+    "state_code": "WA",
+    "rule_category": "identification",
+    "description": "Washington uses its own toxicity criteria (book designation, WAC 173-303-080 through -100) in addition to federal characteristic testing.",
+    "rule_reference": "WAC 173-303-080",
+    "condition": { "generator_state": "WA" },
+    "questions": [
+      { "id": "wa002_book", "text": "Has book designation per WAC 173-303-080 been evaluated?", "type": "yes_no" },
+      { "id": "wa002_criteria", "text": "Provide Washington toxicity criteria results if applicable", "type": "text" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "WA-003",
+    "state_code": "WA",
+    "rule_category": "manifest",
+    "description": "Washington requires manifests for ALL dangerous waste (state-only + RCRA). State waste codes must appear on manifest.",
+    "rule_reference": "WAC 173-303-180",
+    "condition": { "generator_state": "WA" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "TX-001",
+    "state_code": "TX",
+    "rule_category": "identification",
+    "description": "Texas adopts federal RCRA with TCEQ-specific modifications per 30 TAC Chapter 335.",
+    "rule_reference": "30 TAC Chapter 335",
+    "condition": { "generator_state": "TX" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "TX-002",
+    "state_code": "TX",
+    "rule_category": "identification",
+    "description": "Texas requires Class 1 industrial solid waste determination for non-hazardous industrial wastes that may still require special management.",
+    "rule_reference": "30 TAC §335.505",
+    "condition": { "generator_state": "TX" },
+    "questions": [
+      { "id": "tx002_class1", "text": "Has a Class 1 industrial solid waste determination been performed?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "TX-003",
+    "state_code": "TX",
+    "rule_category": "reporting",
+    "description": "TCEQ requires annual waste summary reports from LQGs and SQGs.",
+    "rule_reference": "30 TAC §335.9",
+    "condition": { "generator_state": "TX", "generator_status": ["LQG", "SQG"] },
+    "questions": [
+      { "id": "tx003_report", "text": "Has the annual TCEQ waste summary report been filed?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NY-001",
+    "state_code": "NY",
+    "rule_category": "identification",
+    "description": "New York adopts RCRA and adds 6 NYCRR Part 371 state-specific listed wastes and characteristic thresholds.",
+    "rule_reference": "6 NYCRR Part 371",
+    "condition": { "generator_state": "NY" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NY-002",
+    "state_code": "NY",
+    "rule_category": "identification",
+    "description": "NYSDEC requires waste characterization data form (DEC Form) to accompany profile.",
+    "rule_reference": "6 NYCRR Part 372",
+    "condition": { "generator_state": "NY" },
+    "questions": [
+      { "id": "ny002_form", "text": "Has the NYSDEC waste characterization data form been completed?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NY-003",
+    "state_code": "NY",
+    "rule_category": "manifest",
+    "description": "New York requires hazardous waste manifests for both RCRA and state-listed wastes. Additional Part 372 manifest copies required.",
+    "rule_reference": "6 NYCRR Part 372.2",
+    "condition": { "generator_state": "NY" },
+    "questions": [
+      { "id": "ny003_copies", "text": "Confirm that additional Part 372 manifest copies will be provided to NYSDEC", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "IL-001",
+    "state_code": "IL",
+    "rule_category": "identification",
+    "description": "Illinois adopts federal RCRA per 35 IAC Part 721 with Illinois-specific special waste categories.",
+    "rule_reference": "35 IAC Part 721",
+    "condition": { "generator_state": "IL" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "IL-002",
+    "state_code": "IL",
+    "rule_category": "identification",
+    "description": "Illinois EPA requires special waste classification for non-hazardous industrial wastes. Special waste stream authorization required.",
+    "rule_reference": "35 IAC Part 808",
+    "condition": { "generator_state": "IL" },
+    "questions": [
+      { "id": "il002_special", "text": "Has an Illinois special waste stream authorization been obtained?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "IL-003",
+    "state_code": "IL",
+    "rule_category": "manifest",
+    "description": "Illinois requires special waste hauling permits for non-hazardous special waste transport.",
+    "rule_reference": "415 ILCS 5/21",
+    "condition": { "generator_state": "IL" },
+    "questions": [
+      { "id": "il003_permit", "text": "Does the transporter hold an Illinois special waste hauling permit?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NJ-001",
+    "state_code": "NJ",
+    "rule_category": "identification",
+    "description": "New Jersey DEP imposes additional hazardous waste listings per N.J.A.C. 7:26G beyond federal RCRA.",
+    "rule_reference": "N.J.A.C. 7:26G",
+    "condition": { "generator_state": "NJ" },
+    "questions": [],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NJ-002",
+    "state_code": "NJ",
+    "rule_category": "manifest",
+    "description": "NJ DEP requires the NJ Special Waste Manifest for non-hazardous industrial waste and additional copies for hazardous waste.",
+    "rule_reference": "N.J.A.C. 7:26-7",
+    "condition": { "generator_state": "NJ" },
+    "questions": [
+      { "id": "nj002_manifest", "text": "Will the NJ DEP Special Waste Manifest be used for this shipment?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "NJ-003",
+    "state_code": "NJ",
+    "rule_category": "reporting",
+    "description": "NJ DEP requires source reduction planning for hazardous waste generators.",
+    "rule_reference": "N.J.A.C. 7:26G-9",
+    "condition": { "generator_state": "NJ", "generator_status": ["LQG", "SQG"] },
+    "questions": [
+      { "id": "nj003_plan", "text": "Has the facility submitted a source reduction plan to NJ DEP?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "PR-001",
+    "state_code": "PR",
+    "rule_category": "identification",
+    "description": "Puerto Rico adopts federal RCRA with modifications. Generators must register with DNER in addition to EPA.",
+    "rule_reference": "DNER Regulations",
+    "condition": { "generator_state": "PR" },
+    "questions": [
+      { "id": "pr001_dner", "text": "Has this facility registered with DNER as a hazardous waste generator?", "type": "yes_no" },
+      { "id": "pr001_reg", "text": "Provide DNER registration number", "type": "text" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  },
+  {
+    "id": "PR-002",
+    "state_code": "PR",
+    "rule_category": "manifest",
+    "description": "Puerto Rico requires Spanish-language manifest copies for local transport.",
+    "rule_reference": "DNER Manifest Requirements",
+    "condition": { "generator_state": "PR" },
+    "questions": [
+      { "id": "pr002_local", "text": "Will this shipment remain entirely within Puerto Rico?", "type": "yes_no" }
+    ],
+    "effective_date": null,
+    "sunset_date": null,
+    "is_active": true
+  }
+]
