@@ -67,7 +67,7 @@ export default function StateRulesPage() {
       if (mixtureId) {
         await mixtures.validateStateRules(mixtureId, answers)
       }
-      navigate(returnTo.includes('edit=') ? returnTo : returnTo)
+      navigate(returnTo)
     } catch {
       navigate(returnTo)
     } finally {

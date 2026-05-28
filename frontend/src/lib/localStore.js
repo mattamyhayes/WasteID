@@ -709,7 +709,7 @@ export const localMixtures = {
         ruleResults.push({ rule_id: rule.id, rule_id_code: rule.id, result: 'pass', details: rule.description, questions: [] })
       } else {
         const answered = additionalAnswers[rule.id] || {}
-        const unanswered = questions.filter(q => !(q.id in answered) || answered[q.id] === '')
+        const unanswered = questions.filter(q => !(q.id in answered) || answered[q.id] == null || answered[q.id] === '')
         if (unanswered.length > 0) {
           ruleResults.push({ rule_id: rule.id, rule_id_code: rule.id, result: 'needs_info', details: rule.description, questions: unanswered })
           pendingQuestions.push(...unanswered.map(q => ({ ...q, rule_id_code: rule.id })))
