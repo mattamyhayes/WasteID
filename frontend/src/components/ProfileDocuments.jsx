@@ -18,6 +18,26 @@ function validateFileClient(file) {
   return null
 }
 
+function getApiErrorMessage(err, fallbackMessage) {
+  const data = err?.response?.data
+  if (typeof data === 'string' && data.trim()) return data
+  if (data?.detail) return data.detail
+  if (data && typeof data === 'object') {
+    const details = Object.entries(data)
+      .map(([field, value]) => {
+        if (Array.isArray(value)) return `${field}: ${value.join(', ')}`
+        if (value && typeof value === 'object') return `${field}: ${JSON.stringify(value)}`
+        if (value !== null && value !== undefined && `${value}`.trim() !== '') return `${field}: ${value}`
+        return ''
+      })
+      .filter(Boolean)
+    if (details.length) return details.join(' | ')
+  }
+  const status = err?.response?.status
+  if (status) return `${fallbackMessage} (HTTP ${status})`
+  return err?.message || fallbackMessage
+}
+
 export default function ProfileDocuments({ mixtureId, profileName, onCompositionImported }) {
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(false)
@@ -137,7 +157,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
         } catch (importErr) {
           // Upload succeeded but import failed
           setSuccess('Document uploaded.')
-          setError(`SDS import failed: ${importErr?.response?.data?.detail || importErr?.message || 'Unknown error'}`)
+          setError(`SDS import failed: ${getApiErrorMessage(importErr, 'Unknown error')}`)
         }
       } else {
         setSuccess('Document uploaded successfully.')
@@ -151,7 +171,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
       if (fileInput) fileInput.value = ''
       await loadDocuments()
     } catch (err) {
-      setError(err?.response?.data?.detail || err?.message || 'Upload failed.')
+      setError(getApiErrorMessage(err, 'Upload failed.'))
     } finally {
       setUploading(false)
     }
