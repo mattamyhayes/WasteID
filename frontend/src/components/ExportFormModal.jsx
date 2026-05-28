@@ -228,7 +228,7 @@ export default function ExportFormModal({ profile, onClose }) {
             <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button
               className="btn btn-secondary"
-              onClick={() => { onClose(); navigate(`/output-form?profile=${profile?.id || ''}&form=${selectedFormId}`) }}
+              onClick={() => { onClose(); navigate(`/output-form?profile=${profile?.id || ''}${selectedFormId ? `&form=${selectedFormId}` : ''}`) }}
               title="Open full-page form preview"
             >
               👁️ Preview

@@ -30,7 +30,7 @@ export default function OutputFormVisualization() {
       }
     }
     loadProfiles()
-  }, [])
+  }, [selectedProfileId])
 
   const handleProfileChange = (id) => {
     setSelectedProfileId(id)

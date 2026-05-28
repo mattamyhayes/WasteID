@@ -26,11 +26,12 @@ export default function OutputFormPreview({ profile, formId: initialFormId, onEx
 
   useEffect(() => {
     if (initialFormId) {
-      handleFormSelect(String(initialFormId))
+      selectForm(String(initialFormId))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFormId])
 
-  const handleFormSelect = (formId) => {
+  const selectForm = (formId) => {
     setSelectedFormId(formId)
     if (!formId) {
       setSelectedForm(null)
@@ -46,6 +47,10 @@ export default function OutputFormPreview({ profile, formId: initialFormId, onEx
       const filled = populateFormFields(profile, form, extraData)
       setFilledFields(filled)
     }
+  }
+
+  const handleFormSelect = (formId) => {
+    selectForm(formId)
   }
 
   useEffect(() => {
