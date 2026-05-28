@@ -3,9 +3,13 @@ import io
 import logging
 import os
 import re
+from datetime import date, datetime
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
+from django.db import DataError, IntegrityError
 from django.http import HttpResponse
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
@@ -1069,15 +1073,26 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'Invalid sds_data JSON.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Build the SDS record from provided data
-        if sds_data and isinstance(sds_data, dict):
-            sds_fields = self._extract_sds_fields(sds_data)
-        else:
-            # When no pre-parsed data, create a pending record
-            # In production, this would trigger async document parsing (OCR/NLP)
-            sds_fields = {
-                'import_status': 'pending',
-                'product_name': sds_data.get('product_name', original_filename) if isinstance(sds_data, dict) else original_filename,
-            }
+        try:
+            if sds_data and isinstance(sds_data, dict):
+                sds_fields = self._extract_sds_fields(sds_data)
+            else:
+                # When no pre-parsed data, create a pending record
+                # In production, this would trigger async document parsing (OCR/NLP)
+                sds_fields = {
+                    'import_status': 'pending',
+                    'product_name': sds_data.get('product_name', original_filename) if isinstance(sds_data, dict) else original_filename,
+                }
+        except ValueError:
+            return Response(
+                {
+                    'detail': (
+                        'SDS import failed because one or more extracted fields are invalid. '
+                        'For date fields, use YYYY-MM-DD or MM/DD/YYYY.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         sds = SafetyDataSheet(
             profile_document=profile_doc,
@@ -1085,7 +1100,29 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             original_filename=original_filename,
             **sds_fields
         )
-        sds.save()
+        try:
+            sds.full_clean()
+            sds.save()
+        except IntegrityError:
+            return Response(
+                {
+                    'detail': (
+                        'SDS import failed because this source document is already linked to an SDS record. '
+                        'Use a different document or update the existing SDS entry.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except (DjangoValidationError, DataError, ValueError):
+            return Response(
+                {
+                    'detail': (
+                        'SDS import failed while validating parsed values. '
+                        'Please review extracted fields and try again.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Auto-populate mixture components from SDS composition if linked to a mixture
         if mixture and sds_fields.get('import_status') == 'complete':
@@ -1170,9 +1207,13 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
 
         # Date fields
         if 'sds_revision_date' in data and data['sds_revision_date']:
-            fields['sds_revision_date'] = data['sds_revision_date']
+            fields['sds_revision_date'] = self._parse_sds_date(
+                data['sds_revision_date'], 'sds_revision_date'
+            )
         if 'preparation_date' in data and data['preparation_date']:
-            fields['preparation_date'] = data['preparation_date']
+            fields['preparation_date'] = self._parse_sds_date(
+                data['preparation_date'], 'preparation_date'
+            )
 
         # Ensure product_name is set
         if 'product_name' not in fields:
@@ -1183,6 +1224,36 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             fields['import_status'] = 'complete'
 
         return fields
+
+    def _parse_sds_date(self, value, field_name):
+        """Parse incoming SDS date values into date objects."""
+        if value is None or value == '':
+            return None
+        if isinstance(value, date):
+            return value
+
+        raw = str(value).strip()
+        if not raw:
+            return None
+
+        parsed = parse_date(raw)
+        if parsed:
+            return parsed
+
+        for fmt in (
+            '%m/%d/%Y', '%m/%d/%y', '%Y/%m/%d',
+            '%B %d, %Y', '%b %d, %Y',
+            '%d %B %Y', '%d %b %Y', '%d-%b-%Y'
+        ):
+            try:
+                return datetime.strptime(raw, fmt).date()
+            except ValueError:
+                continue
+
+        raise ValueError(
+            f'Field "{field_name}" has unsupported date format "{raw}". '
+            'Use a standard format such as YYYY-MM-DD, MM/DD/YYYY, or Month Day, Year.'
+        )
 
     def _populate_mixture_components(self, mixture, composition_json):
         """

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sds, profileDocuments, mixtures } from '../api/client'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
+import { getApiErrorMessage } from '../lib/apiErrors'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
 const MAX_FILE_SIZE = 25 * 1024 * 1024
@@ -186,7 +187,7 @@ export default function SDSAdd() {
       setSuccess('SDS imported successfully!')
       setTimeout(() => navigate('/sds'), 1500)
     } catch (err) {
-      setError(err?.response?.data?.detail || err?.message || 'Import failed. Please try again.')
+      setError(getApiErrorMessage(err, 'Import failed. Please try again.'))
     } finally {
       setLoading(false)
     }

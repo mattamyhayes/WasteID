@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { profileDocuments, sds } from '../api/client'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
+import { getApiErrorMessage } from '../lib/apiErrors'
 
 // Allowed extensions (mirrors backend validation)
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
@@ -137,7 +138,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
         } catch (importErr) {
           // Upload succeeded but import failed
           setSuccess('Document uploaded.')
-          setError(`SDS import failed: ${importErr?.response?.data?.detail || importErr?.message || 'Unknown error'}`)
+          setError(`SDS import failed: ${getApiErrorMessage(importErr, 'Unknown error')}`)
         }
       } else {
         setSuccess('Document uploaded successfully.')
@@ -151,7 +152,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
       if (fileInput) fileInput.value = ''
       await loadDocuments()
     } catch (err) {
-      setError(err?.response?.data?.detail || err?.message || 'Upload failed.')
+      setError(getApiErrorMessage(err, 'Upload failed.'))
     } finally {
       setUploading(false)
     }
