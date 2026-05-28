@@ -27,6 +27,8 @@ import SDSDetail from './pages/SDSDetail'
 import SDSEdit from './pages/SDSEdit'
 import ChemicalDatabase from './pages/ChemicalDatabase'
 import SiteManager from './pages/SiteManager'
+import AdminContactSubmissions from './pages/AdminContactSubmissions'
+import AdminUsers from './pages/AdminUsers'
 
 export default function App() {
   return (
@@ -51,6 +53,8 @@ export default function App() {
           <Route path="/journey" element={<Journey />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/contact-submissions" element={<AdminContactSubmissions />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/scheduling" element={<ComingSoon title="Scheduling" />} />
           <Route path="/marketplace" element={<Marketplace />} />
