@@ -29,6 +29,7 @@ import ChemicalDatabase from './pages/ChemicalDatabase'
 import SiteManager from './pages/SiteManager'
 import AdminContactSubmissions from './pages/AdminContactSubmissions'
 import AdminUsers from './pages/AdminUsers'
+import OutputFormVisualization from './pages/OutputFormVisualization'
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/sds/:id/edit" element={<SDSEdit />} />
           <Route path="/admin/chemicals" element={<ChemicalDatabase />} />
           <Route path="/site-manager" element={<SiteManager />} />
+          <Route path="/output-form" element={<OutputFormVisualization />} />
         </Routes>
       </main>
       <Footer />
