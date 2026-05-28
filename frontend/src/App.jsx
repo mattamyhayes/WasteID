@@ -30,6 +30,7 @@ import SiteManager from './pages/SiteManager'
 import AdminContactSubmissions from './pages/AdminContactSubmissions'
 import AdminUsers from './pages/AdminUsers'
 import OutputFormVisualization from './pages/OutputFormVisualization'
+import StateRulesPage from './pages/StateRulesPage'
 
 export default function App() {
   return (
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/admin/chemicals" element={<ChemicalDatabase />} />
           <Route path="/site-manager" element={<SiteManager />} />
           <Route path="/output-form" element={<OutputFormVisualization />} />
+          <Route path="/state-rules" element={<StateRulesPage />} />
         </Routes>
       </main>
       <Footer />

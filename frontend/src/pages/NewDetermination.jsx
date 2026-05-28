@@ -5,6 +5,7 @@ import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
+import stateRulesData from '../data/stateRules.json'
 
 const DISCARD_REASONS = [
   { value: 'spent', label: 'Spent material (used and no longer useful)' },
@@ -182,6 +183,18 @@ export default function NewDetermination() {
   // Location options come from the selected customer's nested `locations` payload.
   const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
   const locationsForCustomer = selectedCustomer?.locations || []
+
+  // Resolve selected location state for state eval section
+  const selectedLocation = locationsForCustomer.find(l => String(l.id) === String(locationId))
+  const selectedState = selectedLocation?.state?.toUpperCase()?.trim()?.slice(0, 2) || ''
+  const applicableStateRules = useMemo(() => {
+    if (!selectedState) return []
+    return stateRulesData.filter(r => r.state_code === selectedState && r.is_active)
+  }, [selectedState])
+  const stateRulesWithQuestions = useMemo(() => applicableStateRules.filter(r => r.questions && r.questions.length > 0), [applicableStateRules])
+
+  // State eval status
+  const [stateEvalResult, setStateEvalResult] = useState(null) // 'pass' | 'needs_info' | null
 
   useEffect(() => {
     if (!customerId) {
@@ -554,6 +567,99 @@ export default function NewDetermination() {
           </div>
         </div>
       </>
+
+      {/* State Evaluation Criteria Section */}
+      {selectedState && applicableStateRules.length > 0 && (
+        <div className="card" style={{ marginTop: '1.25rem', border: '2px solid #c4b5fd', background: '#faf5ff' }}>
+          <h2 style={{ color: '#7c3aed', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+            📜 State Evaluation Criteria
+          </h2>
+          <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            The selected generator location is in <strong>{selectedState}</strong>, which has{' '}
+            <strong>{applicableStateRules.length}</strong> unique state rule{applicableStateRules.length !== 1 ? 's' : ''} beyond federal RCRA.
+            {stateRulesWithQuestions.length > 0 && (
+              <> Click on a state rule below to view details and provide required information.</>
+            )}
+          </p>
+
+          {stateEvalResult === 'pass' && (
+            <div style={{ background: '#dcfce7', border: '1px solid #86efac', borderRadius: 8, padding: '0.6rem 1rem', marginBottom: '1rem', color: '#166534', fontWeight: 600, fontSize: '0.9rem' }}>
+              ✅ All state rules have been satisfied.
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {applicableStateRules.map(rule => {
+              const hasQuestions = rule.questions && rule.questions.length > 0
+              const returnPath = editId ? `/profile?edit=${editId}` : '/profile'
+              return (
+                <Link
+                  key={rule.id}
+                  to={`/state-rules?state=${selectedState}&mixture=${mixtureId || ''}&return=${encodeURIComponent(returnPath)}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 1rem',
+                    background: '#fff',
+                    border: `1px solid ${hasQuestions ? '#fde68a' : '#d1d5db'}`,
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    color: '#374151',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>{hasQuestions ? '⚠️' : '✅'}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#14532d' }}>
+                      {rule.id} — {rule.rule_category.charAt(0).toUpperCase() + rule.rule_category.slice(1)}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '0.15rem' }}>
+                      {rule.description.length > 120 ? rule.description.slice(0, 120) + '…' : rule.description}
+                    </div>
+                  </div>
+                  {hasQuestions && (
+                    <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {rule.questions.length} question{rule.questions.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  <span style={{ color: '#9ca3af' }}>→</span>
+                </Link>
+              )
+            })}
+          </div>
+
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: '0.85rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
+              onClick={async () => {
+                if (!mixtureId) return
+                try {
+                  const res = await mixtures.validateStateRules(mixtureId, stateAnswers)
+                  setStateEvalResult(res.data.overall_result)
+                  if (res.data.overall_result === 'needs_info' && res.data.questions.length > 0) {
+                    setStateQuestions(res.data.questions)
+                    setSavedMixtureId(mixtureId)
+                    setStateRulesModal(true)
+                  }
+                } catch { /* ignore */ }
+              }}
+              disabled={!mixtureId}
+            >
+              🔄 Evaluate State Rules
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedState && applicableStateRules.length === 0 && (
+        <div className="card" style={{ marginTop: '1.25rem', background: '#f0fdf4', border: '1px solid #86efac' }}>
+          <p style={{ color: '#166534', margin: 0, fontWeight: 600, fontSize: '0.92rem' }}>
+            ✅ No unique state rules for {selectedState}. Federal RCRA rules are sufficient.
+          </p>
+        </div>
+      )}
 
       {/* Submit */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
