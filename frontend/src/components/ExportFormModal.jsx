@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listForms, getForm, populateFormFields, getUnmappedFields } from '../lib/formStore'
 import { jsPDF } from 'jspdf'
 
@@ -13,6 +14,7 @@ const EXPORT_FOOTER_HEIGHT_MM = 8
  *   onClose - Callback to close the modal
  */
 export default function ExportFormModal({ profile, onClose }) {
+  const navigate = useNavigate()
   const [forms, setForms] = useState([])
   const [selectedFormId, setSelectedFormId] = useState('')
   const [selectedForm, setSelectedForm] = useState(null)
@@ -224,6 +226,13 @@ export default function ExportFormModal({ profile, onClose }) {
         {selectedForm && (
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
             <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => { onClose(); navigate(`/output-form?profile=${profile?.id || ''}${selectedFormId ? `&form=${selectedFormId}` : ''}`) }}
+              title="Open full-page form preview"
+            >
+              👁️ Preview
+            </button>
             <button
               className="btn btn-primary"
               onClick={handleExport}
