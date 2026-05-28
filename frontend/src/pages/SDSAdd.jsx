@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sds, profileDocuments, mixtures } from '../api/client'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
+import { getApiErrorMessage } from '../lib/apiErrors'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
 const MAX_FILE_SIZE = 25 * 1024 * 1024
@@ -21,26 +22,6 @@ function fileToDataUrl(file) {
     reader.onerror = () => reject(new Error('Failed to read file'))
     reader.readAsDataURL(file)
   })
-}
-
-function getApiErrorMessage(err, fallbackMessage) {
-  const data = err?.response?.data
-  if (typeof data === 'string' && data.trim()) return data
-  if (data?.detail) return data.detail
-  if (data && typeof data === 'object') {
-    const details = Object.entries(data)
-      .map(([field, value]) => {
-        if (Array.isArray(value)) return `${field}: ${value.join(', ')}`
-        if (value && typeof value === 'object') return `${field}: ${JSON.stringify(value)}`
-        if (value !== null && value !== undefined && `${value}`.trim() !== '') return `${field}: ${value}`
-        return ''
-      })
-      .filter(Boolean)
-    if (details.length) return details.join(' | ')
-  }
-  const status = err?.response?.status
-  if (status) return `${fallbackMessage} (HTTP ${status})`
-  return err?.message || fallbackMessage
 }
 
 export default function SDSAdd() {

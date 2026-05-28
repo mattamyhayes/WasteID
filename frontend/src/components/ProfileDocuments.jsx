@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { profileDocuments, sds } from '../api/client'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
+import { getApiErrorMessage } from '../lib/apiErrors'
 
 // Allowed extensions (mirrors backend validation)
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
@@ -16,26 +17,6 @@ function validateFileClient(file) {
   if (BLOCKED_EXTENSIONS.includes(ext)) return `File type "${ext}" is not allowed for security reasons.`
   if (!ALLOWED_EXTENSIONS.includes(ext)) return `File type "${ext}" is not supported. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`
   return null
-}
-
-function getApiErrorMessage(err, fallbackMessage) {
-  const data = err?.response?.data
-  if (typeof data === 'string' && data.trim()) return data
-  if (data?.detail) return data.detail
-  if (data && typeof data === 'object') {
-    const details = Object.entries(data)
-      .map(([field, value]) => {
-        if (Array.isArray(value)) return `${field}: ${value.join(', ')}`
-        if (value && typeof value === 'object') return `${field}: ${JSON.stringify(value)}`
-        if (value !== null && value !== undefined && `${value}`.trim() !== '') return `${field}: ${value}`
-        return ''
-      })
-      .filter(Boolean)
-    if (details.length) return details.join(' | ')
-  }
-  const status = err?.response?.status
-  if (status) return `${fallbackMessage} (HTTP ${status})`
-  return err?.message || fallbackMessage
 }
 
 export default function ProfileDocuments({ mixtureId, profileName, onCompositionImported }) {

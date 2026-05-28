@@ -5,7 +5,9 @@ import os
 import re
 from datetime import date, datetime
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
+from django.db import DataError, IntegrityError
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets, status
@@ -1081,8 +1083,16 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
                     'import_status': 'pending',
                     'product_name': sds_data.get('product_name', original_filename) if isinstance(sds_data, dict) else original_filename,
                 }
-        except ValueError as exc:
-            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response(
+                {
+                    'detail': (
+                        'SDS import failed because one or more extracted fields are invalid. '
+                        'For date fields, use YYYY-MM-DD or MM/DD/YYYY.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         sds = SafetyDataSheet(
             profile_document=profile_doc,
@@ -1091,10 +1101,26 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
             **sds_fields
         )
         try:
+            sds.full_clean()
             sds.save()
-        except Exception as exc:
+        except IntegrityError:
             return Response(
-                {'detail': f'SDS import failed while saving data: {str(exc)}'},
+                {
+                    'detail': (
+                        'SDS import failed because this source document is already linked to an SDS record. '
+                        'Use a different document or update the existing SDS entry.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except (DjangoValidationError, DataError, ValueError):
+            return Response(
+                {
+                    'detail': (
+                        'SDS import failed while validating parsed values. '
+                        'Please review extracted fields and try again.'
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1226,7 +1252,7 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
 
         raise ValueError(
             f'Field "{field_name}" has unsupported date format "{raw}". '
-            'Use YYYY-MM-DD or MM/DD/YYYY.'
+            'Use a standard format such as YYYY-MM-DD, MM/DD/YYYY, or Month Day, Year.'
         )
 
     def _populate_mixture_components(self, mixture, composition_json):
