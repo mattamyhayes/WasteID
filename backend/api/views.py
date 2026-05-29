@@ -907,7 +907,7 @@ import os
 from rest_framework.parsers import MultiPartParser, FormParser
 
 # Allowed file extensions for document uploads
-ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff'}
+ALLOWED_EXTENSIONS = {'.pdf', '.sds', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff'}
 # Blocked extensions that could be harmful
 BLOCKED_EXTENSIONS = {'.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.js', '.vbs',
                       '.wsf', '.ps1', '.sh', '.bash', '.php', '.py', '.rb', '.pl', '.jar',

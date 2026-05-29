@@ -4,7 +4,7 @@ import { parseSdsPdf } from '../lib/sdsPdfParser'
 import { getApiErrorMessage } from '../lib/apiErrors'
 
 // Allowed extensions (mirrors backend validation)
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
+const ALLOWED_EXTENSIONS = ['.pdf', '.sds', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
 const BLOCKED_EXTENSIONS = ['.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.js', '.vbs',
   '.wsf', '.ps1', '.sh', '.bash', '.php', '.py', '.rb', '.pl', '.jar',
   '.dll', '.sys', '.htm', '.html', '.svg', '.swf']

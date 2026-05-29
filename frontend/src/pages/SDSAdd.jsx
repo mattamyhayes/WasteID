@@ -4,7 +4,7 @@ import { sds, profileDocuments, mixtures } from '../api/client'
 import { parseSdsPdf } from '../lib/sdsPdfParser'
 import { getApiErrorMessage } from '../lib/apiErrors'
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
+const ALLOWED_EXTENSIONS = ['.pdf', '.sds', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff']
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 
 function validateFile(file) {
@@ -236,7 +236,7 @@ export default function SDSAdd() {
                 accept={ALLOWED_EXTENSIONS.join(',')}
                 className="form-control"
               />
-              <small style={{ color: '#6b7280' }}>Accepted: PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, PNG, JPG, TIFF (max 25 MB)</small>
+              <small style={{ color: '#6b7280' }}>Accepted: PDF, SDS, DOC, DOCX, XLS, XLSX, CSV, TXT, PNG, JPG, TIFF (max 25 MB)</small>
             </div>
 
             {parsing && (
