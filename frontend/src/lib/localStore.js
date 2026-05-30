@@ -1783,11 +1783,53 @@ export const localMarketplace = {
 // ===== Profile Documents (localStorage-backed) =====
 const DOCUMENTS_STORAGE_KEY = 'wasteid_documents_v1'
 
+// Convert the legacy documentStore array format (used before the SDS/Analytical
+// upload was migrated to this store) into the current { documents, nextId } shape.
+// Legacy records used { profile_id, doc_type, file_name, data } instead of
+// { mixture, file_type, original_filename, file_data }. Mapping them here keeps
+// previously uploaded files accessible (as a link) and lets new uploads succeed.
+function migrateLegacyDocuments(arr) {
+  const documents = arr.map((d, idx) => {
+    const fileType = d.file_type || (d.doc_type === 'analytical' ? 'A' : 'SDS')
+    const filename = d.original_filename || d.file_name || d.stored_filename || 'document'
+    return {
+      id: d.id != null ? d.id : idx + 1,
+      mixture: d.mixture != null ? Number(d.mixture) : (d.profile_id != null ? Number(d.profile_id) : null),
+      file_type: fileType,
+      short_name: d.short_name || filename.replace(/\.[^.]+$/, ''),
+      stored_filename: d.stored_filename || filename,
+      original_filename: filename,
+      file_size: d.file_size != null ? d.file_size : null,
+      uploaded_at: d.uploaded_at || new Date().toISOString(),
+      file_data: d.file_data || d.data || null,
+      file_url: d.file_url || d.data || null,
+    }
+  })
+  const maxId = documents.reduce((m, d) => Math.max(m, Number(d.id) || 0), 0)
+  return { documents, nextId: maxId + 1 }
+}
+
 function loadDocumentsStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DOCUMENTS_STORAGE_KEY) : null
     if (!raw) return { documents: [], nextId: 1 }
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    // Legacy format: a bare array of documents from the old documentStore module,
+    // which shared this same storage key. Migrate it to the current shape once.
+    if (Array.isArray(parsed)) {
+      const migrated = migrateLegacyDocuments(parsed)
+      saveDocumentsStore(migrated)
+      return migrated
+    }
+    // Guard against malformed or partial objects so callers can rely on the shape.
+    if (!parsed || !Array.isArray(parsed.documents)) {
+      return { documents: [], nextId: 1 }
+    }
+    if (typeof parsed.nextId !== 'number') {
+      const maxId = parsed.documents.reduce((m, d) => Math.max(m, Number(d.id) || 0), 0)
+      parsed.nextId = maxId + 1
+    }
+    return parsed
   } catch {
     return { documents: [], nextId: 1 }
   }
