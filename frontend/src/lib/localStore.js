@@ -2344,3 +2344,107 @@ export const localSds = {
     return ok(findings)
   },
 }
+
+// --------------------------------------------------------------- Local Chemicals
+// Persists admin edits/additions to the chemical database in localStorage so
+// changes survive reloads in the static (no-backend) build. The bundled
+// chemicals.json is treated as a read-only base; user edits to existing rows are
+// stored as `overrides` keyed by chemical id, and brand-new rows live in
+// `additions`.
+const CHEMICALS_STORAGE_KEY = 'wasteid_chemicals_v1'
+
+function emptyChemicalStore() {
+  return { overrides: {}, additions: [], nextId: null }
+}
+
+function loadChemicalStore() {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(CHEMICALS_STORAGE_KEY) : null
+    if (!raw) return emptyChemicalStore()
+    const parsed = JSON.parse(raw)
+    return {
+      overrides: parsed.overrides || {},
+      additions: Array.isArray(parsed.additions) ? parsed.additions : [],
+      nextId: parsed.nextId || null,
+    }
+  } catch {
+    return emptyChemicalStore()
+  }
+}
+
+function saveChemicalStore(store) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CHEMICALS_STORAGE_KEY, JSON.stringify(store))
+    }
+  } catch { /* ignore */ }
+}
+
+function normalizeChemical(c) {
+  const source = c.source || 'epa_import'
+  return {
+    ...c,
+    source,
+    source_display: c.source_display || (source === 'manual' ? 'Manual (Admin)' : 'EPA Import'),
+    added_by: c.added_by || 'Admin',
+  }
+}
+
+function nextChemicalId(store) {
+  if (store.nextId && store.nextId > 0) return store.nextId
+  let max = 0
+  for (const c of localChemicals) {
+    const n = Number(c.id)
+    if (Number.isFinite(n) && n > max) max = n
+  }
+  for (const a of store.additions) {
+    const n = Number(a.id)
+    if (Number.isFinite(n) && n > max) max = n
+  }
+  return max + 1
+}
+
+export const localChemicalStore = {
+  // Returns the full merged list: additions first, then base records with any
+  // overrides applied.
+  listAll() {
+    const store = loadChemicalStore()
+    const base = localChemicals.map(c => {
+      const ov = store.overrides[c.id]
+      return normalizeChemical(ov ? { ...c, ...ov } : c)
+    })
+    const additions = store.additions.map(normalizeChemical)
+    return [...additions, ...base]
+  },
+  create(payload) {
+    const store = loadChemicalStore()
+    const id = nextChemicalId(store)
+    const now = new Date().toISOString()
+    const chemical = normalizeChemical({
+      ...payload,
+      id,
+      source: 'manual',
+      created_at: payload.created_at || now,
+    })
+    store.additions.push(chemical)
+    store.nextId = id + 1
+    saveChemicalStore(store)
+    return chemical
+  },
+  update(id, payload) {
+    const store = loadChemicalStore()
+    const numId = Number(id)
+    const addition = store.additions.find(a => Number(a.id) === numId)
+    if (addition) {
+      Object.assign(addition, payload, { id: addition.id })
+      saveChemicalStore(store)
+      return normalizeChemical(addition)
+    }
+    const base = localChemicals.find(c => Number(c.id) === numId)
+    const existing = store.overrides[numId] || {}
+    const updated = { ...existing, ...payload, id: numId }
+    store.overrides[numId] = updated
+    saveChemicalStore(store)
+    return normalizeChemical({ ...(base || {}), ...updated })
+  },
+}
