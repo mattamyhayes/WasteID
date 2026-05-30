@@ -1,7 +1,6 @@
 import axios from 'axios'
-import localChemicals from '../data/chemicals.json'
 import { localJourney } from '../lib/journeyStore.js'
-import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace, localDocuments, localSds } from '../lib/localStore.js'
+import { localMixtures, localCustomers, localCustomerLocations, localShippers, localIncinerators, localManifests, localOrders, localMarketplace, localDocuments, localSds, localChemicalStore } from '../lib/localStore.js'
 
 const apiUrlConfigured = import.meta.env.VITE_API_URL != null && import.meta.env.VITE_API_URL !== ''
 const apiBaseUrl = apiUrlConfigured ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -25,7 +24,7 @@ const client = axios.create({
 
 function searchLocalChemicals(q, category) {
   const query = (q || '').trim().toLowerCase()
-  let results = localChemicals
+  let results = localChemicalStore.listAll()
   if (query) {
     results = results.filter(c => {
       return (
@@ -56,37 +55,35 @@ export const chemicals = {
   },
   list: async () => {
     if (useLocalChemicals) {
-      return { data: { results: localChemicals } }
+      return { data: { results: localChemicalStore.listAll() } }
     }
     try {
       return await client.get('/chemicals/')
     } catch (err) {
-      return { data: { results: localChemicals } }
+      return { data: { results: localChemicalStore.listAll() } }
     }
   },
   listAdmin: async (params = {}) => {
     if (useLocalChemicals) {
-      const results = localChemicals.map(c => ({ ...c, source: c.source || 'epa_import', source_display: c.source === 'manual' ? 'Manual (Admin)' : 'EPA Import', added_by: c.added_by || 'Admin' }))
+      const results = localChemicalStore.listAll()
       return { data: { results, count: results.length } }
     }
     try {
       return await client.get('/chemicals/', { params })
     } catch (err) {
-      const results = localChemicals.map(c => ({ ...c, source: c.source || 'epa_import', source_display: c.source === 'manual' ? 'Manual (Admin)' : 'EPA Import', added_by: c.added_by || 'Admin' }))
+      const results = localChemicalStore.listAll()
       return { data: { results, count: results.length } }
     }
   },
   create: async (data) => {
     if (useLocalChemicals) {
-      // In static mode, return a stub response
-      const newItem = { ...data, id: Date.now(), source: 'manual', source_display: 'Manual (Admin)', added_by: 'Admin', created_at: new Date().toISOString() }
-      return { data: newItem }
+      return { data: localChemicalStore.create(data) }
     }
     return await client.post('/chemicals/', data)
   },
   update: async (id, data) => {
     if (useLocalChemicals) {
-      return { data: { ...data, id } }
+      return { data: localChemicalStore.update(id, data) }
     }
     return await client.patch(`/chemicals/${id}/`, data)
   },

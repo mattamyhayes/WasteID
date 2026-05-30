@@ -16,6 +16,14 @@ const SOURCE_LABELS = {
   manual: 'Manual (Admin)',
 }
 
+const CHARACTERISTIC_FIELDS = [
+  ['is_ignitable', 'Ignitable'],
+  ['is_corrosive', 'Corrosive'],
+  ['is_reactive', 'Reactive'],
+  ['is_toxic', 'Toxic'],
+  ['is_acutely_hazardous', 'Acutely Hazardous'],
+]
+
 const CATEGORY_OPTIONS = [
   { value: 'P', label: 'P-list (Acutely Hazardous)' },
   { value: 'U', label: 'U-list (Toxic)' },
@@ -343,6 +351,7 @@ export default function ChemicalDatabase() {
                   <th style={thStyle}>CAS #</th>
                   <th style={thStyle}>EPA Code</th>
                   <th style={thStyle}>Category</th>
+                  <th style={thStyle}>Characteristics</th>
                   <th style={thStyle}>Source</th>
                   <th style={thStyle}>Date Added</th>
                   <th style={thStyle}>Added By</th>
@@ -366,6 +375,24 @@ export default function ChemicalDatabase() {
                       }}>
                         {c.category_display || CATEGORY_LABELS[c.category] || c.category || '—'}
                       </span>
+                    </td>
+                    <td style={tdStyle}>
+                      {(() => {
+                        const active = CHARACTERISTIC_FIELDS.filter(([k]) => c[k])
+                        if (active.length === 0) return <span style={{ color: '#9ca3af' }}>—</span>
+                        return (
+                          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                            {active.map(([k, label]) => (
+                              <span key={k} style={{
+                                fontSize: '0.72rem', fontWeight: 600, padding: '0.1rem 0.4rem', borderRadius: 4,
+                                background: '#fef3c7', color: '#92400e', whiteSpace: 'nowrap',
+                              }}>
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td style={tdStyle}>
                       <span style={{
