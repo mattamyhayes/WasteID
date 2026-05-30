@@ -92,7 +92,9 @@ export default function MixtureBuilder({ components, onChange, editable = false 
               </tr>
             </thead>
             <tbody>
-              {components.map((comp, i) => (
+              {components.map((comp, i) => {
+                const casNumber = comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number || ''
+                return (
                 <tr key={i}>
                   <td style={{ width: 32, textAlign: 'center', fontSize: '1rem' }} title={
                     comp._source === 'imported' ? 'Imported from document'
@@ -111,8 +113,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                   </td>
                   <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
                   <td>
-                    {(comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number)
-                      ? (comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number)
+                    {casNumber
+                      ? casNumber
                       : <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
                   <td>
@@ -156,7 +158,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                     )}
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

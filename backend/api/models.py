@@ -234,7 +234,7 @@ class MixtureComponent(models.Model):
     mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='components')
     chemical = models.ForeignKey(Chemical, on_delete=models.SET_NULL, null=True, blank=True)
     custom_name = models.CharField(max_length=200, blank=True)
-    cas_number = models.CharField(max_length=50, blank=True)
+    cas_number = models.CharField(max_length=50, blank=True, help_text='CAS number for components without a linked Chemical record (e.g. parsed from an SDS import)')
     quantity = models.FloatField()
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
 

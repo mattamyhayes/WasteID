@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='mixturecomponent',
             name='cas_number',
-            field=models.CharField(blank=True, max_length=50),
+            field=models.CharField(blank=True, help_text='CAS number for components without a linked Chemical record (e.g. parsed from an SDS import)', max_length=50),
         ),
     ]
