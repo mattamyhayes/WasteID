@@ -239,6 +239,15 @@ export default function ChemicalDatabase() {
     }
   }
 
+  const formatDateTime = (val) => {
+    if (!val) return '—'
+    try {
+      return new Date(val).toLocaleString()
+    } catch {
+      return '—'
+    }
+  }
+
   const sourceLabel = (c) => {
     if (c.source_display) return c.source_display
     if (c.source && SOURCE_LABELS[c.source]) return SOURCE_LABELS[c.source]
@@ -354,6 +363,7 @@ export default function ChemicalDatabase() {
                   <th style={thStyle}>Characteristics</th>
                   <th style={thStyle}>Source</th>
                   <th style={thStyle}>Date Added</th>
+                  <th style={thStyle}>Last Modified</th>
                   <th style={thStyle}>Added By</th>
                   <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                 </tr>
@@ -404,6 +414,7 @@ export default function ChemicalDatabase() {
                       </span>
                     </td>
                     <td style={{ ...tdStyle, color: '#6b7280' }}>{formatDate(c.created_at)}</td>
+                    <td style={{ ...tdStyle, color: '#6b7280' }}>{formatDateTime(c.updated_at)}</td>
                     <td style={{ ...tdStyle, color: '#6b7280' }}>{c.added_by || '—'}</td>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                       <button
