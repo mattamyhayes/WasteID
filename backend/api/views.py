@@ -1382,7 +1382,7 @@ def contact_us_submissions(request):
 
 @api_view(['POST'])
 def demo_request(request):
-    """Send a demo request email to sales@waste-id.com from the server."""
+    """Send a demo request email to the WasteID sales inboxes from the server."""
     data = request.data
     name = data.get('name', '')
     company = data.get('company', '')
@@ -1407,7 +1407,7 @@ def demo_request(request):
         f'Message:\n{message}'
     )
 
-    recipient_list = ['sales@waste-id.com']
+    recipient_list = ['sales@waste-id.com', 'info@waste-id.com']
 
     ContactUsSubmission.objects.create(
         name=name,

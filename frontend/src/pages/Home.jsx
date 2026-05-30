@@ -96,7 +96,7 @@ export default function Home() {
       await axios.post(`${baseUrl}/api/demo-request/`, form)
       setSubmitted(true)
     } catch (err) {
-      setError('Something went wrong. Please try again or email sales@waste-id.com directly.')
+      setError('Something went wrong. Please try again or email sales@waste-id.com or info@waste-id.com directly.')
     } finally {
       setSending(false)
     }
