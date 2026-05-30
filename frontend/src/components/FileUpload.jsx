@@ -7,7 +7,7 @@ const DOC_TYPES = [
   { value: 'A', label: 'Analytical Report' },
 ]
 
-export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded }) {
+export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded, children }) {
   const [docType, setDocType] = useState('')
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
@@ -115,6 +115,8 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
           Max file size: 25 MB. Executable files (.exe, .bat, .sh, etc.) are blocked for security.
         </small>
       </div>
+
+      {children}
     </div>
   )
 }
