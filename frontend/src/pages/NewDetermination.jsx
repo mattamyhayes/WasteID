@@ -340,8 +340,8 @@ export default function NewDetermination() {
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${mixtureId}` : 'New Profile'}</h1>
+    <div className="container" style={{ padding: '2rem 1.5rem' }}>
+      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'New Profile'}</h1>
 
       {/* Days Remaining Banner */}
       {shipByInfo && (
@@ -387,37 +387,25 @@ export default function NewDetermination() {
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Document Upload Section – always available; auto-saves profile on first upload.
-          Uploaded documents are listed inline within the Upload Documents card. */}
-      <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
-        {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
-          setComponents(prev => [...prev, ...newComponents])
-        }} />}
-      </FileUpload>
+      {/* Three-column layout:
+          - Left: document upload + generator information + notes
+          - Middle: mixture components
+          - Right: analytics + state specific rules */}
+      <div className="profile-columns">
+        {/* Left column */}
+        <div className="profile-column">
+          {/* Document Upload Section – always available; auto-saves profile on first upload.
+              Uploaded documents are listed inline within the Upload Documents card. */}
+          <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
+            {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
+              setComponents(prev => [...prev, ...newComponents])
+            }} />}
+          </FileUpload>
 
-      {/* Waste Profile */}
-      <>
-        {/* Mixture Components section (moved above Generator Information) */}
-        <div className="card" style={{ marginTop: '1.25rem' }}>
-          <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
-            Search the EPA chemical database or enter custom chemical names with quantities.
-            You can edit component quantities and percentages after adding them.
-          </p>
-          <MixtureBuilder components={components} onChange={setComponents} editable />
-        </div>
+          {/* Generator Information section */}
+          <CollapsibleSection title="Generator Information" open={showGenerator} onToggle={() => setShowGenerator(s => !s)}>
 
-        {/* Analytics section – displays results of analytical uploads */}
-        <CollapsibleSection title="Analytics" open={showAnalytics} onToggle={() => setShowAnalytics(s => !s)}>
-          <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
-            Analytics from uploaded analytical reports will be displayed here.
-          </p>
-        </CollapsibleSection>
-
-        {/* Generator Information section */}
-        <CollapsibleSection title="Generator Information" open={showGenerator} onToggle={() => setShowGenerator(s => !s)}>
-
-          <div className="form-group">
+            <div className="form-group">
             <label>Generator *</label>
             {customersError && <div style={{ color: '#b91c1c', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{customersError}</div>}
             <select className="form-control" value={customerId}
@@ -562,7 +550,30 @@ export default function NewDetermination() {
               placeholder="Any additional observations or context…" />
           </div>
         </CollapsibleSection>
-      </>
+        </div>
+        {/* End left column */}
+
+        {/* Middle column: mixture components */}
+        <div className="profile-column">
+          <div className="card" style={{ marginTop: 0 }}>
+            <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
+            <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+              Search the EPA chemical database or enter custom chemical names with quantities.
+              You can edit component quantities and percentages after adding them.
+            </p>
+            <MixtureBuilder components={components} onChange={setComponents} editable />
+          </div>
+        </div>
+        {/* End middle column */}
+
+        {/* Right column: analytics + state specific rules */}
+        <div className="profile-column">
+          {/* Analytics section – displays results of analytical uploads */}
+          <CollapsibleSection title="Analytics" open={showAnalytics} onToggle={() => setShowAnalytics(s => !s)} style={{ marginTop: 0 }}>
+            <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
+              Analytics from uploaded analytical reports will be displayed here.
+            </p>
+          </CollapsibleSection>
 
       {/* State Specific Rules Section */}
       <CollapsibleSection title="State Specific Rules" open={showStateRules} onToggle={() => setShowStateRules(s => !s)}>
@@ -665,6 +676,10 @@ export default function NewDetermination() {
         </div>
       )}
       </CollapsibleSection>
+        </div>
+        {/* End right column */}
+      </div>
+      {/* End three-column layout */}
 
       {/* Submit */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>

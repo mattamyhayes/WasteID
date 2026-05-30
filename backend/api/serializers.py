@@ -346,7 +346,7 @@ class SafetyDataSheetListSerializer(serializers.ModelSerializer):
         model = SafetyDataSheet
         fields = ['id', 'product_name', 'cas_number', 'manufacturer_name',
                   'imported_at', 'import_status', 'original_filename',
-                  'mixture', 'profile_name', 'profile_transaction_id']
+                  'mixture', 'profile_document', 'profile_name', 'profile_transaction_id']
 
 
 class SafetyDataSheetSerializer(serializers.ModelSerializer):

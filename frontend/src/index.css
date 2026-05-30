@@ -57,6 +57,26 @@ input, select, textarea {
   gap: 1rem;
 }
 
+/* Three-column layout for the profile (New Determination) page. */
+.profile-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.profile-columns > .profile-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .profile-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 .badge {
   display: inline-block;
   padding: 2px 10px;
