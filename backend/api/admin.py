@@ -23,9 +23,9 @@ class CustomerLocationAdmin(admin.ModelAdmin):
 
 @admin.register(Chemical)
 class ChemicalAdmin(admin.ModelAdmin):
-    list_display = ['name', 'cas_number', 'epa_waste_code', 'category']
-    list_filter = ['category', 'is_ignitable', 'is_corrosive', 'is_reactive', 'is_toxic']
-    search_fields = ['name', 'cas_number', 'epa_waste_code']
+    list_display = ['name', 'cas_number', 'epa_waste_code', 'category', 'source', 'added_by']
+    list_filter = ['category', 'source', 'is_ignitable', 'is_corrosive', 'is_reactive', 'is_toxic', 'is_acutely_hazardous']
+    search_fields = ['name', 'cas_number', 'epa_waste_code', 'hazardous_waste_description']
 
 
 @admin.register(Mixture)

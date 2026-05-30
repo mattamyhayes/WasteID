@@ -467,12 +467,673 @@ class Command(BaseCommand):
             'notes': 'Inert liquid material – non-hazardous'},
         ]
 
+        # ── 40 CFR 261 Subpart D import (F-list & K-list) ─────────────────────
+        # Source: https://www.ecfr.gov/current/title-40/chapter-I/subchapter-I/
+        #         part-261/subpart-D
+        #
+        # The F-list (§261.31, non-specific sources) and K-list (§261.32,
+        # specific sources) describe hazardous *waste streams* rather than single
+        # substances. They therefore have no CAS number; the regulatory
+        # "Hazardous waste" column is captured in `hazardous_waste_description`.
+        #
+        # Hazard codes (§261.30(b)) are mapped onto the existing characteristic
+        # boolean fields so the new data stays consistent with what is already in
+        # the database:
+        #   (I) Ignitable Waste            -> is_ignitable
+        #   (C) Corrosive Waste            -> is_corrosive
+        #   (R) Reactive Waste             -> is_reactive
+        #   (E) Toxicity Characteristic    -> is_toxic
+        #   (T) Toxic Waste                -> is_toxic
+        #   (H) Acute Hazardous Waste      -> is_acutely_hazardous
+        HAZARD_CODE_FLAGS = {
+            'I': 'is_ignitable',
+            'C': 'is_corrosive',
+            'R': 'is_reactive',
+            'E': 'is_toxic',
+            'T': 'is_toxic',
+            'H': 'is_acutely_hazardous',
+        }
+        IMPORT_SOURCE_REF = '40 CFR 261 Subpart D (eCFR)'
+        IMPORT_ADDED_BY = 'eCFR Import (40 CFR 261 Subpart D)'
+
+        def build_listed(code, name, category, hazard_codes, description):
+            """Build a Chemical dict for an F-/K-list waste stream."""
+            section = '261.31' if category == 'F' else '261.32'
+            codes_str = ', '.join('(%s)' % h for h in hazard_codes)
+            item = {
+                'name': name,
+                'cas_number': '',
+                'epa_waste_code': code,
+                'category': category,
+                'hazardous_waste_description': description,
+                'source': 'epa_import',
+                'added_by': IMPORT_ADDED_BY,
+                'notes': (
+                    f'{code} – {IMPORT_SOURCE_REF} §{section}; '
+                    f'hazard code(s): {codes_str or "—"}'
+                ),
+            }
+            for h in hazard_codes:
+                item[HAZARD_CODE_FLAGS[h]] = True
+            return item
+
+        # ── F-list: Hazardous wastes from non-specific sources (§261.31) ──────
+        f_list_raw = [
+            ('F001', 'Spent halogenated solvents used in degreasing', ['T'],
+             'The following spent halogenated solvents used in degreasing: '
+             'Tetrachloroethylene, trichloroethylene, methylene chloride, '
+             '1,1,1-trichloroethane, carbon tetrachloride, and chlorinated '
+             'fluorocarbons; all spent solvent mixtures/blends used in degreasing '
+             'containing, before use, a total of ten percent or more (by volume) '
+             'of one or more of the above halogenated solvents or those solvents '
+             'listed in F002, F004, and F005; and still bottoms from the recovery '
+             'of these spent solvents and spent solvent mixtures.'),
+            ('F002', 'Spent halogenated solvents', ['T'],
+             'The following spent halogenated solvents: Tetrachloroethylene, '
+             'methylene chloride, trichloroethylene, 1,1,1-trichloroethane, '
+             'chlorobenzene, 1,1,2-trichloro-1,2,2-trifluoroethane, '
+             'ortho-dichlorobenzene, trichlorofluoromethane, and '
+             '1,1,2-trichloroethane; all spent solvent mixtures/blends containing, '
+             'before use, a total of ten percent or more (by volume) of one or '
+             'more of the above halogenated solvents or those listed in F001, '
+             'F004, or F005; and still bottoms from the recovery of these spent '
+             'solvents and spent solvent mixtures.'),
+            ('F003', 'Spent non-halogenated solvents (xylene, acetone, etc.)', ['I'],
+             'The following spent non-halogenated solvents: Xylene, acetone, ethyl '
+             'acetate, ethyl benzene, ethyl ether, methyl isobutyl ketone, '
+             'n-butyl alcohol, cyclohexanone, and methanol; all spent solvent '
+             'mixtures/blends containing, before use, only the above spent '
+             'non-halogenated solvents; and all spent solvent mixtures/blends '
+             'containing, before use, one or more of the above non-halogenated '
+             'solvents, and a total of ten percent or more (by volume) of one or '
+             'more of those solvents listed in F001, F002, F004, and F005; and '
+             'still bottoms from the recovery of these spent solvents and spent '
+             'solvent mixtures.'),
+            ('F004', 'Spent non-halogenated solvents (cresols, nitrobenzene)', ['T'],
+             'The following spent non-halogenated solvents: Cresols and cresylic '
+             'acid, and nitrobenzene; all spent solvent mixtures/blends containing, '
+             'before use, a total of ten percent or more (by volume) of one or '
+             'more of the above non-halogenated solvents or those solvents listed '
+             'in F001, F002, and F005; and still bottoms from the recovery of '
+             'these spent solvents and spent solvent mixtures.'),
+            ('F005', 'Spent non-halogenated solvents (toluene, MEK, etc.)', ['I', 'T'],
+             'The following spent non-halogenated solvents: Toluene, methyl ethyl '
+             'ketone, carbon disulfide, isobutanol, pyridine, benzene, '
+             '2-ethoxyethanol, and 2-nitropropane; all spent solvent mixtures/'
+             'blends containing, before use, a total of ten percent or more (by '
+             'volume) of one or more of the above non-halogenated solvents or '
+             'those solvents listed in F001, F002, or F004; and still bottoms from '
+             'the recovery of these spent solvents and spent solvent mixtures.'),
+            ('F006', 'Wastewater treatment sludges from electroplating', ['T'],
+             'Wastewater treatment sludges from electroplating operations except '
+             'from the following processes: (1) Sulfuric acid anodizing of '
+             'aluminum; (2) tin plating on carbon steel; (3) zinc plating '
+             '(segregated basis) on carbon steel; (4) aluminum or zinc-aluminum '
+             'plating on carbon steel; (5) cleaning/stripping associated with tin, '
+             'zinc and aluminum plating on carbon steel; and (6) chemical etching '
+             'and milling of aluminum.'),
+            ('F007', 'Spent cyanide plating bath solutions', ['R', 'T'],
+             'Spent cyanide plating bath solutions from electroplating operations.'),
+            ('F008', 'Plating bath residues (cyanide electroplating)', ['R', 'T'],
+             'Plating bath residues from the bottom of plating baths from '
+             'electroplating operations where cyanides are used in the process.'),
+            ('F009', 'Spent stripping and cleaning bath solutions (cyanide)', ['R', 'T'],
+             'Spent stripping and cleaning bath solutions from electroplating '
+             'operations where cyanides are used in the process.'),
+            ('F010', 'Quenching bath residues from oil baths (cyanide)', ['R', 'T'],
+             'Quenching bath residues from oil baths from metal heat treating '
+             'operations where cyanides are used in the process.'),
+            ('F011', 'Spent cyanide solutions from salt bath pot cleaning', ['R', 'T'],
+             'Spent cyanide solutions from salt bath pot cleaning from metal heat '
+             'treating operations.'),
+            ('F012', 'Quenching wastewater treatment sludges (cyanide)', ['T'],
+             'Quenching wastewater treatment sludges from metal heat treating '
+             'operations where cyanides are used in the process.'),
+            ('F019', 'Wastewater treatment sludges from conversion coating of aluminum', ['T'],
+             'Wastewater treatment sludges from the chemical conversion coating of '
+             'aluminum except from zirconium phosphating in aluminum can washing '
+             'when such phosphating is an exclusive conversion coating process. '
+             'Wastewater treatment sludges from the manufacturing of motor '
+             'vehicles using a zinc phosphating process will not be subject to '
+             'this listing at the point of generation if the wastes are not placed '
+             'outside on the land prior to shipment to a landfill for disposal and '
+             'are either: disposed in a Subtitle D non-hazardous landfill licensed '
+             'or permitted by the state or federal government; or disposed in a '
+             'landfill licensed or permitted to accept the waste described as '
+             'F019.'),
+            ('F020', 'Wastes from production/use of tri- or tetrachlorophenol', ['H'],
+             'Wastes (except wastewater and spent carbon from hydrogen chloride '
+             'purification) from the production or manufacturing use (as a '
+             'reactant, chemical intermediate, or component in a formulating '
+             'process) of tri- or tetrachlorophenol, or of intermediates used to '
+             'produce their pesticide derivatives. (This listing does not include '
+             'wastes from the production of Hexachlorophene from highly purified '
+             '2,4,5-trichlorophenol.)'),
+            ('F021', 'Wastes from production/use of pentachlorophenol', ['H'],
+             'Wastes (except wastewater and spent carbon from hydrogen chloride '
+             'purification) from the production or manufacturing use (as a '
+             'reactant, chemical intermediate, or component in a formulating '
+             'process) of pentachlorophenol, or of intermediates used to produce '
+             'its derivatives.'),
+            ('F022', 'Wastes from use of tetra-, penta-, or hexachlorobenzene', ['H'],
+             'Wastes (except wastewater and spent carbon from hydrogen chloride '
+             'purification) from the manufacturing use (as a reactant, chemical '
+             'intermediate, or component in a formulating process) of tetra-, '
+             'penta-, or hexachlorobenzene under alkaline conditions.'),
+            ('F023', 'Wastes from equipment previously used for tri-/tetrachlorophenols', ['H'],
+             'Wastes (except wastewater and spent carbon from hydrogen chloride '
+             'purification) from the production of materials on equipment '
+             'previously used for the production or manufacturing use (as a '
+             'reactant, chemical intermediate, or component in a formulating '
+             'process) of tri- and tetrachlorophenols. (This listing does not '
+             'include wastes from equipment used only for the production or use of '
+             'Hexachlorophene from highly purified 2,4,5-trichlorophenol.)'),
+            ('F024', 'Process wastes from chlorinated aliphatic hydrocarbon production', ['T'],
+             'Process wastes, including but not limited to, distillation residues, '
+             'heavy ends, tars, and reactor clean-out wastes, from the production '
+             'of certain chlorinated aliphatic hydrocarbons by free radical '
+             'catalyzed processes. These chlorinated aliphatic hydrocarbons are '
+             'those having carbon chain lengths ranging from one to and including '
+             'five, with varying amounts and positions of chlorine substitution. '
+             '(This listing does not include wastewaters, wastewater treatment '
+             'sludges, spent catalysts, and wastes listed in §261.31 or §261.32.)'),
+            ('F025', 'Condensed light ends / spent filters from chlorinated aliphatics', ['T'],
+             'Condensed light ends, spent filters and filter aids, and spent '
+             'desiccant wastes from the production of certain chlorinated '
+             'aliphatic hydrocarbons, by free radical catalyzed processes. These '
+             'chlorinated aliphatic hydrocarbons are those having carbon chain '
+             'lengths ranging from one to and including five, with varying amounts '
+             'and positions of chlorine substitution.'),
+            ('F026', 'Wastes from equipment previously used for chlorobenzene production', ['H'],
+             'Wastes (except wastewater and spent carbon from hydrogen chloride '
+             'purification) from the production of materials on equipment '
+             'previously used for the manufacturing use (as a reactant, chemical '
+             'intermediate, or component in a formulating process) of tetra-, '
+             'penta-, or hexachlorobenzene under alkaline conditions.'),
+            ('F027', 'Discarded unused tri-/tetra-/pentachlorophenol formulations', ['H'],
+             'Discarded unused formulations containing tri-, tetra-, or '
+             'pentachlorophenol or discarded unused formulations containing '
+             'compounds derived from these chlorophenols. (This listing does not '
+             'include formulations containing Hexachlorophene synthesized from '
+             'prepurified 2,4,5-trichlorophenol as the sole component.)'),
+            ('F028', 'Residues from incineration of F020-F023/F026-F027 soils', ['T'],
+             'Residues resulting from the incineration or thermal treatment of '
+             'soil contaminated with EPA Hazardous Waste Nos. F020, F021, F022, '
+             'F023, F026, and F027.'),
+            ('F032', 'Wood preserving wastes – chlorophenolic formulations', ['T'],
+             'Wastewaters (except those that have not come into contact with '
+             'process contaminants), process residuals, preservative drippage, and '
+             'spent formulations from wood preserving processes generated at '
+             'plants that currently use or have previously used chlorophenolic '
+             'formulations (except potentially cross-contaminated wastes that have '
+             'had the F032 waste code deleted in accordance with §261.35 or '
+             'potentially cross-contaminated wastes that are otherwise currently '
+             'regulated as hazardous wastes, and where the generator does not '
+             'resume or initiate use of chlorophenolic formulations). This listing '
+             'does not include K001 bottom sediment sludge from the treatment of '
+             'wastewater from wood preserving processes that use creosote and/or '
+             'pentachlorophenol.'),
+            ('F034', 'Wood preserving wastes – creosote formulations', ['T'],
+             'Wastewaters (except those that have not come into contact with '
+             'process contaminants), process residuals, preservative drippage, and '
+             'spent formulations from wood preserving processes generated at '
+             'plants that use creosote formulations. This listing does not include '
+             'K001 bottom sediment sludge from the treatment of wastewater from '
+             'wood preserving processes that use creosote and/or pentachlorophenol.'),
+            ('F035', 'Wood preserving wastes – inorganic (arsenic/chromium)', ['T'],
+             'Wastewaters (except those that have not come into contact with '
+             'process contaminants), process residuals, preservative drippage, and '
+             'spent formulations from wood preserving processes generated at '
+             'plants that use inorganic preservatives containing arsenic or '
+             'chromium. This listing does not include K001 bottom sediment sludge '
+             'from the treatment of wastewater from wood preserving processes that '
+             'use creosote and/or pentachlorophenol.'),
+            ('F037', 'Petroleum refinery primary oil/water/solids separation sludge', ['T'],
+             'Petroleum refinery primary oil/water/solids separation sludge—Any '
+             'sludge generated from the gravitational separation of oil/water/'
+             'solids during the storage or treatment of process wastewaters and '
+             'oily cooling wastewaters from petroleum refineries. Such sludges '
+             'include, but are not limited to, those generated in oil/water/solids '
+             'separators; tanks and impoundments; ditches and other conveyances; '
+             'sumps; and stormwater units receiving dry weather flow. (See '
+             '§261.31 for full exclusions.)'),
+            ('F038', 'Petroleum refinery secondary (emulsified) separation sludge', ['T'],
+             'Petroleum refinery secondary (emulsified) oil/water/solids '
+             'separation sludge—Any sludge and/or float generated from the '
+             'physical and/or chemical separation of oil/water/solids in process '
+             'wastewaters and oily cooling wastewaters from petroleum refineries. '
+             'Such wastes include, but are not limited to, all sludges and floats '
+             'generated in: induced air flotation (IAF) units, tanks and '
+             'impoundments, and all sludges generated in DAF units. (See §261.31 '
+             'for full exclusions.)'),
+            ('F039', 'Multi-source leachate', ['T'],
+             'Leachate resulting from the disposal of more than one restricted '
+             'waste classified as hazardous under subpart D of this part (leachate '
+             'resulting from the disposal of one or more of the following EPA '
+             'Hazardous Wastes and no other Hazardous Wastes retains its EPA '
+             'Hazardous Waste Number(s): F020, F021, F022, F026, F027, and/or '
+             'F028).'),
+        ]
+        f_list = [build_listed(c, n, 'F', hc, d) for (c, n, hc, d) in f_list_raw]
+
+        # ── K-list: Hazardous wastes from specific sources (§261.32) ──────────
+        k_list_raw = [
+            # Wood preservation
+            ('K001', 'Bottom sediment sludge – wood preserving (creosote/PCP)', ['T'],
+             'Bottom sediment sludge from the treatment of wastewaters from wood '
+             'preserving processes that use creosote and/or pentachlorophenol.'),
+            # Inorganic pigments
+            ('K002', 'WWT sludge – chrome yellow and orange pigments', ['T'],
+             'Wastewater treatment sludge from the production of chrome yellow and '
+             'orange pigments.'),
+            ('K003', 'WWT sludge – molybdate orange pigments', ['T'],
+             'Wastewater treatment sludge from the production of molybdate orange '
+             'pigments.'),
+            ('K004', 'WWT sludge – zinc yellow pigments', ['T'],
+             'Wastewater treatment sludge from the production of zinc yellow '
+             'pigments.'),
+            ('K005', 'WWT sludge – chrome green pigments', ['T'],
+             'Wastewater treatment sludge from the production of chrome green '
+             'pigments.'),
+            ('K006', 'WWT sludge – chrome oxide green pigments', ['T'],
+             'Wastewater treatment sludge from the production of chrome oxide '
+             'green pigments (anhydrous and hydrated).'),
+            ('K007', 'WWT sludge – iron blue pigments', ['T'],
+             'Wastewater treatment sludge from the production of iron blue '
+             'pigments.'),
+            ('K008', 'Oven residue – chrome oxide green pigments', ['T'],
+             'Oven residue from the production of chrome oxide green pigments.'),
+            # Organic chemicals
+            ('K009', 'Distillation bottoms – acetaldehyde from ethylene', ['T'],
+             'Distillation bottoms from the production of acetaldehyde from '
+             'ethylene.'),
+            ('K010', 'Distillation side cuts – acetaldehyde from ethylene', ['T'],
+             'Distillation side cuts from the production of acetaldehyde from '
+             'ethylene.'),
+            ('K011', 'Bottom stream – wastewater stripper, acrylonitrile', ['R', 'T'],
+             'Bottom stream from the wastewater stripper in the production of '
+             'acrylonitrile.'),
+            ('K013', 'Bottom stream – acetonitrile column, acrylonitrile', ['R', 'T'],
+             'Bottom stream from the acetonitrile column in the production of '
+             'acrylonitrile.'),
+            ('K014', 'Bottoms – acetonitrile purification, acrylonitrile', ['T'],
+             'Bottoms from the acetonitrile purification column in the production '
+             'of acrylonitrile.'),
+            ('K015', 'Still bottoms – distillation of benzyl chloride', ['T'],
+             'Still bottoms from the distillation of benzyl chloride.'),
+            ('K016', 'Heavy ends – carbon tetrachloride production', ['T'],
+             'Heavy ends or distillation residues from the production of carbon '
+             'tetrachloride.'),
+            ('K017', 'Heavy ends – epichlorohydrin purification column', ['T'],
+             'Heavy ends (still bottoms) from the purification column in the '
+             'production of epichlorohydrin.'),
+            ('K018', 'Heavy ends – ethyl chloride production', ['T'],
+             'Heavy ends from the fractionation column in ethyl chloride '
+             'production.'),
+            ('K019', 'Heavy ends – ethylene dichloride production', ['T'],
+             'Heavy ends from the distillation of ethylene dichloride in ethylene '
+             'dichloride production.'),
+            ('K020', 'Heavy ends – vinyl chloride monomer production', ['T'],
+             'Heavy ends from the distillation of vinyl chloride in vinyl chloride '
+             'monomer production.'),
+            ('K021', 'Aqueous spent antimony catalyst – fluoromethanes', ['T'],
+             'Aqueous spent antimony catalyst waste from fluoromethanes '
+             'production.'),
+            ('K022', 'Distillation bottom tars – phenol/acetone from cumene', ['T'],
+             'Distillation bottom tars from the production of phenol/acetone from '
+             'cumene.'),
+            ('K023', 'Distillation light ends – phthalic anhydride from naphthalene', ['T'],
+             'Distillation light ends from the production of phthalic anhydride '
+             'from naphthalene.'),
+            ('K024', 'Distillation bottoms – phthalic anhydride from naphthalene', ['T'],
+             'Distillation bottoms from the production of phthalic anhydride from '
+             'naphthalene.'),
+            ('K025', 'Distillation bottoms – nitrobenzene by nitration of benzene', ['T'],
+             'Distillation bottoms from the production of nitrobenzene by the '
+             'nitration of benzene.'),
+            ('K026', 'Stripping still tails – methyl ethyl pyridines', ['T'],
+             'Stripping still tails from the production of methyl ethyl pyridines.'),
+            ('K027', 'Centrifuge/distillation residues – toluene diisocyanate', ['R', 'T'],
+             'Centrifuge and distillation residues from toluene diisocyanate '
+             'production.'),
+            ('K028', 'Spent catalyst – 1,1,1-trichloroethane hydrochlorinator', ['T'],
+             'Spent catalyst from the hydrochlorinator reactor in the production '
+             'of 1,1,1-trichloroethane.'),
+            ('K029', 'Waste from product steam stripper – 1,1,1-trichloroethane', ['T'],
+             'Waste from the product steam stripper in the production of '
+             '1,1,1-trichloroethane.'),
+            ('K030', 'Column bottoms – trichloroethylene/perchloroethylene', ['T'],
+             'Column bottoms or heavy ends from the combined production of '
+             'trichloroethylene and perchloroethylene.'),
+            ('K083', 'Distillation bottoms – aniline production', ['T'],
+             'Distillation bottoms from aniline production.'),
+            ('K085', 'Distillation/fractionation bottoms – chlorobenzenes', ['T'],
+             'Distillation or fractionation column bottoms from the production of '
+             'chlorobenzenes.'),
+            ('K093', 'Distillation light ends – phthalic anhydride from o-xylene', ['T'],
+             'Distillation light ends from the production of phthalic anhydride '
+             'from ortho-xylene.'),
+            ('K094', 'Distillation bottoms – phthalic anhydride from o-xylene', ['T'],
+             'Distillation bottoms from the production of phthalic anhydride from '
+             'ortho-xylene.'),
+            ('K095', 'Distillation bottoms – 1,1,1-trichloroethane', ['T'],
+             'Distillation bottoms from the production of 1,1,1-trichloroethane.'),
+            ('K096', 'Heavy ends – 1,1,1-trichloroethane heavy ends column', ['T'],
+             'Heavy ends from the heavy ends column from the production of '
+             '1,1,1-trichloroethane.'),
+            ('K103', 'Process residues – aniline extraction', ['T'],
+             'Process residues from aniline extraction from the production of '
+             'aniline.'),
+            ('K104', 'Combined wastewater – nitrobenzene/aniline production', ['T'],
+             'Combined wastewater streams generated from nitrobenzene/aniline '
+             'production.'),
+            ('K105', 'Separated aqueous stream – chlorobenzene reactor washing', ['T'],
+             'Separated aqueous stream from the reactor product washing step in '
+             'the production of chlorobenzenes.'),
+            ('K107', 'Column bottoms – UDMH from carboxylic acid hydrazides', ['C', 'T'],
+             'Column bottoms from product separation from the production of '
+             '1,1-dimethylhydrazine (UDMH) from carboxylic acid hydrazides.'),
+            ('K108', 'Condensed overheads/vent gases – UDMH production', ['I', 'T'],
+             'Condensed column overheads from product separation and condensed '
+             'reactor vent gases from the production of 1,1-dimethylhydrazine '
+             '(UDMH) from carboxylic acid hydrazides.'),
+            ('K109', 'Spent filter cartridges – UDMH purification', ['T'],
+             'Spent filter cartridges from product purification from the '
+             'production of 1,1-dimethylhydrazine (UDMH) from carboxylic acid '
+             'hydrazides.'),
+            ('K110', 'Condensed overheads – UDMH intermediate separation', ['T'],
+             'Condensed column overheads from intermediate separation from the '
+             'production of 1,1-dimethylhydrazine (UDMH) from carboxylic acid '
+             'hydrazides.'),
+            ('K111', 'Product washwaters – dinitrotoluene via nitration of toluene', ['C', 'T'],
+             'Product washwaters from the production of dinitrotoluene via '
+             'nitration of toluene.'),
+            ('K112', 'Reaction by-product water – toluenediamine drying column', ['T'],
+             'Reaction by-product water from the drying column in the production '
+             'of toluenediamine via hydrogenation of dinitrotoluene.'),
+            ('K113', 'Condensed liquid light ends – toluenediamine purification', ['T'],
+             'Condensed liquid light ends from the purification of toluenediamine '
+             'in the production of toluenediamine via hydrogenation of '
+             'dinitrotoluene.'),
+            ('K114', 'Vicinals – toluenediamine purification', ['T'],
+             'Vicinals from the purification of toluenediamine in the production '
+             'of toluenediamine via hydrogenation of dinitrotoluene.'),
+            ('K115', 'Heavy ends – toluenediamine purification', ['T'],
+             'Heavy ends from the purification of toluenediamine in the production '
+             'of toluenediamine via hydrogenation of dinitrotoluene.'),
+            ('K116', 'Organic condensate – TDI solvent recovery column', ['T'],
+             'Organic condensate from the solvent recovery column in the '
+             'production of toluene diisocyanate via phosgenation of '
+             'toluenediamine.'),
+            ('K117', 'Wastewater – ethylene dibromide reactor vent gas scrubber', ['T'],
+             'Wastewater from the reactor vent gas scrubber in the production of '
+             'ethylene dibromide via bromination of ethene.'),
+            ('K118', 'Spent adsorbent solids – ethylene dibromide purification', ['T'],
+             'Spent adsorbent solids from purification of ethylene dibromide in '
+             'the production of ethylene dibromide via bromination of ethene.'),
+            ('K136', 'Still bottoms – ethylene dibromide purification', ['T'],
+             'Still bottoms from the purification of ethylene dibromide in the '
+             'production of ethylene dibromide via bromination of ethene.'),
+            ('K149', 'Distillation bottoms – chlorinated toluenes/benzoyl chlorides', ['T'],
+             'Distillation bottoms from the production of alpha- (or methyl-) '
+             'chlorinated toluenes, ring-chlorinated toluenes, benzoyl chlorides, '
+             'and compounds with mixtures of these functional groups. (This waste '
+             'does not include still bottoms from the distillation of benzyl '
+             'chloride.)'),
+            ('K150', 'Organic residuals – chlorinated toluene chlorine/HCl recovery', ['T'],
+             'Organic residuals, excluding spent carbon adsorbent, from the spent '
+             'chlorine gas and hydrochloric acid recovery processes associated '
+             'with the production of alpha- (or methyl-) chlorinated toluenes, '
+             'ring-chlorinated toluenes, benzoyl chlorides, and compounds with '
+             'mixtures of these functional groups.'),
+            ('K151', 'WWT sludges – chlorinated toluene production', ['T'],
+             'Wastewater treatment sludges, excluding neutralization and '
+             'biological sludges, generated during the treatment of wastewaters '
+             'from the production of alpha- (or methyl-) chlorinated toluenes, '
+             'ring-chlorinated toluenes, benzoyl chlorides, and compounds with '
+             'mixtures of these functional groups.'),
+            ('K156', 'Organic waste – carbamates and carbamoyl oximes', ['T'],
+             'Organic waste (including heavy ends, still bottoms, light ends, '
+             'spent solvents, filtrates, and decantates) from the production of '
+             'carbamates and carbamoyl oximes. (This listing does not apply to '
+             'wastes generated from the manufacture of 3-iodo-2-propynyl '
+             'n-butylcarbamate.)'),
+            ('K157', 'Wastewaters – carbamates and carbamoyl oximes', ['T'],
+             'Wastewaters (including scrubber waters, condenser waters, '
+             'washwaters, and separation waters) from the production of carbamates '
+             'and carbamoyl oximes. (This listing does not apply to wastes '
+             'generated from the manufacture of 3-iodo-2-propynyl '
+             'n-butylcarbamate.)'),
+            ('K158', 'Bag house dusts/filter solids – carbamates and carbamoyl oximes', ['T'],
+             'Bag house dusts and filter/separation solids from the production of '
+             'carbamates and carbamoyl oximes.'),
+            ('K159', 'Organics from treatment of thiocarbamate wastes', ['T'],
+             'Organics from the treatment of thiocarbamate wastes.'),
+            ('K161', 'Purification solids/dust – dithiocarbamate acids and salts', ['R', 'T'],
+             'Purification solids (including filtration, evaporation, and '
+             'centrifugation solids), bag house dust and floor sweepings from the '
+             'production of dithiocarbamate acids and their salts. (This listing '
+             'does not include K125 or K126.)'),
+            ('K174', 'WWT sludges – ethylene dichloride/vinyl chloride monomer', ['T'],
+             'Wastewater treatment sludges from the production of ethylene '
+             'dichloride or vinyl chloride monomer (including sludges that result '
+             'from commingled ethylene dichloride or vinyl chloride monomer '
+             'wastewater) but not including sludges that do not contain dioxin in '
+             'a measurable concentration.'),
+            ('K175', 'WWT sludge – vinyl chloride monomer (mercuric chloride catalyst)', ['T'],
+             'Wastewater treatment sludge from the production of vinyl chloride '
+             'monomer using mercuric chloride catalyst in an acetylene-based '
+             'process.'),
+            ('K181', 'Nonwastewaters – dyes and/or pigments production', ['T'],
+             'Nonwastewaters from the production of dyes and/or pigments '
+             '(including nonwastewaters commingled at the point of generation with '
+             'nonwastewaters from other processes) that, at the point of '
+             'generation, contain mass loadings of any of the constituents '
+             'identified in 40 CFR 261.32 above the listed levels.'),
+            # Inorganic chemicals (chlorine production)
+            ('K071', 'Brine purification muds – mercury cell chlorine process', ['T'],
+             'Brine purification muds from the mercury cell process in chlorine '
+             'production, where separately prepurified brine is not used.'),
+            ('K073', 'Chlorinated hydrocarbon waste – diaphragm cell chlorine process', ['T'],
+             'Chlorinated hydrocarbon waste from the purification step of the '
+             'diaphragm cell process using graphite anodes in chlorine '
+             'production.'),
+            ('K106', 'WWT sludge – mercury cell chlorine process', ['T'],
+             'Wastewater treatment sludge from the mercury cell process in '
+             'chlorine production.'),
+            # Pesticides
+            ('K031', 'By-product salts – MSMA and cacodylic acid', ['T'],
+             'By-product salts generated in the production of MSMA and cacodylic '
+             'acid.'),
+            ('K032', 'WWT sludge – chlordane production', ['T'],
+             'Wastewater treatment sludge from the production of chlordane.'),
+            ('K033', 'Wastewater/scrub water – cyclopentadiene chlorination (chlordane)', ['T'],
+             'Wastewater and scrub water from the chlorination of cyclopentadiene '
+             'in the production of chlordane.'),
+            ('K034', 'Filter solids – hexachlorocyclopentadiene filtration (chlordane)', ['T'],
+             'Filter solids from the filtration of hexachlorocyclopentadiene in '
+             'the production of chlordane.'),
+            ('K035', 'WWT sludges – creosote production', ['T'],
+             'Wastewater treatment sludges generated in the production of '
+             'creosote.'),
+            ('K036', 'Still bottoms – toluene reclamation (disulfoton)', ['T'],
+             'Still bottoms from toluene reclamation distillation in the '
+             'production of disulfoton.'),
+            ('K037', 'WWT sludges – disulfoton production', ['T'],
+             'Wastewater treatment sludges from the production of disulfoton.'),
+            ('K038', 'Wastewater – washing/stripping of phorate production', ['T'],
+             'Wastewater from the washing and stripping of phorate production.'),
+            ('K039', 'Filter cake – diethylphosphorodithioic acid (phorate)', ['T'],
+             'Filter cake from the filtration of diethylphosphorodithioic acid in '
+             'the production of phorate.'),
+            ('K040', 'WWT sludge – phorate production', ['T'],
+             'Wastewater treatment sludge from the production of phorate.'),
+            ('K041', 'WWT sludge – toxaphene production', ['T'],
+             'Wastewater treatment sludge from the production of toxaphene.'),
+            ('K042', 'Heavy ends – tetrachlorobenzene distillation (2,4,5-T)', ['T'],
+             'Heavy ends or distillation residues from the distillation of '
+             'tetrachlorobenzene in the production of 2,4,5-T.'),
+            ('K043', '2,6-Dichlorophenol waste – 2,4-D production', ['T'],
+             '2,6-Dichlorophenol waste from the production of 2,4-D.'),
+            ('K097', 'Vacuum stripper discharge – chlordane chlorinator', ['T'],
+             'Vacuum stripper discharge from the chlordane chlorinator in the '
+             'production of chlordane.'),
+            ('K098', 'Untreated process wastewater – toxaphene production', ['T'],
+             'Untreated process wastewater from the production of toxaphene.'),
+            ('K099', 'Untreated wastewater – 2,4-D production', ['T'],
+             'Untreated wastewater from the production of 2,4-D.'),
+            ('K123', 'Process wastewater – EBDC acid and salts', ['T'],
+             'Process wastewater (including supernates, filtrates, and washwaters) '
+             'from the production of ethylenebisdithiocarbamic acid and its '
+             'salts.'),
+            ('K124', 'Reactor vent scrubber water – EBDC acid and salts', ['C', 'T'],
+             'Reactor vent scrubber water from the production of '
+             'ethylenebisdithiocarbamic acid and its salts.'),
+            ('K125', 'Filtration/evaporation/centrifugation solids – EBDC acid and salts', ['T'],
+             'Filtration, evaporation, and centrifugation solids from the '
+             'production of ethylenebisdithiocarbamic acid and its salts.'),
+            ('K126', 'Baghouse dust/floor sweepings – EBDC milling and packaging', ['T'],
+             'Baghouse dust and floor sweepings in milling and packaging '
+             'operations from the production or formulation of '
+             'ethylenebisdithiocarbamic acid and its salts.'),
+            ('K131', 'Wastewater/spent sulfuric acid – methyl bromide production', ['C', 'T'],
+             'Wastewater from the reactor and spent sulfuric acid from the acid '
+             'dryer from the production of methyl bromide.'),
+            ('K132', 'Spent absorbent/separator solids – methyl bromide production', ['T'],
+             'Spent absorbent and wastewater separator solids from the production '
+             'of methyl bromide.'),
+            # Explosives
+            ('K044', 'WWT sludges – manufacturing/processing of explosives', ['R'],
+             'Wastewater treatment sludges from the manufacturing and processing '
+             'of explosives.'),
+            ('K045', 'Spent carbon – treatment of explosives wastewater', ['R'],
+             'Spent carbon from the treatment of wastewater containing '
+             'explosives.'),
+            ('K046', 'WWT sludges – lead-based initiating compounds', ['T'],
+             'Wastewater treatment sludges from the manufacturing, formulation and '
+             'loading of lead-based initiating compounds.'),
+            ('K047', 'Pink/red water from TNT operations', ['R'],
+             'Pink/red water from TNT operations.'),
+            # Petroleum refining
+            ('K048', 'DAF float – petroleum refining', ['T'],
+             'Dissolved air flotation (DAF) float from the petroleum refining '
+             'industry.'),
+            ('K049', 'Slop oil emulsion solids – petroleum refining', ['T'],
+             'Slop oil emulsion solids from the petroleum refining industry.'),
+            ('K050', 'Heat exchanger bundle cleaning sludge – petroleum refining', ['T'],
+             'Heat exchanger bundle cleaning sludge from the petroleum refining '
+             'industry.'),
+            ('K051', 'API separator sludge – petroleum refining', ['T'],
+             'API separator sludge from the petroleum refining industry.'),
+            ('K052', 'Tank bottoms (leaded) – petroleum refining', ['T'],
+             'Tank bottoms (leaded) from the petroleum refining industry.'),
+            ('K169', 'Crude oil storage tank sediment – petroleum refining', ['T'],
+             'Crude oil storage tank sediment from petroleum refining '
+             'operations.'),
+            ('K170', 'Clarified slurry oil tank sediment – petroleum refining', ['T'],
+             'Clarified slurry oil tank sediment and/or in-line filter/separation '
+             'solids from petroleum refining operations.'),
+            ('K171', 'Spent hydrotreating catalyst – petroleum refining', ['I', 'T'],
+             'Spent hydrotreating catalyst from petroleum refining operations, '
+             'including guard beds used to desulfurize feeds to other catalytic '
+             'reactors (this listing does not include inert support media).'),
+            ('K172', 'Spent hydrorefining catalyst – petroleum refining', ['I', 'T'],
+             'Spent hydrorefining catalyst from petroleum refining operations, '
+             'including guard beds used to desulfurize feeds to other catalytic '
+             'reactors (this listing does not include inert support media).'),
+            # Iron and steel
+            ('K061', 'Emission control dust/sludge – primary steel in electric furnaces', ['T'],
+             'Emission control dust/sludge from the primary production of steel in '
+             'electric furnaces.'),
+            ('K062', 'Spent pickle liquor – steel finishing operations', ['C', 'T'],
+             'Spent pickle liquor generated by steel finishing operations of '
+             'facilities within the iron and steel industry (SIC Codes 331 and '
+             '332).'),
+            # Primary copper / lead / zinc / aluminum
+            ('K064', 'Acid plant blowdown slurry/sludge – primary copper', ['T'],
+             'Acid plant blowdown slurry/sludge resulting from the thickening of '
+             'blowdown slurry from primary copper production.'),
+            ('K065', 'Surface impoundment solids – primary lead smelting', ['T'],
+             'Surface impoundment solids contained in and dredged from surface '
+             'impoundments at primary lead smelting facilities.'),
+            ('K066', 'Sludge – primary zinc production wastewater/acid plant blowdown', ['T'],
+             'Sludge from treatment of process wastewater and/or acid plant '
+             'blowdown from primary zinc production.'),
+            ('K088', 'Spent potliners – primary aluminum reduction', ['T'],
+             'Spent potliners from primary aluminum reduction.'),
+            # Ferroalloys
+            ('K090', 'Emission control dust/sludge – ferrochromiumsilicon production', ['T'],
+             'Emission control dust or sludge from ferrochromiumsilicon '
+             'production.'),
+            ('K091', 'Emission control dust/sludge – ferrochromium production', ['T'],
+             'Emission control dust or sludge from ferrochromium production.'),
+            # Secondary lead
+            ('K069', 'Emission control dust/sludge – secondary lead smelting', ['T'],
+             'Emission control dust/sludge from secondary lead smelting. (Note: '
+             'This listing is stayed administratively for sludge generated from '
+             'secondary acid scrubber systems. The stay will remain in effect '
+             'until further administrative action is taken.)'),
+            ('K100', 'Waste leaching solution – secondary lead emission control dust', ['T'],
+             'Waste leaching solution from acid leaching of emission control dust/'
+             'sludge from secondary lead smelting.'),
+            # Veterinary pharmaceuticals (arsenic / organo-arsenic)
+            ('K084', 'WWT sludges – veterinary pharmaceuticals (arsenic compounds)', ['T'],
+             'Wastewater treatment sludges generated during the production of '
+             'veterinary pharmaceuticals from arsenic or organo-arsenic '
+             'compounds.'),
+            ('K101', 'Distillation tar residues – veterinary pharmaceuticals (arsenic)', ['T'],
+             'Distillation tar residues from the distillation of aniline-based '
+             'compounds in the production of veterinary pharmaceuticals from '
+             'arsenic or organo-arsenic compounds.'),
+            ('K102', 'Activated carbon residue – veterinary pharmaceuticals (arsenic)', ['T'],
+             'Residue from the use of activated carbon for decolorization in the '
+             'production of veterinary pharmaceuticals from arsenic or '
+             'organo-arsenic compounds.'),
+            # Ink formulation
+            ('K086', 'Solvent/caustic/water washes and sludges – ink formulation', ['T'],
+             'Solvent washes and sludges, caustic washes and sludges, or water '
+             'washes and sludges from cleaning tubs and equipment used in the '
+             'formulation of ink from pigments, driers, soaps, and stabilizers '
+             'containing chromium and lead.'),
+            # Coking
+            ('K060', 'Ammonia still lime sludge – coking operations', ['T'],
+             'Ammonia still lime sludge from coking operations.'),
+            ('K087', 'Decanter tank tar sludge – coking operations', ['T'],
+             'Decanter tank tar sludge from coking operations.'),
+            ('K141', 'Process residues – coal tar recovery (coke by-products)', ['T'],
+             'Process residues from the recovery of coal tar, including, but not '
+             'limited to, collecting sump residues from the production of coke '
+             'from coal or the recovery of coke by-products produced from coal. '
+             '(This listing does not include K087.)'),
+            ('K142', 'Tar storage tank residues – coke by-products', ['T'],
+             'Tar storage tank residues from the production of coke from coal or '
+             'from the recovery of coke by-products produced from coal.'),
+            ('K143', 'Process residues – light oil recovery (coke by-products)', ['T'],
+             'Process residues from the recovery of light oil, including, but not '
+             'limited to, those generated in stills, decanters, and wash oil '
+             'recovery units from the recovery of coke by-products produced from '
+             'coal.'),
+            ('K144', 'Wastewater sump residues – light oil refining (coke by-products)', ['T'],
+             'Wastewater sump residues from light oil refining, including, but not '
+             'limited to, intercepting or contamination sump sludges from the '
+             'recovery of coke by-products produced from coal.'),
+            ('K145', 'Residues – naphthalene collection/recovery (coke by-products)', ['T'],
+             'Residues from naphthalene collection and recovery operations from '
+             'the recovery of coke by-products produced from coal.'),
+            ('K147', 'Tar storage tank residues – coal tar refining', ['T'],
+             'Tar storage tank residues from coal tar refining.'),
+            ('K148', 'Residues – coal tar distillation', ['T'],
+             'Residues from coal tar distillation, including but not limited to '
+             'still bottoms.'),
+        ]
+        k_list = [build_listed(c, n, 'K', hc, d) for (c, n, hc, d) in k_list_raw]
+
         def upsert(data_list):
             nonlocal created, updated
             for item in data_list:
                 defaults = {k: v for k, v in item.items() if k != 'name'}
                 defaults.setdefault('source', 'epa_import')
-                defaults['added_by'] = 'Admin'
+                defaults.setdefault('added_by', 'Admin')
                 obj, was_created = Chemical.objects.get_or_create(
                     name=item['name'],
                     defaults=defaults,
@@ -490,6 +1151,8 @@ class Command(BaseCommand):
         upsert(p_list)
         upsert(u_list)
         upsert(other_chemicals)
+        upsert(f_list)
+        upsert(k_list)
 
         # Set all created_at / updated_at dates to 2026-05-04 for every record
         target_date = timezone.datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc)
