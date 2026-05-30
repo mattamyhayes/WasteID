@@ -53,6 +53,7 @@ class ChemicalSerializer(serializers.ModelSerializer):
 
 class MixtureComponentSerializer(serializers.ModelSerializer):
     component_name = serializers.ReadOnlyField()
+    component_cas_number = serializers.ReadOnlyField()
     chemical_detail = ChemicalSerializer(source='chemical', read_only=True)
 
     class Meta:

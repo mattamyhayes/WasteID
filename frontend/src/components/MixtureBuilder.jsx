@@ -35,6 +35,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       unit,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
+      _casNumber: selectedChem ? (selectedChem.cas_number || '') : '',
       _source: 'manual',
     }
     onChange([...components, comp])
@@ -83,6 +84,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
               <tr>
                 <th style={{ width: 32 }}></th>
                 <th>Chemical</th>
+                <th>CAS #</th>
                 <th>EPA Code</th>
                 <th>Quantity</th>
                 <th>Unit</th>
@@ -90,7 +92,9 @@ export default function MixtureBuilder({ components, onChange, editable = false 
               </tr>
             </thead>
             <tbody>
-              {components.map((comp, i) => (
+              {components.map((comp, i) => {
+                const casNumber = comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number || ''
+                return (
                 <tr key={i}>
                   <td style={{ width: 32, textAlign: 'center', fontSize: '1rem' }} title={
                     comp._source === 'imported' ? 'Imported from document'
@@ -108,6 +112,11 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                     </span>
                   </td>
                   <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
+                  <td>
+                    {casNumber
+                      ? casNumber
+                      : <span style={{ color: '#9ca3af' }}>—</span>}
+                  </td>
                   <td>
                     {comp._epaCode
                       ? <span className="badge badge-warning">{comp._epaCode}</span>
@@ -149,7 +158,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                     )}
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
