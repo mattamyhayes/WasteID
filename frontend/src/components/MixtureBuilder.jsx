@@ -7,6 +7,33 @@ const UNIT_LABELS = {
   g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
 }
 
+const CATEGORY_LABELS = {
+  P: 'P-list',
+  U: 'U-list',
+  F: 'F-list',
+  K: 'K-list',
+  D_CHAR: 'D-code',
+  OTHER: 'Other',
+}
+
+const CHARACTERISTIC_FLAGS = [
+  ['is_ignitable', 'Ignitable'],
+  ['is_corrosive', 'Corrosive'],
+  ['is_reactive', 'Reactive'],
+  ['is_toxic', 'Toxic'],
+  ['is_acutely_hazardous', 'Acutely Hazardous'],
+]
+
+function getCharacteristics(chem) {
+  if (!chem) return []
+  return CHARACTERISTIC_FLAGS.filter(([key]) => !!chem[key]).map(([, label]) => label)
+}
+
+function getCategoryDisplay(chem) {
+  if (!chem) return ''
+  return chem.category_display || CATEGORY_LABELS[chem.category] || chem.category || ''
+}
+
 /**
  * Build/edit mixture components.
  * Set `editable` to true when components should support inline quantity/unit edits.
@@ -36,6 +63,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
       _casNumber: selectedChem ? (selectedChem.cas_number || '') : '',
+      _categoryDisplay: selectedChem ? getCategoryDisplay(selectedChem) : '',
+      _characteristics: selectedChem ? getCharacteristics(selectedChem) : [],
       _source: 'manual',
     }
     onChange([...components, comp])
@@ -86,6 +115,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                 <th>Chemical</th>
                 <th>CAS #</th>
                 <th>EPA Code</th>
+                <th>Characteristic Category</th>
+                <th>Characteristic</th>
                 <th>Quantity</th>
                 <th>Unit</th>
                 <th></th>
@@ -121,6 +152,22 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                     {comp._epaCode
                       ? <span className="badge badge-warning">{comp._epaCode}</span>
                       : <span style={{ color: '#9ca3af' }}>—</span>}
+                  </td>
+                  <td>
+                    {(() => {
+                      const cat = comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail)
+                      return cat ? cat : <span style={{ color: '#9ca3af' }}>—</span>
+                    })()}
+                  </td>
+                  <td>
+                    {(() => {
+                      const chars = (comp._characteristics && comp._characteristics.length > 0)
+                        ? comp._characteristics
+                        : getCharacteristics(comp.chemical_detail)
+                      return chars.length > 0
+                        ? chars.join(', ')
+                        : <span style={{ color: '#9ca3af' }}>—</span>
+                    })()}
                   </td>
                   <td>
                     {editable && editingIndex === i
