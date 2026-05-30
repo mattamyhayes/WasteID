@@ -337,12 +337,12 @@ export default function NewDetermination() {
   const [activeSection, setActiveSection] = useState('upload')
 
   const SIDEBAR_ITEMS = [
-    { key: 'upload', label: '📄 Upload', icon: '📄' },
-    { key: 'mixture', label: '🧪 Mixture', icon: '🧪' },
-    { key: 'generator', label: '🏭 Generator', icon: '🏭' },
-    { key: 'analytics', label: '📊 Analytics', icon: '📊' },
-    { key: 'stateRules', label: '📜 State Rules', icon: '📜' },
-    { key: 'notes', label: '📝 Notes', icon: '📝' },
+    { key: 'upload', label: '📄 Upload' },
+    { key: 'mixture', label: '🧪 Mixture' },
+    { key: 'generator', label: '🏭 Generator' },
+    { key: 'analytics', label: '📊 Analytics' },
+    { key: 'stateRules', label: '📜 State Rules' },
+    { key: 'notes', label: '📝 Notes' },
   ]
 
   return (
