@@ -385,6 +385,11 @@ function buildComponentName(comp) {
   return comp.custom_name || 'Unknown Chemical'
 }
 
+function buildComponentCasNumber(comp) {
+  if (comp.chemical_detail && comp.chemical_detail.cas_number) return comp.chemical_detail.cas_number
+  return comp.cas_number || ''
+}
+
 function hydrateComponent(rawComp) {
   const chemDetail = findChemical(rawComp.chemical)
   const comp = {
@@ -393,6 +398,7 @@ function hydrateComponent(rawComp) {
     chemical: rawComp.chemical,
     chemical_detail: chemDetail,
     custom_name: rawComp.custom_name || '',
+    cas_number: rawComp.cas_number || '',
     quantity: rawComp.quantity,
     unit: rawComp.unit,
     override_flash_point_c: rawComp.override_flash_point_c ?? null,
@@ -401,6 +407,7 @@ function hydrateComponent(rawComp) {
     notes: rawComp.notes || '',
   }
   comp.component_name = buildComponentName(comp)
+  comp.component_cas_number = buildComponentCasNumber(comp)
   return comp
 }
 
@@ -560,6 +567,7 @@ export const localMixtures = {
       mixture: numId,
       chemical: payload.chemical ?? null,
       custom_name: payload.custom_name || '',
+      cas_number: payload.cas_number || '',
       quantity: Number(payload.quantity),
       unit: payload.unit,
       override_flash_point_c: payload.override_flash_point_c ?? null,
@@ -629,7 +637,7 @@ export const localMixtures = {
     for (const c of hydrated.components) {
       lines.push([
         c.component_name,
-        c.chemical_detail?.cas_number || '',
+        c.component_cas_number || c.chemical_detail?.cas_number || '',
         c.chemical_detail?.epa_waste_code || '',
         c.quantity,
         c.unit,

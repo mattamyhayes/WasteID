@@ -35,6 +35,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
       unit,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
+      _casNumber: selectedChem ? (selectedChem.cas_number || '') : '',
       _source: 'manual',
     }
     onChange([...components, comp])
@@ -83,6 +84,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
               <tr>
                 <th style={{ width: 32 }}></th>
                 <th>Chemical</th>
+                <th>CAS #</th>
                 <th>EPA Code</th>
                 <th>Quantity</th>
                 <th>Unit</th>
@@ -108,6 +110,11 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                     </span>
                   </td>
                   <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
+                  <td>
+                    {(comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number)
+                      ? (comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number)
+                      : <span style={{ color: '#9ca3af' }}>—</span>}
+                  </td>
                   <td>
                     {comp._epaCode
                       ? <span className="badge badge-warning">{comp._epaCode}</span>

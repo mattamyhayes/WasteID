@@ -234,6 +234,7 @@ class MixtureComponent(models.Model):
     mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='components')
     chemical = models.ForeignKey(Chemical, on_delete=models.SET_NULL, null=True, blank=True)
     custom_name = models.CharField(max_length=200, blank=True)
+    cas_number = models.CharField(max_length=50, blank=True)
     quantity = models.FloatField()
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
 
@@ -248,6 +249,12 @@ class MixtureComponent(models.Model):
         if self.chemical:
             return self.chemical.name
         return self.custom_name or 'Unknown Chemical'
+
+    @property
+    def component_cas_number(self):
+        if self.chemical and self.chemical.cas_number:
+            return self.chemical.cas_number
+        return self.cas_number or ''
 
     def __str__(self):
         return f"{self.component_name}: {self.quantity} {self.unit}"

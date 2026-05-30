@@ -156,6 +156,9 @@ export default function NewDetermination() {
             quantity: c.quantity,
             unit: c.unit,
             component_name: c.component_name || c.custom_name || '',
+            _displayName: c.component_name || c.custom_name || '',
+            _epaCode: c.chemical_detail?.epa_waste_code || '',
+            _casNumber: c.component_cas_number || c.cas_number || c.chemical_detail?.cas_number || '',
           })))
         }
       } catch (e) {
@@ -276,6 +279,7 @@ export default function NewDetermination() {
       await mixtures.addComponent(id, {
         chemical: comp.chemical,
         custom_name: comp.custom_name,
+        cas_number: comp._casNumber || comp.cas_number || '',
         quantity: comp.quantity,
         unit: comp.unit,
       })
