@@ -340,7 +340,7 @@ export default function NewDetermination() {
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem' }}>
+    <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'New Profile'}</h1>
 
       {/* Days Remaining Banner */}
