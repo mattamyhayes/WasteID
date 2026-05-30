@@ -76,6 +76,12 @@ export default function NewDetermination() {
   const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
+  // Collapsible section visibility (hidden by default)
+  const [showGenerator, setShowGenerator] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [showStateRules, setShowStateRules] = useState(false)
+
   // Shipment & EPA fields
   const [shipmentSizeUnit, setShipmentSizeUnit] = useState('')
   const [shipmentSizeQty, setShipmentSizeQty] = useState('')
@@ -331,23 +337,7 @@ export default function NewDetermination() {
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: 780 }}>
-      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>New Profile</h1>
-
-      {/* PID Banner */}
-      {mixtureId && (
-        <div style={{
-          background: '#f0fdf4',
-          border: '1px solid #86efac',
-          borderRadius: 8,
-          padding: '0.5rem 1rem',
-          marginBottom: '1rem',
-          fontSize: '0.95rem',
-          color: '#166534',
-          fontWeight: 600,
-        }}>
-          PID: {mixtureId}
-        </div>
-      )}
+      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${mixtureId}` : 'New Profile'}</h1>
 
       {/* Days Remaining Banner */}
       {shipByInfo && (
@@ -389,27 +379,39 @@ export default function NewDetermination() {
         </div>
       )}
 
-      {/* Transaction ID banner once issued */}
-      {transactionId && (
-        <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
-          <strong>Transaction ID:</strong> {transactionId}
-        </div>
-      )}
+      {/* Transaction ID is generated but intentionally not displayed on the page */}
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Document Upload Section – always available; auto-saves profile on first upload */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)} />
+      {/* Document Upload Section – always available; auto-saves profile on first upload.
+          Uploaded documents are listed inline within the Upload Documents card. */}
+      <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
         {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
           setComponents(prev => [...prev, ...newComponents])
         }} />}
-      </div>
+      </FileUpload>
 
       {/* Waste Profile */}
       <>
-        <div className="card">
-          <h2 style={{ marginBottom: '1.25rem', color: '#166534' }}>Generator Information</h2>
+        {/* Mixture Components section (moved above Generator Information) */}
+        <div className="card" style={{ marginTop: '1.25rem' }}>
+          <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
+          <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+            Search the EPA chemical database or enter custom chemical names with quantities.
+            You can edit component quantities and percentages after adding them.
+          </p>
+          <MixtureBuilder components={components} onChange={setComponents} editable />
+        </div>
+
+        {/* Analytics section – displays results of analytical uploads */}
+        <CollapsibleSection title="Analytics" open={showAnalytics} onToggle={() => setShowAnalytics(s => !s)}>
+          <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
+            Analytics from uploaded analytical reports will be displayed here.
+          </p>
+        </CollapsibleSection>
+
+        {/* Generator Information section */}
+        <CollapsibleSection title="Generator Information" open={showGenerator} onToggle={() => setShowGenerator(s => !s)}>
 
           <div className="form-group">
             <label>Generator *</label>
@@ -546,31 +548,29 @@ export default function NewDetermination() {
               onChange={e => setProcessDesc(e.target.value)}
               placeholder="Describe the process that generated this waste…" />
           </div>
-        </div>
-
-        {/* Components section */}
-        <div className="card" style={{ marginTop: '1.25rem' }}>
-          <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
-            Search the EPA chemical database or enter custom chemical names with quantities.
-            You can edit component quantities and percentages after adding them.
-          </p>
-          <MixtureBuilder components={components} onChange={setComponents} editable />
-        </div>
+        </CollapsibleSection>
 
         {/* Notes */}
-        <div className="card" style={{ marginTop: '1.25rem' }}>
-          <div className="form-group">
+        <CollapsibleSection title="Notes" open={showNotes} onToggle={() => setShowNotes(s => !s)}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Notes</label>
             <textarea className="form-control" rows={3} value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Any additional observations or context…" />
           </div>
-        </div>
+        </CollapsibleSection>
       </>
 
-      {/* State Evaluation Criteria Section */}
-      {selectedState && applicableStateRules.length > 0 && (
-        <div className="card" style={{ marginTop: '1.25rem', border: '2px solid #c4b5fd', background: '#faf5ff' }}>
+      {/* State Specific Rules Section */}
+      <CollapsibleSection title="State Specific Rules" open={showStateRules} onToggle={() => setShowStateRules(s => !s)}>
+        {!selectedState && (
+          <p style={{ color: '#6b7280', margin: 0, fontSize: '0.92rem' }}>
+            Select a generator location to evaluate state specific rules.
+          </p>
+        )}
+
+        {/* State Evaluation Criteria Section */}
+        {selectedState && applicableStateRules.length > 0 && (
+        <div style={{ marginTop: 0, border: '2px solid #c4b5fd', background: '#faf5ff', borderRadius: 10, padding: '1.25rem' }}>
           <h2 style={{ color: '#7c3aed', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
             📜 State Evaluation Criteria
           </h2>
@@ -654,12 +654,13 @@ export default function NewDetermination() {
       )}
 
       {selectedState && applicableStateRules.length === 0 && (
-        <div className="card" style={{ marginTop: '1.25rem', background: '#f0fdf4', border: '1px solid #86efac' }}>
+        <div style={{ marginTop: 0, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '1.25rem' }}>
           <p style={{ color: '#166534', margin: 0, fontWeight: 600, fontSize: '0.92rem' }}>
             ✅ No unique state rules for {selectedState}. Federal RCRA rules are sufficient.
           </p>
         </div>
       )}
+      </CollapsibleSection>
 
       {/* Submit */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -738,6 +739,25 @@ export default function NewDetermination() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function CollapsibleSection({ title, open, onToggle, children, style }) {
+  return (
+    <div className="card" style={{ marginTop: '1.25rem', ...(style || {}) }}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+        aria-expanded={open}
+      >
+        <span style={{ fontSize: '1rem', color: '#166534', display: 'inline-block', transition: 'transform 0.15s', transform: open ? 'rotate(90deg)' : 'none' }}>▶</span>
+        <h2 style={{ margin: 0, color: '#166534', fontSize: '1.1rem' }}>{title}</h2>
+      </div>
+      {open && <div style={{ marginTop: '1rem' }}>{children}</div>}
     </div>
   )
 }

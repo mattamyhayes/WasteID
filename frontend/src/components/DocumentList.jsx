@@ -298,7 +298,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       )}
 
       {docs.length > 0 && (
-        <div className="card" style={{ marginBottom: '1.25rem' }}>
+        <div style={{ marginTop: '1rem' }}>
           <h3 style={{ color: '#166534', marginBottom: '0.75rem', fontSize: '1rem' }}>
             📄 Documents ({docs.length})
           </h3>
