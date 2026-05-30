@@ -38,6 +38,24 @@ function generatePrefixedId(prefix, existingValues = new Set()) {
   return candidate
 }
 
+// Profile numbers are sequential and formatted as `PID` followed by a number,
+// starting at 24456 and incrementing for each new profile that is saved.
+const PROFILE_NUMBER_START = 24456
+
+// Determine the next sequential profile number for a mixture store, taking into
+// account both the stored counter and any profile numbers already in use.
+function nextProfileNumber(store) {
+  const existing = store.mixtures
+    .map(m => {
+      const match = /^PID0*(\d+)$/.exec(m.transaction_id || '')
+      return match ? Number(match[1]) : null
+    })
+    .filter(n => n != null && !Number.isNaN(n))
+  const fromCounter = Number(store.nextId?.profileNumber) || PROFILE_NUMBER_START
+  const fromExisting = existing.length ? Math.max(...existing) + 1 : PROFILE_NUMBER_START
+  return Math.max(PROFILE_NUMBER_START, fromCounter, fromExisting)
+}
+
 function emptyStore() {
   return {
     mixtures: [],
@@ -508,8 +526,9 @@ export const localMixtures = {
   create(payload) {
     const store = loadStore()
     const id = store.nextId.mixture++
-    const usedIds = new Set(store.mixtures.map(m => m.transaction_id))
-    const transactionId = generatePrefixedId('PID', usedIds)
+    const profileNumber = nextProfileNumber(store)
+    store.nextId.profileNumber = profileNumber + 1
+    const transactionId = `PID${profileNumber}`
     const mixture = {
       id,
       transaction_id: transactionId,

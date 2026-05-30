@@ -11,6 +11,9 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
   const [importing, setImporting] = useState(null)
   const [importSuccess, setImportSuccess] = useState(null)
   const [importError, setImportError] = useState('')
+  // Map of profile document id -> completed SDS record, used to prevent
+  // re-importing the same file and to surface an "SDS Import Detail" link.
+  const [sdsByDoc, setSdsByDoc] = useState({})
   const getDocFilename = (doc) => doc.original_filename || doc.file_name || doc.stored_filename || 'document'
 
   const load = async () => {
@@ -20,6 +23,20 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       setDocs(res?.data?.results || res?.data || [])
     } catch {
       setDocs([])
+    }
+    try {
+      const sdsRes = await sds.list(profileId)
+      const records = sdsRes?.data?.results || sdsRes?.data || []
+      const map = {}
+      for (const rec of records) {
+        const docRef = rec.profile_document
+        if (docRef != null && rec.import_status === 'complete') {
+          map[docRef] = rec
+        }
+      }
+      setSdsByDoc(map)
+    } catch {
+      setSdsByDoc({})
     }
   }
 
@@ -102,6 +119,11 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       setImportError('Document not found. It may have been deleted.')
       return
     }
+    // Prevent importing the same file twice (which would duplicate the data).
+    if (sdsByDoc[docId]) {
+      setImportError('This SDS file has already been imported.')
+      return
+    }
     setImporting(docId)
     setImportError('')
     setImportSuccess(null)
@@ -146,6 +168,8 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       const sdsRecord = res.data
 
       setImportSuccess(sdsRecord)
+      // Track this document as imported so it cannot be imported again.
+      setSdsByDoc(prev => ({ ...prev, [doc.id]: sdsRecord }))
 
       // If composition data was parsed, populate it into mixture components
       if (parsedData.composition && onCompositionImported) {
@@ -265,7 +289,19 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       )}
 
       {importSuccess && (
-        <div className="card" style={{ marginBottom: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+        <div className="card" style={{ marginBottom: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', position: 'relative' }}>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => setImportSuccess(null)}
+            style={{
+              position: 'absolute', top: '0.5rem', right: '0.5rem',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: '#166534', fontSize: '1.1rem', lineHeight: 1, padding: '0.2rem 0.4rem',
+            }}
+          >
+            ✕
+          </button>
           <h3 style={{ color: '#166534', marginBottom: '0.5rem', fontSize: '1rem' }}>✓ SDS Imported Successfully</h3>
           <p style={{ fontSize: '0.88rem', color: '#374151', marginBottom: '0.5rem' }}>
             <strong>{importSuccess.product_name}</strong> ({importSuccess.sds_id || `SDS-${String(importSuccess.id).padStart(5, '0')}`})
@@ -292,7 +328,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
             style={{ fontSize: '0.85rem', padding: '0.3rem 0.75rem' }}
             onClick={() => navigate(`/sds/${importSuccess.id}`)}
           >
-            📋 View SDS Detail
+            📋 SDS Import Detail
           </button>
         </div>
       )}
@@ -326,14 +362,24 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
                   >
                     👁 View
                   </button>
+                  {sdsByDoc[doc.id] && (
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '0.2rem 0.45rem' }}
+                      onClick={() => navigate(`/sds/${sdsByDoc[doc.id].id}`)}
+                    >
+                      📋 SDS Import Detail
+                    </button>
+                  )}
                   {(doc.file_type === 'SDS' || doc.doc_type === 'sds') && (
                     <button
                       className="btn btn-primary"
                       style={{ fontSize: '0.78rem', padding: '0.2rem 0.45rem' }}
                       onClick={() => handleImportSds(doc.id)}
-                      disabled={importing === doc.id}
+                      disabled={importing === doc.id || !!sdsByDoc[doc.id]}
+                      title={sdsByDoc[doc.id] ? 'This SDS file has already been imported' : 'Import SDS data from this file'}
                     >
-                      {importing === doc.id ? '⏳…' : '📥 Import'}
+                      {importing === doc.id ? '⏳…' : sdsByDoc[doc.id] ? '✓ Imported' : '📥 Import'}
                     </button>
                   )}
                   {confirmDelete === doc.id ? (
