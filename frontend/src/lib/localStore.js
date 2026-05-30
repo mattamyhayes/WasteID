@@ -47,7 +47,7 @@ const PROFILE_NUMBER_START = 24456
 function nextProfileNumber(store) {
   const existing = store.mixtures
     .map(m => {
-      const match = /^PID0*(\d+)$/.exec(m.transaction_id || '')
+      const match = /^PID(\d+)$/.exec(m.transaction_id || '')
       return match ? Number(match[1]) : null
     })
     .filter(n => n != null && !Number.isNaN(n))
