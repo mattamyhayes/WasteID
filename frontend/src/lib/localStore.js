@@ -1895,6 +1895,44 @@ export const localDocuments = {
     return ok({ results: docs })
   },
 
+  // Synchronously create and persist a document record from already-read file
+  // data (data URL). Returns the stored doc object, or null when the mixture
+  // cannot be found. Used by SDS import so the original file is stored with the
+  // related profile and surfaces in the profile's document lists.
+  createRecord({ mixtureId, fileType, shortName, originalFilename, fileSize, fileData }) {
+    if (!mixtureId) return null
+    const type = fileType === 'A' ? 'A' : 'SDS'
+    const store = loadDocumentsStore()
+    const mixtureStore = loadStore()
+    const mixture = mixtureStore.mixtures.find(m => m.id === Number(mixtureId))
+    if (!mixture) return null
+
+    const profileNumber = mixture.transaction_id || `PID-${mixtureId}`
+    const existingCount = store.documents.filter(
+      d => d.mixture === Number(mixtureId) && d.file_type === type
+    ).length
+    const increment = existingCount + 1
+    const name = originalFilename || 'document'
+    const ext = name.includes('.') ? '.' + name.split('.').pop() : ''
+    const storedFilename = `${profileNumber}_${type}${increment}${ext}`
+
+    const doc = {
+      id: store.nextId++,
+      mixture: Number(mixtureId),
+      file_type: type,
+      short_name: (shortName && shortName.trim()) || name,
+      stored_filename: storedFilename,
+      original_filename: name,
+      file_size: fileSize || 0,
+      uploaded_at: new Date().toISOString(),
+      file_data: fileData || null,
+      file_url: fileData || null,
+    }
+    store.documents.push(doc)
+    saveDocumentsStore(store)
+    return doc
+  },
+
   upload(mixtureId, fileType, shortName, file) {
     const validationError = validateFile(file)
     if (validationError) return reject(validationError, 400)
@@ -2013,6 +2051,23 @@ export const localSds = {
       mixture = mixtureStore.mixtures.find(m => m.id === mid)
     }
 
+    // When importing directly from an uploaded file (no existing profile
+    // document) that is associated with a profile, persist the original file as
+    // a ProfileDocument so it is stored with the profile and accessible from the
+    // SDS section and the profile's document list.
+    let profileDocumentId = data.profile_document_id ? Number(data.profile_document_id) : null
+    if (!profileDocumentId && mixture && data.file_data) {
+      const createdDoc = localDocuments.createRecord({
+        mixtureId: mixture.id,
+        fileType: 'SDS',
+        shortName: data.product_name || data.original_filename || '',
+        originalFilename: data.original_filename || (data.file && data.file.name) || '',
+        fileSize: data.file && data.file.size ? data.file.size : 0,
+        fileData: data.file_data,
+      })
+      if (createdDoc) profileDocumentId = createdDoc.id
+    }
+
     const sdsId = `SDS-${String(store.nextId).padStart(5, '0')}`
 
     const record = {
@@ -2021,7 +2076,7 @@ export const localSds = {
       mixture: mixture ? mixture.id : null,
       profile_name: mixture ? mixture.name : '',
       profile_transaction_id: mixture ? mixture.transaction_id : '',
-      profile_document: data.profile_document_id ? Number(data.profile_document_id) : null,
+      profile_document: profileDocumentId,
       imported_at: new Date().toISOString(),
       import_status: 'complete',
       original_filename: data.original_filename || '',
