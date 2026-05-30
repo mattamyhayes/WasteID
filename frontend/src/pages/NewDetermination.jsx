@@ -337,7 +337,7 @@ export default function NewDetermination() {
   const [activeSection, setActiveSection] = useState('upload')
 
   const SIDEBAR_ITEMS = [
-    { key: 'upload', label: '📄 Upload' },
+    { key: 'upload', label: '📄 SDS Upload' },
     { key: 'mixture', label: '🧪 Mixture' },
     { key: 'generator', label: '🏭 Generator' },
     { key: 'analytics', label: '📊 Analytics' },
@@ -418,9 +418,16 @@ export default function NewDetermination() {
         <div className="profile-main-content">
           {activeSection === 'upload' && (
             <div className="card" style={{ marginTop: 0 }}>
-              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Upload Documents</h2>
-              <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
-                {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
+              <FileUpload
+                profileId={mixtureId}
+                transactionId={transactionId}
+                fixedDocType="SDS"
+                title="SDS Upload"
+                description="Upload Safety Data Sheet (SDS) files for this profile. Accepted formats: PDF, images, Word, Excel."
+                onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined}
+                onUploaded={() => setDocRefresh(r => r + 1)}
+              >
+                {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} filterDocType="SDS" components={components} onCompositionImported={(newComponents, sdsRecord) => {
                   setComponents(prev => [...prev, ...newComponents])
                 }} />}
               </FileUpload>
@@ -582,10 +589,17 @@ export default function NewDetermination() {
 
           {activeSection === 'analytics' && (
             <div className="card" style={{ marginTop: 0 }}>
-              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Analytics</h2>
-              <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
-                Analytics from uploaded analytical reports will be displayed here.
-              </p>
+              <FileUpload
+                profileId={mixtureId}
+                transactionId={transactionId}
+                fixedDocType="A"
+                title="Analytic Upload"
+                description="Upload analytical files for this profile. Uploaded files are automatically treated as Analytic."
+                onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined}
+                onUploaded={() => setDocRefresh(r => r + 1)}
+              >
+                {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={`analytics-${docRefresh}`} filterDocType="A" components={components} />}
+              </FileUpload>
             </div>
           )}
 
@@ -774,4 +788,3 @@ export default function NewDetermination() {
     </div>
   )
 }
-
