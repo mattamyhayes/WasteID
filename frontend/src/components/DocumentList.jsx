@@ -4,6 +4,13 @@ import { parseSdsPdf } from '../lib/sdsPdfParser'
 import { profileDocuments, sds } from '../api/client'
 import FileUpload from './FileUpload'
 
+const canonicalType = (docType) => {
+  const type = String(docType || '').toLowerCase()
+  if (type === 'sds') return 'sds'
+  if (type === 'analytical' || type === 'a') return 'analytical'
+  return type
+}
+
 export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components, filterDocType }) {
   const navigate = useNavigate()
   const [docs, setDocs] = useState([])
@@ -276,12 +283,9 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     )
   }
 
-  const normalizedFilter = filterDocType === 'SDS' ? 'sds' : filterDocType === 'A' ? 'analytical' : null
+  const normalizedFilter = canonicalType(filterDocType)
   const filteredDocs = normalizedFilter
-    ? docs.filter(doc => {
-      const type = String(doc.file_type || doc.doc_type || '').toLowerCase()
-      return type === normalizedFilter || (normalizedFilter === 'analytical' && type === 'a')
-    })
+    ? docs.filter(doc => canonicalType(doc.file_type || doc.doc_type) === normalizedFilter)
     : docs
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { validateFile } from '../lib/documentStore'
 import { profileDocuments } from '../api/client'
 
@@ -14,10 +14,6 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
   const effectiveDocType = fixedDocType || docType
-
-  useEffect(() => {
-    setDocType(fixedDocType || '')
-  }, [fixedDocType])
 
   const handleFileChange = (e) => {
     setError('')
