@@ -7,12 +7,13 @@ const DOC_TYPES = [
   { value: 'A', label: 'Analytical Report' },
 ]
 
-export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded, children }) {
-  const [docType, setDocType] = useState('')
+export default function FileUpload({ profileId, transactionId, onBeforeUpload, onUploaded, children, fixedDocType, title, description }) {
+  const [docType, setDocType] = useState(fixedDocType || '')
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
+  const effectiveDocType = fixedDocType || docType
 
   const handleFileChange = (e) => {
     setError('')
@@ -32,7 +33,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
   }
 
   const handleUpload = async () => {
-    if (!docType) {
+    if (!effectiveDocType) {
       setError('Please select a document type (SDS or Analytical).')
       return
     }
@@ -53,10 +54,10 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
         setUploading(false)
         return
       }
-      const shortName = file.name.replace(/\.[^.]+$/, '') || `${docType === 'SDS' ? 'SDS' : 'Analytical'} Document`
-      await profileDocuments.upload(resolvedProfileId, docType, shortName, file)
+      const shortName = file.name.replace(/\.[^.]+$/, '') || `${effectiveDocType === 'SDS' ? 'SDS' : 'Analytical'} Document`
+      await profileDocuments.upload(resolvedProfileId, effectiveDocType, shortName, file)
       setFile(null)
-      setDocType('')
+      setDocType(fixedDocType || '')
       if (fileInputRef.current) fileInputRef.current.value = ''
       if (onUploaded) onUploaded()
     } catch (e) {
@@ -68,9 +69,9 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
 
   return (
     <div className="card" style={{ marginBottom: '1.25rem' }}>
-      <h2 style={{ marginBottom: '0.75rem', color: '#166534' }}>Upload Documents</h2>
+      <h2 style={{ marginBottom: '0.75rem', color: '#166534' }}>{title || 'Upload Documents'}</h2>
       <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-        Upload SDS (Safety Data Sheet) or Analytical files for this profile. Accepted formats: PDF, images, Word, Excel.
+        {description || 'Upload SDS (Safety Data Sheet) or Analytical files for this profile. Accepted formats: PDF, images, Word, Excel.'}
       </p>
 
       {error && (
@@ -80,15 +81,17 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
       )}
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div className="form-group" style={{ flex: '0 0 200px', marginBottom: 0 }}>
-          <label>Document Type *</label>
-          <select className="form-control" value={docType} onChange={e => setDocType(e.target.value)}>
-            <option value="">-- Select type --</option>
-            {DOC_TYPES.map(t => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        </div>
+        {!fixedDocType && (
+          <div className="form-group" style={{ flex: '0 0 200px', marginBottom: 0 }}>
+            <label>Document Type *</label>
+            <select className="form-control" value={docType} onChange={e => setDocType(e.target.value)}>
+              <option value="">-- Select type --</option>
+              {DOC_TYPES.map(t => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 180 }}>
           <label>File *</label>
@@ -106,7 +109,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
         <button
           className="btn btn-primary"
           onClick={handleUpload}
-          disabled={uploading || !file || !docType}
+          disabled={uploading || !file || !effectiveDocType}
           style={{ fontSize: '0.85rem', padding: '0.35rem 0.9rem' }}
         >
           {uploading ? 'Uploading…' : '⬆ Upload'}

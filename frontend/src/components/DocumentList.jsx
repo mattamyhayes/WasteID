@@ -4,7 +4,14 @@ import { parseSdsPdf } from '../lib/sdsPdfParser'
 import { profileDocuments, sds } from '../api/client'
 import FileUpload from './FileUpload'
 
-export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components }) {
+const canonicalType = (docType) => {
+  const type = String(docType || '').toLowerCase()
+  if (type === 'sds') return 'sds'
+  if (type === 'analytical' || type === 'a') return 'analytical'
+  return type
+}
+
+export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components, filterDocType }) {
   const navigate = useNavigate()
   const [docs, setDocs] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -276,6 +283,11 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     )
   }
 
+  const normalizedFilter = canonicalType(filterDocType)
+  const filteredDocs = normalizedFilter
+    ? docs.filter(doc => canonicalType(doc.file_type || doc.doc_type) === normalizedFilter)
+    : docs
+
   return (
     <div>
       {showUpload && (
@@ -333,13 +345,13 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
         </div>
       )}
 
-      {docs.length > 0 && (
+      {filteredDocs.length > 0 && (
         <div style={{ marginTop: '1rem' }}>
           <h3 style={{ color: '#166534', marginBottom: '0.75rem', fontSize: '1rem' }}>
-            📄 Documents ({docs.length})
+            📄 Documents ({filteredDocs.length})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {docs.map(doc => (
+            {filteredDocs.map(doc => (
               <div key={doc.id} style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem',
                 background: '#f9fafb', borderRadius: 6, border: '1px solid #e5e7eb', flexWrap: 'wrap',
@@ -417,7 +429,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
         </div>
       )}
 
-      {!showUpload && docs.length === 0 && (
+      {!showUpload && filteredDocs.length === 0 && (
         <p style={{ color: '#9ca3af', fontSize: '0.9rem', fontStyle: 'italic' }}>No documents uploaded for this profile.</p>
       )}
     </div>
