@@ -76,12 +76,6 @@ export default function NewDetermination() {
   const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
-  // Collapsible section visibility (hidden by default)
-  const [showGenerator, setShowGenerator] = useState(false)
-  const [showNotes, setShowNotes] = useState(false)
-  const [showAnalytics, setShowAnalytics] = useState(false)
-  const [showStateRules, setShowStateRules] = useState(false)
-
   // Shipment & EPA fields
   const [shipmentSizeUnit, setShipmentSizeUnit] = useState('')
   const [shipmentSizeQty, setShipmentSizeQty] = useState('')
@@ -339,6 +333,18 @@ export default function NewDetermination() {
     }
   }
 
+  // Sidebar navigation state
+  const [activeSection, setActiveSection] = useState('upload')
+
+  const SIDEBAR_ITEMS = [
+    { key: 'upload', label: '📄 Upload' },
+    { key: 'mixture', label: '🧪 Mixture' },
+    { key: 'generator', label: '🏭 Generator' },
+    { key: 'analytics', label: '📊 Analytics' },
+    { key: 'stateRules', label: '📜 State Rules' },
+    { key: 'notes', label: '📝 Notes' },
+  ]
+
   return (
     <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'New Profile'}</h1>
@@ -383,303 +389,313 @@ export default function NewDetermination() {
         </div>
       )}
 
-      {/* Transaction ID is generated but intentionally not displayed on the page */}
-
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Three-column layout:
-          - Left: document upload + generator information + notes
-          - Middle: mixture components
-          - Right: analytics + state specific rules */}
-      <div className="profile-columns">
-        {/* Left column */}
-        <div className="profile-column">
-          {/* Document Upload Section – always available; auto-saves profile on first upload.
-              Uploaded documents are listed inline within the Upload Documents card. */}
-          <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
-            {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
-              setComponents(prev => [...prev, ...newComponents])
-            }} />}
-          </FileUpload>
+      {/* Sidebar + main content layout */}
+      <div className="profile-sidebar-layout">
+        {/* Left sidebar navigation */}
+        <div className="profile-sidebar">
+          {SIDEBAR_ITEMS.map(item => (
+            <button
+              key={item.key}
+              className={`profile-sidebar-btn${activeSection === item.key ? ' active' : ''}`}
+              onClick={() => setActiveSection(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-          {/* Generator Information section */}
-          <CollapsibleSection title="Generator Information" open={showGenerator} onToggle={() => setShowGenerator(s => !s)}>
-
-            <div className="form-group">
-            <label>Generator *</label>
-            {customersError && <div style={{ color: '#b91c1c', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{customersError}</div>}
-            <select className="form-control" value={customerId}
-              onChange={e => { setCustomerId(e.target.value); setLocationId('') }}
-              disabled={customersLoading}>
-              <option value="">{customersLoading ? 'Loading generators…' : '-- Select a generator --'}</option>
-              {customerList.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <small style={{ color: '#6b7280' }}>
-              Don't see your generator?{' '}
-              <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
-              {' '}first, then return here.
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label>Generator Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
-            <select className="form-control" value={locationId}
-              onChange={e => setLocationId(e.target.value)}
-              disabled={!customerId || locationsForCustomer.length === 0}>
-              <option value="">
-                {!customerId ? '-- Select a generator first --'
-                  : locationsForCustomer.length === 0 ? 'No locations on file for this generator'
-                  : '-- Select a location --'}
-              </option>
-              {locationsForCustomer.map(loc => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}{(loc.city || loc.state) ? ` — ${[loc.city, loc.state].filter(Boolean).join(', ')}` : ''}
-                </option>
-              ))}
-            </select>
-            {customerId && locationsForCustomer.length === 0 && (
-              <small style={{ color: '#6b7280' }}>
-                <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
-              </small>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Mixture / Sample Name *</label>
-            <input className="form-control" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
-          </div>
-
-          <div className="form-group">
-            <label>Generation Date</label>
-            <input className="form-control" type="date" value={generationDate}
-              onChange={e => setGenerationDate(e.target.value)}
-              style={{ maxWidth: '220px' }} />
-            <small style={{ color: '#6b7280' }}>Date the waste was generated. Used to calculate the ship-by deadline.</small>
-          </div>
-
-          <div className="form-group">
-            <label>Generator EPA Status</label>
-            <select className="form-control" value={epaGeneratorStatus}
-              onChange={e => setEpaGeneratorStatus(e.target.value)}>
-              <option value="">-- Select EPA status --</option>
-              {EPA_GENERATOR_STATUSES.map(s => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            {epaGeneratorStatus && (
-              <div style={{ marginTop: '0.45rem' }}>
-                <small style={{ color: '#166534', fontWeight: 700, display: 'block' }}>
-                  {epaGeneratorStatus} regulatory guidance
-                </small>
-                <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0, color: '#166534', fontSize: '0.82rem' }}>
-                  {(EPA_GENERATOR_STATUS_GUIDANCE[epaGeneratorStatus] || [`Can hold waste for up to ${EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? '—'} days.`]).map(item => (
-                    <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <h3 style={{ color: '#166534', marginTop: '1.25rem', marginBottom: '0.75rem', fontSize: '1rem' }}>Shipment Size</h3>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label>Size Unit</label>
-              <select className="form-control" value={shipmentSizeUnit}
-                onChange={e => { setShipmentSizeUnit(e.target.value); if (e.target.value === 'bulk') setShipmentSizeQty('') }}>
-                <option value="">-- Select unit --</option>
-                {SHIPMENT_SIZE_UNITS.map(u => (
-                  <option key={u.value} value={u.value}>{u.label}</option>
-                ))}
-              </select>
+        {/* Main content area */}
+        <div className="profile-main-content">
+          {activeSection === 'upload' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Upload Documents</h2>
+              <FileUpload profileId={mixtureId} transactionId={transactionId} onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined} onUploaded={() => setDocRefresh(r => r + 1)}>
+                {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} components={components} onCompositionImported={(newComponents, sdsRecord) => {
+                  setComponents(prev => [...prev, ...newComponents])
+                }} />}
+              </FileUpload>
             </div>
-            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label>Quantity</label>
-              {shipmentSizeUnit === 'bulk' ? (
-                <input className="form-control" type="number" min="0" step="any"
-                  value={shipmentSizeQty}
-                  onChange={e => setShipmentSizeQty(e.target.value)}
-                  placeholder="Enter quantity" />
-              ) : (
-                <select className="form-control" value={shipmentSizeQty}
-                  onChange={e => setShipmentSizeQty(e.target.value)}>
-                  <option value="">-- Select quantity --</option>
-                  {SHIPMENT_SIZE_QTYS.map(q => (
-                    <option key={q} value={q}>{q}</option>
+          )}
+
+          {activeSection === 'mixture' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+                Search the EPA chemical database or enter custom chemical names with quantities.
+                You can edit component quantities and percentages after adding them.
+              </p>
+              <MixtureBuilder components={components} onChange={setComponents} editable />
+            </div>
+          )}
+
+          {activeSection === 'generator' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Generator Information</h2>
+
+              <div className="form-group">
+                <label>Generator *</label>
+                {customersError && <div style={{ color: '#b91c1c', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{customersError}</div>}
+                <select className="form-control" value={customerId}
+                  onChange={e => { setCustomerId(e.target.value); setLocationId('') }}
+                  disabled={customersLoading}>
+                  <option value="">{customersLoading ? 'Loading generators…' : '-- Select a generator --'}</option>
+                  {customerList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                <small style={{ color: '#6b7280' }}>
+                  Don't see your generator?{' '}
+                  <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
+                  {' '}first, then return here.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Generator Location {locationsForCustomer.length > 0 ? '*' : ''}</label>
+                <select className="form-control" value={locationId}
+                  onChange={e => setLocationId(e.target.value)}
+                  disabled={!customerId || locationsForCustomer.length === 0}>
+                  <option value="">
+                    {!customerId ? '-- Select a generator first --'
+                      : locationsForCustomer.length === 0 ? 'No locations on file for this generator'
+                      : '-- Select a location --'}
+                  </option>
+                  {locationsForCustomer.map(loc => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}{(loc.city || loc.state) ? ` — ${[loc.city, loc.state].filter(Boolean).join(', ')}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {customerId && locationsForCustomer.length === 0 && (
+                  <small style={{ color: '#6b7280' }}>
+                    <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
+                  </small>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Mixture / Sample Name *</label>
+                <input className="form-control" value={name} onChange={e => setName(e.target.value)}
+                  placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
+              </div>
+
+              <div className="form-group">
+                <label>Generation Date</label>
+                <input className="form-control" type="date" value={generationDate}
+                  onChange={e => setGenerationDate(e.target.value)}
+                  style={{ maxWidth: '220px' }} />
+                <small style={{ color: '#6b7280' }}>Date the waste was generated. Used to calculate the ship-by deadline.</small>
+              </div>
+
+              <div className="form-group">
+                <label>Generator EPA Status</label>
+                <select className="form-control" value={epaGeneratorStatus}
+                  onChange={e => setEpaGeneratorStatus(e.target.value)}>
+                  <option value="">-- Select EPA status --</option>
+                  {EPA_GENERATOR_STATUSES.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+                {epaGeneratorStatus && (
+                  <div style={{ marginTop: '0.45rem' }}>
+                    <small style={{ color: '#166534', fontWeight: 700, display: 'block' }}>
+                      {epaGeneratorStatus} regulatory guidance
+                    </small>
+                    <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0, color: '#166534', fontSize: '0.82rem' }}>
+                      {(EPA_GENERATOR_STATUS_GUIDANCE[epaGeneratorStatus] || [`Can hold waste for up to ${EPA_STATUS_HOLD_DAYS[epaGeneratorStatus] ?? '—'} days.`]).map(item => (
+                        <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <h3 style={{ color: '#166534', marginTop: '1.25rem', marginBottom: '0.75rem', fontSize: '1rem' }}>Shipment Size</h3>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Size Unit</label>
+                  <select className="form-control" value={shipmentSizeUnit}
+                    onChange={e => { setShipmentSizeUnit(e.target.value); if (e.target.value === 'bulk') setShipmentSizeQty('') }}>
+                    <option value="">-- Select unit --</option>
+                    {SHIPMENT_SIZE_UNITS.map(u => (
+                      <option key={u.value} value={u.value}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Quantity</label>
+                  {shipmentSizeUnit === 'bulk' ? (
+                    <input className="form-control" type="number" min="0" step="any"
+                      value={shipmentSizeQty}
+                      onChange={e => setShipmentSizeQty(e.target.value)}
+                      placeholder="Enter quantity" />
+                  ) : (
+                    <select className="form-control" value={shipmentSizeQty}
+                      onChange={e => setShipmentSizeQty(e.target.value)}>
+                      <option value="">-- Select quantity --</option>
+                      {SHIPMENT_SIZE_QTYS.map(q => (
+                        <option key={q} value={q}>{q}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>Is this material being discarded?</label>
+                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.4rem' }}>
+                  {[true, false].map(val => (
+                    <label key={String(val)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input type="radio" name="discarded" checked={isDiscarded === val}
+                        onChange={() => setIsDiscarded(val)} />
+                      {val ? 'Yes – it is being discarded' : 'No – it is still in use / being managed for reuse'}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {isDiscarded && (
+                <div className="form-group">
+                  <label>Reason for Disposal</label>
+                  <select className="form-control" value={discardReason} onChange={e => setDiscardReason(e.target.value)}>
+                    {DISCARD_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="form-group">
+                <label>Process Description (optional)</label>
+                <textarea className="form-control" rows={3} value={processDesc}
+                  onChange={e => setProcessDesc(e.target.value)}
+                  placeholder="Describe the process that generated this waste…" />
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'analytics' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Analytics</h2>
+              <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
+                Analytics from uploaded analytical reports will be displayed here.
+              </p>
+            </div>
+          )}
+
+          {activeSection === 'stateRules' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>State Specific Rules</h2>
+              {!selectedState && (
+                <p style={{ color: '#6b7280', margin: 0, fontSize: '0.92rem' }}>
+                  Select a generator location to evaluate state specific rules.
+                </p>
+              )}
+
+              {selectedState && applicableStateRules.length > 0 && (
+                <div style={{ marginTop: '0.5rem', border: '2px solid #c4b5fd', background: '#faf5ff', borderRadius: 10, padding: '1.25rem' }}>
+                  <h3 style={{ color: '#7c3aed', marginBottom: '0.5rem', fontSize: '1.05rem' }}>
+                    📜 State Evaluation Criteria
+                  </h3>
+                  <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                    The selected generator location is in <strong>{selectedState}</strong>, which has{' '}
+                    <strong>{applicableStateRules.length}</strong> unique state rule{applicableStateRules.length !== 1 ? 's' : ''} beyond federal RCRA.
+                    {stateRulesWithQuestions.length > 0 && (
+                      <> Click on a state rule below to view details and provide required information.</>
+                    )}
+                  </p>
+
+                  {stateEvalResult === 'pass' && (
+                    <div style={{ background: '#dcfce7', border: '1px solid #86efac', borderRadius: 8, padding: '0.6rem 1rem', marginBottom: '1rem', color: '#166534', fontWeight: 600, fontSize: '0.9rem' }}>
+                      ✅ All state rules have been satisfied.
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {applicableStateRules.map(rule => {
+                      const hasQuestions = rule.questions && rule.questions.length > 0
+                      const returnPath = editId ? `/profile?edit=${editId}` : '/profile'
+                      return (
+                        <Link
+                          key={rule.id}
+                          to={`/state-rules?state=${selectedState}&mixture=${mixtureId || ''}&return=${encodeURIComponent(returnPath)}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.75rem 1rem',
+                            background: '#fff',
+                            border: `1px solid ${hasQuestions ? '#fde68a' : '#d1d5db'}`,
+                            borderRadius: 8,
+                            textDecoration: 'none',
+                            color: '#374151',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          <span style={{ fontSize: '1.1rem' }}>{hasQuestions ? '⚠️' : '✅'}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#14532d' }}>
+                              {rule.id} — {rule.rule_category.charAt(0).toUpperCase() + rule.rule_category.slice(1)}
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '0.15rem' }}>
+                              {rule.description.length > 120 ? rule.description.slice(0, 120) + '…' : rule.description}
+                            </div>
+                          </div>
+                          {hasQuestions && (
+                            <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              {rule.questions.length} question{rule.questions.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          <span style={{ color: '#9ca3af' }}>→</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{ marginTop: '1rem' }}>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.85rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
+                      onClick={async () => {
+                        if (!mixtureId) return
+                        try {
+                          const res = await mixtures.validateStateRules(mixtureId, stateAnswers)
+                          setStateEvalResult(res.data.overall_result)
+                          if (res.data.overall_result === 'needs_info' && res.data.questions.length > 0) {
+                            setStateQuestions(res.data.questions)
+                            setSavedMixtureId(mixtureId)
+                            setStateRulesModal(true)
+                          }
+                        } catch { /* ignore */ }
+                      }}
+                      disabled={!mixtureId}
+                    >
+                      🔄 Evaluate State Rules
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedState && applicableStateRules.length === 0 && (
+                <div style={{ marginTop: '0.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '1.25rem' }}>
+                  <p style={{ color: '#166534', margin: 0, fontWeight: 600, fontSize: '0.92rem' }}>
+                    ✅ No unique state rules for {selectedState}. Federal RCRA rules are sufficient.
+                  </p>
+                </div>
               )}
             </div>
-          </div>
-
-          <div className="form-group" style={{ marginTop: '1rem' }}>
-            <label>Is this material being discarded?</label>
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.4rem' }}>
-              {[true, false].map(val => (
-                <label key={String(val)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                  <input type="radio" name="discarded" checked={isDiscarded === val}
-                    onChange={() => setIsDiscarded(val)} />
-                  {val ? 'Yes – it is being discarded' : 'No – it is still in use / being managed for reuse'}
-                </label>
-              ))}
-            </div>
-          </div>
-          {isDiscarded && (
-            <div className="form-group">
-              <label>Reason for Disposal</label>
-              <select className="form-control" value={discardReason} onChange={e => setDiscardReason(e.target.value)}>
-                {DISCARD_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-              </select>
-            </div>
-          )}
-          <div className="form-group">
-            <label>Process Description (optional)</label>
-            <textarea className="form-control" rows={3} value={processDesc}
-              onChange={e => setProcessDesc(e.target.value)}
-              placeholder="Describe the process that generated this waste…" />
-          </div>
-        </CollapsibleSection>
-
-        {/* Notes */}
-        <CollapsibleSection title="Notes" open={showNotes} onToggle={() => setShowNotes(s => !s)}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Notes</label>
-            <textarea className="form-control" rows={3} value={notes} onChange={e => setNotes(e.target.value)}
-              placeholder="Any additional observations or context…" />
-          </div>
-        </CollapsibleSection>
-        </div>
-        {/* End left column */}
-
-        {/* Middle column: mixture components */}
-        <div className="profile-column">
-          <div className="card" style={{ marginTop: 0 }}>
-            <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
-            <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
-              Search the EPA chemical database or enter custom chemical names with quantities.
-              You can edit component quantities and percentages after adding them.
-            </p>
-            <MixtureBuilder components={components} onChange={setComponents} editable />
-          </div>
-        </div>
-        {/* End middle column */}
-
-        {/* Right column: analytics + state specific rules */}
-        <div className="profile-column">
-          {/* Analytics section – displays results of analytical uploads */}
-          <CollapsibleSection title="Analytics" open={showAnalytics} onToggle={() => setShowAnalytics(s => !s)} style={{ marginTop: 0 }}>
-            <p style={{ color: '#6b7280', fontSize: '0.92rem', margin: 0 }}>
-              Analytics from uploaded analytical reports will be displayed here.
-            </p>
-          </CollapsibleSection>
-
-      {/* State Specific Rules Section */}
-      <CollapsibleSection title="State Specific Rules" open={showStateRules} onToggle={() => setShowStateRules(s => !s)}>
-        {!selectedState && (
-          <p style={{ color: '#6b7280', margin: 0, fontSize: '0.92rem' }}>
-            Select a generator location to evaluate state specific rules.
-          </p>
-        )}
-
-        {/* State Evaluation Criteria Section */}
-        {selectedState && applicableStateRules.length > 0 && (
-        <div style={{ marginTop: 0, border: '2px solid #c4b5fd', background: '#faf5ff', borderRadius: 10, padding: '1.25rem' }}>
-          <h2 style={{ color: '#7c3aed', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
-            📜 State Evaluation Criteria
-          </h2>
-          <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            The selected generator location is in <strong>{selectedState}</strong>, which has{' '}
-            <strong>{applicableStateRules.length}</strong> unique state rule{applicableStateRules.length !== 1 ? 's' : ''} beyond federal RCRA.
-            {stateRulesWithQuestions.length > 0 && (
-              <> Click on a state rule below to view details and provide required information.</>
-            )}
-          </p>
-
-          {stateEvalResult === 'pass' && (
-            <div style={{ background: '#dcfce7', border: '1px solid #86efac', borderRadius: 8, padding: '0.6rem 1rem', marginBottom: '1rem', color: '#166534', fontWeight: 600, fontSize: '0.9rem' }}>
-              ✅ All state rules have been satisfied.
-            </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {applicableStateRules.map(rule => {
-              const hasQuestions = rule.questions && rule.questions.length > 0
-              const returnPath = editId ? `/profile?edit=${editId}` : '/profile'
-              return (
-                <Link
-                  key={rule.id}
-                  to={`/state-rules?state=${selectedState}&mixture=${mixtureId || ''}&return=${encodeURIComponent(returnPath)}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    background: '#fff',
-                    border: `1px solid ${hasQuestions ? '#fde68a' : '#d1d5db'}`,
-                    borderRadius: 8,
-                    textDecoration: 'none',
-                    color: '#374151',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <span style={{ fontSize: '1.1rem' }}>{hasQuestions ? '⚠️' : '✅'}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#14532d' }}>
-                      {rule.id} — {rule.rule_category.charAt(0).toUpperCase() + rule.rule_category.slice(1)}
-                    </div>
-                    <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '0.15rem' }}>
-                      {rule.description.length > 120 ? rule.description.slice(0, 120) + '…' : rule.description}
-                    </div>
-                  </div>
-                  {hasQuestions && (
-                    <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      {rule.questions.length} question{rule.questions.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                  <span style={{ color: '#9ca3af' }}>→</span>
-                </Link>
-              )
-            })}
-          </div>
-
-          <div style={{ marginTop: '1rem' }}>
-            <button
-              className="btn btn-secondary"
-              style={{ fontSize: '0.85rem', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #c4b5fd' }}
-              onClick={async () => {
-                if (!mixtureId) return
-                try {
-                  const res = await mixtures.validateStateRules(mixtureId, stateAnswers)
-                  setStateEvalResult(res.data.overall_result)
-                  if (res.data.overall_result === 'needs_info' && res.data.questions.length > 0) {
-                    setStateQuestions(res.data.questions)
-                    setSavedMixtureId(mixtureId)
-                    setStateRulesModal(true)
-                  }
-                } catch { /* ignore */ }
-              }}
-              disabled={!mixtureId}
-            >
-              🔄 Evaluate State Rules
-            </button>
-          </div>
+          {activeSection === 'notes' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '1rem', color: '#166534' }}>Notes</h2>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Notes</label>
+                <textarea className="form-control" rows={5} value={notes} onChange={e => setNotes(e.target.value)}
+                  placeholder="Any additional observations or context…" />
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {selectedState && applicableStateRules.length === 0 && (
-        <div style={{ marginTop: 0, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '1.25rem' }}>
-          <p style={{ color: '#166534', margin: 0, fontWeight: 600, fontSize: '0.92rem' }}>
-            ✅ No unique state rules for {selectedState}. Federal RCRA rules are sufficient.
-          </p>
-        </div>
-      )}
-      </CollapsibleSection>
-        </div>
-        {/* End right column */}
       </div>
-      {/* End three-column layout */}
 
       {/* Submit */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -762,21 +778,3 @@ export default function NewDetermination() {
   )
 }
 
-function CollapsibleSection({ title, open, onToggle, children, style }) {
-  return (
-    <div className="card" style={{ marginTop: '1.25rem', ...(style || {}) }}>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
-        aria-expanded={open}
-      >
-        <span style={{ fontSize: '1rem', color: '#166534', display: 'inline-block', transition: 'transform 0.15s', transform: open ? 'rotate(90deg)' : 'none' }}>▶</span>
-        <h2 style={{ margin: 0, color: '#166534', fontSize: '1.1rem' }}>{title}</h2>
-      </div>
-      {open && <div style={{ marginTop: '1rem' }}>{children}</div>}
-    </div>
-  )
-}

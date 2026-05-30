@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { chemicals } from '../api/client'
 
@@ -51,11 +51,12 @@ const EMPTY_FORM = {
 }
 
 const thStyle = {
-  padding: '0.75rem 0.5rem', textAlign: 'left', borderBottom: '2px solid #d1d5db',
-  color: '#374151', fontWeight: 600, fontSize: '0.88rem',
+  padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '2px solid #d1d5db',
+  color: '#374151', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap',
 }
 const tdStyle = {
-  padding: '0.6rem 0.5rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.9rem', color: '#1f2937',
+  padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.88rem', color: '#1f2937',
+  whiteSpace: 'nowrap',
 }
 
 const overlayStyle = {
@@ -181,45 +182,37 @@ function ChemicalFormModal({ initial, onSave, onClose, isNew }) {
 }
 
 export default function ChemicalDatabase() {
-  const [records, setRecords] = useState([])
+  const [allRecords, setAllRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [characteristicFilter, setCharacteristicFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
   const PAGE_SIZE = 100
 
   // modal state
   const [showAdd, setShowAdd] = useState(false)
   const [editItem, setEditItem] = useState(null)
+  const [historyItem, setHistoryItem] = useState(null)
 
   useEffect(() => {
     loadChemicals()
-  // search and sourceFilter are applied client-side to already-loaded records;
-  // only page and categoryFilter drive new API requests.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, categoryFilter])
+  }, [])
 
   const loadChemicals = async () => {
     setLoading(true)
     setError('')
     try {
-      const params = {}
-      if (categoryFilter) params.category = categoryFilter
-      params.page = page
-      const res = await chemicals.listAdmin(params)
+      const res = await chemicals.listAdmin({})
       const data = res.data
       if (data && Array.isArray(data.results)) {
-        setRecords(data.results)
-        setTotalCount(data.count || data.results.length)
+        setAllRecords(data.results)
       } else if (Array.isArray(data)) {
-        setRecords(data)
-        setTotalCount(data.length)
+        setAllRecords(data)
       } else {
-        setRecords([])
-        setTotalCount(0)
+        setAllRecords([])
       }
     } catch (err) {
       setError('Failed to load chemical database.')
@@ -228,36 +221,34 @@ export default function ChemicalDatabase() {
     }
   }
 
-  const filtered = records.filter(c => {
-    const q = search.toLowerCase()
-    const matchesSearch = !q || (
-      (c.name && c.name.toLowerCase().includes(q)) ||
-      (c.cas_number && c.cas_number.toLowerCase().includes(q)) ||
-      (c.epa_waste_code && c.epa_waste_code.toLowerCase().includes(q)) ||
-      (c.hazardous_waste_description && c.hazardous_waste_description.toLowerCase().includes(q))
-    )
-    const matchesSource = !sourceFilter || (c.source || 'epa_import') === sourceFilter
-    return matchesSearch && matchesSource
-  })
+  const filtered = useMemo(() => {
+    return allRecords.filter(c => {
+      const q = search.toLowerCase()
+      const matchesSearch = !q || (
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.cas_number && c.cas_number.toLowerCase().includes(q)) ||
+        (c.epa_waste_code && c.epa_waste_code.toLowerCase().includes(q)) ||
+        (c.hazardous_waste_description && c.hazardous_waste_description.toLowerCase().includes(q))
+      )
+      const matchesCategory = !categoryFilter || (c.category || '') === categoryFilter
+      const matchesSource = !sourceFilter || (c.source || 'epa_import') === sourceFilter
+      const matchesCharacteristic = !characteristicFilter || !!c[characteristicFilter]
+      return matchesSearch && matchesCategory && matchesSource && matchesCharacteristic
+    })
+  }, [allRecords, search, categoryFilter, sourceFilter, characteristicFilter])
 
+  const totalCount = filtered.length
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const paginatedRecords = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const formatDate = (val) => {
     if (!val) return '—'
-    try {
-      return new Date(val).toLocaleDateString()
-    } catch {
-      return '—'
-    }
+    try { return new Date(val).toLocaleDateString() } catch { return '—' }
   }
 
   const formatDateTime = (val) => {
     if (!val) return '—'
-    try {
-      return new Date(val).toLocaleString()
-    } catch {
-      return '—'
-    }
+    try { return new Date(val).toLocaleString() } catch { return '—' }
   }
 
   const sourceLabel = (c) => {
@@ -288,12 +279,15 @@ export default function ChemicalDatabase() {
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem 3rem', maxWidth: 1200 }}>
+    <div style={{ padding: '2rem 2rem 3rem', width: '100%', maxWidth: '100%' }}>
       {showAdd && (
         <ChemicalFormModal isNew onSave={handleAdd} onClose={() => setShowAdd(false)} initial={{}} />
       )}
       {editItem && (
         <ChemicalFormModal onSave={handleEdit} onClose={() => setEditItem(null)} initial={editItem} />
+      )}
+      {historyItem && (
+        <HistoryModal chemical={historyItem} onClose={() => setHistoryItem(null)} />
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -318,11 +312,11 @@ export default function ChemicalDatabase() {
           style={{ maxWidth: 320 }}
           placeholder="Search name, CAS #, EPA code…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
         />
         <select
           className="form-control"
-          style={{ maxWidth: 180 }}
+          style={{ maxWidth: 200 }}
           value={categoryFilter}
           onChange={e => { setCategoryFilter(e.target.value); setPage(1) }}
         >
@@ -336,16 +330,29 @@ export default function ChemicalDatabase() {
         </select>
         <select
           className="form-control"
+          style={{ maxWidth: 200 }}
+          value={characteristicFilter}
+          onChange={e => { setCharacteristicFilter(e.target.value); setPage(1) }}
+        >
+          <option value="">All Characteristics</option>
+          <option value="is_ignitable">Ignitable</option>
+          <option value="is_corrosive">Corrosive</option>
+          <option value="is_reactive">Reactive</option>
+          <option value="is_toxic">Toxic</option>
+          <option value="is_acutely_hazardous">Acutely Hazardous</option>
+        </select>
+        <select
+          className="form-control"
           style={{ maxWidth: 180 }}
           value={sourceFilter}
-          onChange={e => setSourceFilter(e.target.value)}
+          onChange={e => { setSourceFilter(e.target.value); setPage(1) }}
         >
           <option value="">All Sources</option>
           <option value="epa_import">EPA Import</option>
           <option value="manual">Manual (Admin)</option>
         </select>
-        {(search || categoryFilter || sourceFilter) && (
-          <button className="btn btn-secondary" onClick={() => { setSearch(''); setCategoryFilter(''); setSourceFilter(''); setPage(1) }}>
+        {(search || categoryFilter || sourceFilter || characteristicFilter) && (
+          <button className="btn btn-secondary" onClick={() => { setSearch(''); setCategoryFilter(''); setSourceFilter(''); setCharacteristicFilter(''); setPage(1) }}>
             Clear Filters
           </button>
         )}
@@ -358,7 +365,7 @@ export default function ChemicalDatabase() {
       ) : filtered.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No chemicals found.</p>
-          {(search || categoryFilter || sourceFilter) && (
+          {(search || categoryFilter || sourceFilter || characteristicFilter) && (
             <p style={{ fontSize: '0.9rem' }}>Try adjusting your filters.</p>
           )}
         </div>
@@ -373,33 +380,29 @@ export default function ChemicalDatabase() {
                   <th style={thStyle}>EPA Code</th>
                   <th style={thStyle}>Category</th>
                   <th style={thStyle}>Characteristics</th>
-                  <th style={thStyle}>Source</th>
-                  <th style={thStyle}>Date Added</th>
-                  <th style={thStyle}>Last Modified</th>
-                  <th style={thStyle}>Added By</th>
                   <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(c => (
+                {paginatedRecords.map(c => (
                   <tr key={c.id}
                     onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
-                    <td style={{ ...tdStyle, fontWeight: 500 }}>
+                    <td style={{ ...tdStyle, fontWeight: 500, whiteSpace: 'normal', maxWidth: 320 }}>
                       {c.name}
                       {c.hazardous_waste_description && (
-                        <div style={{ fontWeight: 400, fontSize: '0.78rem', color: '#6b7280', marginTop: '0.2rem', maxWidth: 360 }}>
-                          {c.hazardous_waste_description}
+                        <div style={{ fontWeight: 400, fontSize: '0.78rem', color: '#6b7280', marginTop: '0.2rem' }}>
+                          {c.hazardous_waste_description.length > 80 ? c.hazardous_waste_description.slice(0, 80) + '…' : c.hazardous_waste_description}
                         </div>
                       )}
                     </td>
-                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem' }}>{c.cas_number || '—'}</td>
-                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>
+                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.83rem' }}>{c.cas_number || '—'}</td>
+                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.83rem', fontWeight: 600, color: '#166534' }}>
                       {c.epa_waste_code || '—'}
                     </td>
                     <td style={tdStyle}>
                       <span style={{
-                        fontSize: '0.78rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: 4,
+                        fontSize: '0.76rem', fontWeight: 600, padding: '0.15rem 0.4rem', borderRadius: 4,
                         background: '#f3f4f6', color: '#374151',
                       }}>
                         {c.category_display || CATEGORY_LABELS[c.category] || c.category || '—'}
@@ -413,7 +416,7 @@ export default function ChemicalDatabase() {
                           <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                             {active.map(([k, label]) => (
                               <span key={k} style={{
-                                fontSize: '0.72rem', fontWeight: 600, padding: '0.1rem 0.4rem', borderRadius: 4,
+                                fontSize: '0.7rem', fontWeight: 600, padding: '0.1rem 0.35rem', borderRadius: 4,
                                 background: '#fef3c7', color: '#92400e', whiteSpace: 'nowrap',
                               }}>
                                 {label}
@@ -423,26 +426,23 @@ export default function ChemicalDatabase() {
                         )
                       })()}
                     </td>
-                    <td style={tdStyle}>
-                      <span style={{
-                        fontSize: '0.78rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: 4,
-                        background: (c.source || 'epa_import') === 'epa_import' ? '#dbeafe' : '#dcfce7',
-                        color: (c.source || 'epa_import') === 'epa_import' ? '#1e40af' : '#166534',
-                      }}>
-                        {sourceLabel(c)}
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, color: '#6b7280' }}>{formatDate(c.created_at)}</td>
-                    <td style={{ ...tdStyle, color: '#6b7280' }}>{formatDateTime(c.updated_at)}</td>
-                    <td style={{ ...tdStyle, color: '#6b7280' }}>{c.added_by || '—'}</td>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.78rem', padding: '0.2rem 0.6rem' }}
-                        onClick={() => openEdit(c)}
-                      >
-                        ✏️ Edit
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.76rem', padding: '0.2rem 0.5rem' }}
+                          onClick={() => openEdit(c)}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.76rem', padding: '0.2rem 0.5rem' }}
+                          onClick={() => setHistoryItem(c)}
+                        >
+                          🕓 History
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -465,6 +465,61 @@ export default function ChemicalDatabase() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function HistoryModal({ chemical, onClose }) {
+  const formatDate = (val) => {
+    if (!val) return '—'
+    try { return new Date(val).toLocaleDateString() } catch { return '—' }
+  }
+  const formatDateTime = (val) => {
+    if (!val) return '—'
+    try { return new Date(val).toLocaleString() } catch { return '—' }
+  }
+  const sourceLabel = (c) => {
+    if (c.source_display) return c.source_display
+    if (c.source && SOURCE_LABELS[c.source]) return SOURCE_LABELS[c.source]
+    return 'EPA Import'
+  }
+
+  return (
+    <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ ...modalStyle, maxWidth: 450 }}>
+        <h2 style={{ color: '#14532d', marginBottom: '1rem', fontSize: '1.1rem' }}>🕓 History — {chemical.name}</h2>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: '0.5rem 0', fontWeight: 600, color: '#374151', width: '40%' }}>Source</td>
+              <td style={{ padding: '0.5rem 0', color: '#1f2937' }}>
+                <span style={{
+                  fontSize: '0.82rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: 4,
+                  background: (chemical.source || 'epa_import') === 'epa_import' ? '#dbeafe' : '#dcfce7',
+                  color: (chemical.source || 'epa_import') === 'epa_import' ? '#1e40af' : '#166534',
+                }}>
+                  {sourceLabel(chemical)}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: '0.5rem 0', fontWeight: 600, color: '#374151', borderTop: '1px solid #e5e7eb' }}>Date Added</td>
+              <td style={{ padding: '0.5rem 0', color: '#1f2937', borderTop: '1px solid #e5e7eb' }}>{formatDate(chemical.created_at)}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '0.5rem 0', fontWeight: 600, color: '#374151', borderTop: '1px solid #e5e7eb' }}>Last Modified</td>
+              <td style={{ padding: '0.5rem 0', color: '#1f2937', borderTop: '1px solid #e5e7eb' }}>{formatDateTime(chemical.updated_at)}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '0.5rem 0', fontWeight: 600, color: '#374151', borderTop: '1px solid #e5e7eb' }}>Added By</td>
+              <td style={{ padding: '0.5rem 0', color: '#1f2937', borderTop: '1px solid #e5e7eb' }}>{chemical.added_by || '—'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
+          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
     </div>
   )
 }
