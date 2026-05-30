@@ -915,6 +915,39 @@ BLOCKED_EXTENSIONS = {'.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB
 
 
+def validate_document_file(uploaded_file):
+    """Validate an uploaded document file for security. Returns an error string or None."""
+    if not uploaded_file:
+        return 'No file provided.'
+    # Check file size
+    if uploaded_file.size > MAX_FILE_SIZE:
+        return f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)} MB.'
+    # Check extension
+    _, ext = os.path.splitext(uploaded_file.name)
+    ext = ext.lower()
+    if ext in BLOCKED_EXTENSIONS:
+        return f'File type "{ext}" is not allowed for security reasons.'
+    if ext not in ALLOWED_EXTENSIONS:
+        return f'File type "{ext}" is not supported. Allowed: {", ".join(sorted(ALLOWED_EXTENSIONS))}'
+    # Check for null bytes in filename
+    if '\x00' in uploaded_file.name:
+        return 'Invalid filename.'
+    return None
+
+
+def generate_stored_filename(mixture, file_type, original_filename):
+    """Generate stored filename: {profile_number}_{SDS|A}{increment}.{ext}"""
+    profile_number = mixture.transaction_id
+    type_suffix = file_type  # 'SDS' or 'A'
+    # Count existing documents of this type for this mixture
+    existing_count = ProfileDocument.objects.filter(
+        mixture=mixture, file_type=file_type
+    ).count()
+    increment = existing_count + 1
+    _, ext = os.path.splitext(original_filename)
+    return f"{profile_number}_{type_suffix}{increment}{ext}"
+
+
 class ProfileDocumentViewSet(viewsets.ModelViewSet):
     queryset = ProfileDocument.objects.select_related('mixture').all()
     serializer_class = ProfileDocumentSerializer
@@ -929,34 +962,11 @@ class ProfileDocumentViewSet(viewsets.ModelViewSet):
 
     def _validate_file(self, uploaded_file):
         """Validate the uploaded file for security."""
-        if not uploaded_file:
-            return 'No file provided.'
-        # Check file size
-        if uploaded_file.size > MAX_FILE_SIZE:
-            return f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)} MB.'
-        # Check extension
-        _, ext = os.path.splitext(uploaded_file.name)
-        ext = ext.lower()
-        if ext in BLOCKED_EXTENSIONS:
-            return f'File type "{ext}" is not allowed for security reasons.'
-        if ext not in ALLOWED_EXTENSIONS:
-            return f'File type "{ext}" is not supported. Allowed: {", ".join(sorted(ALLOWED_EXTENSIONS))}'
-        # Check for null bytes in filename
-        if '\x00' in uploaded_file.name:
-            return 'Invalid filename.'
-        return None
+        return validate_document_file(uploaded_file)
 
     def _generate_stored_filename(self, mixture, file_type, original_filename):
         """Generate stored filename: {profile_number}{SDS|A}{increment}.{ext}"""
-        profile_number = mixture.transaction_id
-        type_suffix = file_type  # 'SDS' or 'A'
-        # Count existing documents of this type for this mixture
-        existing_count = ProfileDocument.objects.filter(
-            mixture=mixture, file_type=file_type
-        ).count()
-        increment = existing_count + 1
-        _, ext = os.path.splitext(original_filename)
-        return f"{profile_number}_{type_suffix}{increment}{ext}"
+        return generate_stored_filename(mixture, file_type, original_filename)
 
     def create(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
@@ -1071,6 +1081,33 @@ class SafetyDataSheetViewSet(viewsets.ModelViewSet):
                 sds_data = json.loads(sds_data)
             except json.JSONDecodeError:
                 return Response({'detail': 'Invalid sds_data JSON.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # When the SDS is imported directly from an uploaded file (no existing
+        # ProfileDocument) and it is associated with a profile, persist the
+        # original file as a ProfileDocument so it is stored with the profile
+        # and remains accessible from the SDS section and the profile's
+        # document list.
+        if uploaded_file and not profile_doc and mixture:
+            file_error = validate_document_file(uploaded_file)
+            if file_error:
+                return Response({'detail': file_error}, status=status.HTTP_400_BAD_REQUEST)
+            file_type = request.data.get('file_type') or 'SDS'
+            if file_type not in ('SDS', 'A'):
+                file_type = 'SDS'
+            short_name = (request.data.get('short_name') or '').strip()
+            if not short_name and isinstance(sds_data, dict):
+                short_name = (sds_data.get('product_name') or '').strip()
+            if not short_name:
+                short_name = original_filename or 'Imported SDS'
+            stored_filename = generate_stored_filename(mixture, file_type, uploaded_file.name)
+            profile_doc = ProfileDocument(
+                mixture=mixture,
+                file_type=file_type,
+                short_name=short_name[:200],
+                file=uploaded_file,
+                stored_filename=stored_filename,
+            )
+            profile_doc.save()
 
         # Build the SDS record from provided data
         try:
