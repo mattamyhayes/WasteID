@@ -1914,7 +1914,7 @@ export const localDocuments = {
     const increment = existingCount + 1
     const name = originalFilename || 'document'
     const ext = name.includes('.') ? '.' + name.split('.').pop() : ''
-    const storedFilename = `${profileNumber}_${type}${increment}${ext}`
+    const storedFilename = `PID${mixtureId}_${profileNumber}_${type}${increment}${ext}`
 
     const doc = {
       id: store.nextId++,
@@ -1951,7 +1951,7 @@ export const localDocuments = {
     ).length
     const increment = existingCount + 1
     const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : ''
-    const storedFilename = `${profileNumber}_${fileType}${increment}${ext}`
+    const storedFilename = `PID${mixtureId}_${profileNumber}_${fileType}${increment}${ext}`
 
     const doc = {
       id: store.nextId++,

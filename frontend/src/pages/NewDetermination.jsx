@@ -404,14 +404,20 @@ export default function NewDetermination() {
               {item.label}
             </button>
           ))}
-          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting} style={{ width: '100%' }}>
-              {submitting ? 'Saving…' : '📋 Submit for Review'}
-            </button>
-            <button className="btn btn-primary" style={{ background: '#7c3aed', borderColor: '#7c3aed', width: '100%' }} onClick={handleCreateDetermination} disabled={submitting}>
-              {submitting ? 'Saving…' : '🧪 Create Determination'}
-            </button>
-          </div>
+          <button
+            className="profile-sidebar-btn"
+            onClick={handleSubmitForReview}
+            disabled={submitting}
+          >
+            {submitting ? 'Saving…' : '📋 Submit for Review'}
+          </button>
+          <button
+            className="profile-sidebar-btn"
+            onClick={handleCreateDetermination}
+            disabled={submitting}
+          >
+            {submitting ? 'Saving…' : '🧪 Create Determination'}
+          </button>
         </div>
 
         {/* Main content area */}
