@@ -57,6 +57,14 @@ input, select, textarea {
   gap: 1rem;
 }
 
+/* Full-width wrapper for the profile (New Determination) page so the
+   three columns can use the entire window width. This page is intentionally
+   not designed to be mobile friendly. */
+.profile-page {
+  width: 100%;
+  margin: 0;
+}
+
 /* Three-column layout for the profile (New Determination) page. */
 .profile-columns {
   display: grid;
@@ -69,12 +77,6 @@ input, select, textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-@media (max-width: 1024px) {
-  .profile-columns {
-    grid-template-columns: 1fr;
-  }
 }
 
 .badge {
