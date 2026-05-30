@@ -936,8 +936,12 @@ def validate_document_file(uploaded_file):
 
 
 def generate_stored_filename(mixture, file_type, original_filename):
-    """Generate stored filename: {profile_number}_{SDS|A}{increment}.{ext}"""
-    profile_number = mixture.transaction_id
+    """Generate stored filename: PID{id}_{profile_number}_{SDS|A}{increment}.{ext}
+    
+    Uses the mixture PK as a PID prefix to ensure uniqueness even when the same
+    file is uploaded multiple times.
+    """
+    profile_number = mixture.transaction_id or f'profile{mixture.id}'
     type_suffix = file_type  # 'SDS' or 'A'
     # Count existing documents of this type for this mixture
     existing_count = ProfileDocument.objects.filter(
@@ -945,7 +949,7 @@ def generate_stored_filename(mixture, file_type, original_filename):
     ).count()
     increment = existing_count + 1
     _, ext = os.path.splitext(original_filename)
-    return f"{profile_number}_{type_suffix}{increment}{ext}"
+    return f"PID{mixture.id}_{profile_number}_{type_suffix}{increment}{ext}"
 
 
 class ProfileDocumentViewSet(viewsets.ModelViewSet):

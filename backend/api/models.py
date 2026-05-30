@@ -675,7 +675,7 @@ class SafetyDataSheet(models.Model):
     """
 
     # Linkage
-    profile_document = models.OneToOneField(
+    profile_document = models.ForeignKey(
         ProfileDocument, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='parsed_sds',
         help_text='Source document this SDS was parsed from'

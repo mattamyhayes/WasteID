@@ -126,11 +126,6 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
       setImportError('Document not found. It may have been deleted.')
       return
     }
-    // Prevent importing the same file twice (which would duplicate the data).
-    if (sdsByDoc[docId]) {
-      setImportError('This SDS file has already been imported.')
-      return
-    }
     setImporting(docId)
     setImportError('')
     setImportSuccess(null)

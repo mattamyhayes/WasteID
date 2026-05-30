@@ -1907,14 +1907,14 @@ export const localDocuments = {
     const mixture = mixtureStore.mixtures.find(m => m.id === Number(mixtureId))
     if (!mixture) return null
 
-    const profileNumber = mixture.transaction_id || `PID-${mixtureId}`
+    const profileNumber = mixture.transaction_id || `profile${mixtureId}`
     const existingCount = store.documents.filter(
       d => d.mixture === Number(mixtureId) && d.file_type === type
     ).length
     const increment = existingCount + 1
     const name = originalFilename || 'document'
     const ext = name.includes('.') ? '.' + name.split('.').pop() : ''
-    const storedFilename = `${profileNumber}_${type}${increment}${ext}`
+    const storedFilename = `PID${mixtureId}_${profileNumber}_${type}${increment}${ext}`
 
     const doc = {
       id: store.nextId++,
@@ -1945,13 +1945,13 @@ export const localDocuments = {
     const mixture = mixtureStore.mixtures.find(m => m.id === Number(mixtureId))
     if (!mixture) return reject('Mixture not found.', 404)
 
-    const profileNumber = mixture.transaction_id || `PID-${mixtureId}`
+    const profileNumber = mixture.transaction_id || `profile${mixtureId}`
     const existingCount = store.documents.filter(
       d => d.mixture === Number(mixtureId) && d.file_type === fileType
     ).length
     const increment = existingCount + 1
     const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : ''
-    const storedFilename = `${profileNumber}_${fileType}${increment}${ext}`
+    const storedFilename = `PID${mixtureId}_${profileNumber}_${fileType}${increment}${ext}`
 
     const doc = {
       id: store.nextId++,
