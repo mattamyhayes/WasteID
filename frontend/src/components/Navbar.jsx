@@ -6,6 +6,7 @@ export const navLinks = [
   { to: '/profile', label: 'New Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
+  { to: '/epa-srs-lookup', label: 'EPA SRS Lookup', icon: '🔬' },
   { to: '/reports', label: 'Reports', icon: '📂' },
   { to: '/admin', label: 'Admin', icon: '⚙️' },
 ]
