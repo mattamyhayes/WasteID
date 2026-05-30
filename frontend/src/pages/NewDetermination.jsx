@@ -404,6 +404,14 @@ export default function NewDetermination() {
               {item.label}
             </button>
           ))}
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting} style={{ width: '100%' }}>
+              {submitting ? 'Saving…' : '📋 Submit for Review'}
+            </button>
+            <button className="btn btn-primary" style={{ background: '#7c3aed', borderColor: '#7c3aed', width: '100%' }} onClick={handleCreateDetermination} disabled={submitting}>
+              {submitting ? 'Saving…' : '🧪 Create Determination'}
+            </button>
+          </div>
         </div>
 
         {/* Main content area */}
@@ -695,17 +703,6 @@ export default function NewDetermination() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Submit */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500, marginRight: 'auto' }}>⚠ {error}</span>}
-        <button className="btn btn-primary" onClick={handleSubmitForReview} disabled={submitting}>
-          {submitting ? 'Saving…' : '📋 Submit for Review'}
-        </button>
-        <button className="btn btn-primary" style={{ background: '#7c3aed', borderColor: '#7c3aed' }} onClick={handleCreateDetermination} disabled={submitting}>
-          {submitting ? 'Saving…' : '🧪 Create Determination'}
-        </button>
       </div>
 
       {/* State Rules Follow-up Questions Modal */}
