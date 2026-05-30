@@ -154,20 +154,10 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                       : <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
                   <td>
-                    {(() => {
-                      const cat = comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail)
-                      return cat ? cat : <span style={{ color: '#9ca3af' }}>—</span>
-                    })()}
+                    {(comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail)) || <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
                   <td>
-                    {(() => {
-                      const chars = (comp._characteristics && comp._characteristics.length > 0)
-                        ? comp._characteristics
-                        : getCharacteristics(comp.chemical_detail)
-                      return chars.length > 0
-                        ? chars.join(', ')
-                        : <span style={{ color: '#9ca3af' }}>—</span>
-                    })()}
+                    {(comp._characteristics?.length > 0 ? comp._characteristics : getCharacteristics(comp.chemical_detail)).join(', ') || <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
                   <td>
                     {editable && editingIndex === i
