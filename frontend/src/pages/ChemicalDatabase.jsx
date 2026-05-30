@@ -39,6 +39,7 @@ const EMPTY_FORM = {
   epa_waste_code: '',
   category: 'OTHER',
   notes: '',
+  hazardous_waste_description: '',
   is_ignitable: false,
   is_corrosive: false,
   is_reactive: false,
@@ -154,6 +155,16 @@ function ChemicalFormModal({ initial, onSave, onClose, isNew }) {
             <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Notes</label>
             <textarea className="form-control" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.88rem' }}>Hazardous Waste Description</label>
+            <textarea
+              className="form-control"
+              rows={3}
+              value={form.hazardous_waste_description}
+              onChange={e => set('hazardous_waste_description', e.target.value)}
+              placeholder="Regulatory description of the waste (e.g. F-list / K-list waste stream per 40 CFR 261 Subpart D)"
+            />
+          </div>
           <div style={{ fontSize: '0.82rem', color: '#6b7280', marginBottom: '1rem' }}>
             Source will be set to <strong>Manual (Admin)</strong>.
           </div>
@@ -222,7 +233,8 @@ export default function ChemicalDatabase() {
     const matchesSearch = !q || (
       (c.name && c.name.toLowerCase().includes(q)) ||
       (c.cas_number && c.cas_number.toLowerCase().includes(q)) ||
-      (c.epa_waste_code && c.epa_waste_code.toLowerCase().includes(q))
+      (c.epa_waste_code && c.epa_waste_code.toLowerCase().includes(q)) ||
+      (c.hazardous_waste_description && c.hazardous_waste_description.toLowerCase().includes(q))
     )
     const matchesSource = !sourceFilter || (c.source || 'epa_import') === sourceFilter
     return matchesSearch && matchesSource
@@ -373,7 +385,14 @@ export default function ChemicalDatabase() {
                   <tr key={c.id}
                     onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
-                    <td style={{ ...tdStyle, fontWeight: 500 }}>{c.name}</td>
+                    <td style={{ ...tdStyle, fontWeight: 500 }}>
+                      {c.name}
+                      {c.hazardous_waste_description && (
+                        <div style={{ fontWeight: 400, fontSize: '0.78rem', color: '#6b7280', marginTop: '0.2rem', maxWidth: 360 }}>
+                          {c.hazardous_waste_description}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem' }}>{c.cas_number || '—'}</td>
                     <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>
                       {c.epa_waste_code || '—'}

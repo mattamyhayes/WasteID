@@ -96,6 +96,12 @@ class Chemical(models.Model):
     ph_value = models.FloatField(null=True, blank=True)
     tclp_threshold_mgl = models.FloatField(null=True, blank=True)
 
+    # Narrative description of the hazardous waste as published in 40 CFR 261
+    # Subpart D (the "Hazardous waste" column of the F-, K-, P- and U-list
+    # tables). Primarily used for F-list / K-list waste streams, which describe
+    # a process waste rather than a single substance.
+    hazardous_waste_description = models.TextField(blank=True)
+
     notes = models.TextField(blank=True)
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='epa_import')
     added_by = models.CharField(max_length=200, blank=True)
