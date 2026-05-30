@@ -55,8 +55,11 @@ def epa_srs_lookup(request):
     # Build the EPA SRS URL based on search type
     try:
         url, params = _build_srs_request(search_type, query, list_acronym, exclude_synonyms)
-    except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except ValueError:
+        return Response(
+            {'error': f"Invalid search_type '{search_type}'. Must be one of: name, cas, id"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Make the request to EPA SRS
     try:
