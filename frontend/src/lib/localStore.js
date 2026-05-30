@@ -2433,6 +2433,7 @@ export const localChemicalStore = {
       id,
       source: 'manual',
       created_at: payload.created_at || now,
+      updated_at: now,
     })
     store.additions.push(chemical)
     store.nextId = id + 1
@@ -2442,15 +2443,16 @@ export const localChemicalStore = {
   update(id, payload) {
     const store = loadChemicalStore()
     const numId = Number(id)
+    const now = new Date().toISOString()
     const addition = store.additions.find(a => Number(a.id) === numId)
     if (addition) {
-      Object.assign(addition, payload, { id: addition.id })
+      Object.assign(addition, payload, { id: addition.id, updated_at: now })
       saveChemicalStore(store)
       return normalizeChemical(addition)
     }
     const base = localChemicals.find(c => Number(c.id) === numId)
     const existing = store.overrides[numId] || {}
-    const updated = { ...existing, ...payload, id: numId }
+    const updated = { ...existing, ...payload, id: numId, updated_at: now }
     store.overrides[numId] = updated
     saveChemicalStore(store)
     return normalizeChemical({ ...(base || {}), ...updated })
