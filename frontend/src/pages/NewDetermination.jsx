@@ -245,12 +245,12 @@ export default function NewDetermination() {
   }
 
   const validate = () => {
-    if (!name.trim()) { setError('Please enter a constituents name.'); return false }
+    if (!name.trim()) { setError('Please enter a sample name.'); return false }
     if (!customerId) { setError('Please select a generator.'); return false }
     if (locationsForCustomer.length > 0 && !locationId) {
       setError('Please select a generator location.'); return false
     }
-    if (components.length === 0) { setError('Add at least one component to the constituents.'); return false }
+    if (components.length === 0) { setError('Add at least one constituent.'); return false }
     setError('')
     return true
   }
@@ -503,7 +503,7 @@ export default function NewDetermination() {
                 You can edit component quantities and percentages after adding them.
               </p>
               <div className="form-group">
-                <label>Constituents / Sample Name *</label>
+                <label>Sample Name *</label>
                 <input className="form-control" value={name} onChange={e => setName(e.target.value)}
                   placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
               </div>
