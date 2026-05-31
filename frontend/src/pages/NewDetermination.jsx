@@ -132,6 +132,35 @@ export default function NewDetermination() {
   const [isReactive, setIsReactive] = useState(false)
   const [notes, setNotes] = useState('')
 
+  // Properties (Physical / Chemical / Other)
+  const PROPERTIES_DEFAULTS = {
+    // Physical
+    color: '', ph_prop: '', odor: '', phases_layers: '',
+    // Chemical
+    btu_value: '', specific_gravity: '',
+    // Other (booleans)
+    pyrophoric: false, polymerizable_inhibited: false, dioxins: false,
+    shock_sensitive: false, polymerizable_organic_peroxides: false,
+    pesticides_herbicides: false, explosive_oxidizer: false,
+    asbestos_friable: false, furans: false, reactive_prop: false,
+    cyanides: false, radioactive: false, water_reactive: false,
+    asbestos_non_friable: false, norm: false,
+    thermally_unstable_air_reactive: false, metal_fines: false,
+    biohazard_infectious: false, reactive_sulfides: false,
+  }
+  const [properties, setProperties] = useState({ ...PROPERTIES_DEFAULTS })
+  // Track source per field: 'imported' | 'manual' | 'modified'
+  const [propertiesSources, setPropertiesSources] = useState({})
+
+  const updateProperty = (key, value) => {
+    setProperties(prev => ({ ...prev, [key]: value }))
+    setPropertiesSources(prev => {
+      const prevSource = prev[key]
+      if (prevSource === 'imported') return { ...prev, [key]: 'modified' }
+      return { ...prev, [key]: prev[key] || 'manual' }
+    })
+  }
+
   // Shipment & EPA fields
   const [shipmentSizeUnit, setShipmentSizeUnit] = useState('')
   const [shipmentSizeQty, setShipmentSizeQty] = useState('')
@@ -179,6 +208,8 @@ export default function NewDetermination() {
       setShipmentSizeQty('')
       setEpaGeneratorStatus('')
       setGenerationDate('')
+      setProperties({ ...PROPERTIES_DEFAULTS })
+      setPropertiesSources({})
     }
   }, [editId])
 
@@ -205,6 +236,8 @@ export default function NewDetermination() {
         setShipmentSizeQty(m.shipment_size_qty ? String(m.shipment_size_qty) : '')
         setEpaGeneratorStatus(m.epa_generator_status || '')
         setGenerationDate(m.generation_date || '')
+        if (m.properties) setProperties({ ...PROPERTIES_DEFAULTS, ...m.properties })
+        if (m.properties_sources) setPropertiesSources(m.properties_sources)
           // Load components
         if (m.components && m.components.length > 0) {
           setComponents(m.components.map(c => ({
@@ -314,6 +347,8 @@ export default function NewDetermination() {
       shipment_size_qty: shipmentSizeQty ? Number(shipmentSizeQty) : null,
       epa_generator_status: epaGeneratorStatus,
       generation_date: generationDate || null,
+      properties: properties,
+      properties_sources: propertiesSources,
     }
 
     let id = mixtureId
@@ -463,6 +498,8 @@ export default function NewDetermination() {
     setShipmentSizeQty('')
     setEpaGeneratorStatus('')
     setGenerationDate('')
+    setProperties({ ...PROPERTIES_DEFAULTS })
+    setPropertiesSources({})
     setActiveSection('generator')
   }
 
@@ -478,6 +515,9 @@ export default function NewDetermination() {
     )},
     { key: 'constituents', label: 'Constituents', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><path d="M8 14h8"/></svg>
+    )},
+    { key: 'properties', label: 'Properties', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><circle cx="12" cy="7" r="1"/></svg>
     )},
     { key: 'analytics', label: 'Analytics', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -716,6 +756,13 @@ export default function NewDetermination() {
               >
                 {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} filterDocType="SDS" components={components} onCompositionImported={(newComponents, sdsRecord) => {
                   setComponents(prev => [...prev, ...newComponents])
+                }} onPropertiesImported={(extractedProps) => {
+                  setProperties(prev => ({ ...prev, ...extractedProps }))
+                  setPropertiesSources(prev => {
+                    const newSources = { ...prev }
+                    Object.keys(extractedProps).forEach(k => { newSources[k] = 'imported' })
+                    return newSources
+                  })
                 }} />}
               </FileUpload>
             </div>
@@ -869,6 +916,120 @@ export default function NewDetermination() {
                 <textarea className="form-control" rows={3} value={processDesc}
                   onChange={e => setProcessDesc(e.target.value)}
                   placeholder="Describe the process that generated this waste…" />
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'properties' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Physical / Chemical / Other Properties</h2>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+                Properties imported from an SDS are marked with 📥. Manually entered values show ✍. Modified imported values show ✏️.
+              </p>
+
+              {/* ─── Physical ─── */}
+              <h3 style={{ color: '#14532d', marginTop: '0.5rem', marginBottom: '0.75rem', fontSize: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.4rem' }}>Physical</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.5rem' }}>
+                {[
+                  { key: 'color', label: 'Color' },
+                  { key: 'ph_prop', label: 'pH' },
+                  { key: 'odor', label: 'Odor' },
+                  { key: 'phases_layers', label: 'Phases/Layers' },
+                ].map(field => (
+                  <div className="form-group" key={field.key} style={{ marginBottom: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {field.label}
+                      <span title={
+                        propertiesSources[field.key] === 'imported' ? 'Imported from SDS'
+                          : propertiesSources[field.key] === 'modified' ? 'Imported then modified'
+                          : propertiesSources[field.key] === 'manual' ? 'Manually entered'
+                          : ''
+                      } style={{ fontSize: '0.85rem' }}>
+                        {propertiesSources[field.key] === 'imported' ? '📥'
+                          : propertiesSources[field.key] === 'modified' ? '✏️'
+                          : propertiesSources[field.key] === 'manual' ? '✍' : ''}
+                      </span>
+                    </label>
+                    <input className="form-control" value={properties[field.key]}
+                      onChange={e => updateProperty(field.key, e.target.value)}
+                      placeholder={`Enter ${field.label.toLowerCase()}`} />
+                  </div>
+                ))}
+              </div>
+
+              {/* ─── Chemical ─── */}
+              <h3 style={{ color: '#14532d', marginTop: '1.25rem', marginBottom: '0.75rem', fontSize: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.4rem' }}>Chemical</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.5rem' }}>
+                {[
+                  { key: 'btu_value', label: 'BTU Value' },
+                  { key: 'specific_gravity', label: 'Specific Gravity (lbs/gal)' },
+                ].map(field => (
+                  <div className="form-group" key={field.key} style={{ marginBottom: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {field.label}
+                      <span title={
+                        propertiesSources[field.key] === 'imported' ? 'Imported from SDS'
+                          : propertiesSources[field.key] === 'modified' ? 'Imported then modified'
+                          : propertiesSources[field.key] === 'manual' ? 'Manually entered'
+                          : ''
+                      } style={{ fontSize: '0.85rem' }}>
+                        {propertiesSources[field.key] === 'imported' ? '📥'
+                          : propertiesSources[field.key] === 'modified' ? '✏️'
+                          : propertiesSources[field.key] === 'manual' ? '✍' : ''}
+                      </span>
+                    </label>
+                    <input className="form-control" type="number" step="any" value={properties[field.key]}
+                      onChange={e => updateProperty(field.key, e.target.value)}
+                      placeholder={`Enter ${field.label.toLowerCase()}`} />
+                  </div>
+                ))}
+              </div>
+
+              {/* ─── Other ─── */}
+              <h3 style={{ color: '#14532d', marginTop: '1.25rem', marginBottom: '0.75rem', fontSize: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.4rem' }}>Other</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem' }}>
+                {[
+                  { key: 'pyrophoric', label: 'Pyrophoric' },
+                  { key: 'polymerizable_inhibited', label: 'Polymerizable (Inhibited)' },
+                  { key: 'dioxins', label: 'Dioxins' },
+                  { key: 'shock_sensitive', label: 'Shock Sensitive' },
+                  { key: 'polymerizable_organic_peroxides', label: 'Polymerizable Organic Peroxides' },
+                  { key: 'pesticides_herbicides', label: 'Pesticides/Herbicides' },
+                  { key: 'explosive_oxidizer', label: 'Explosive Oxidizer' },
+                  { key: 'asbestos_friable', label: 'Asbestos Friable' },
+                  { key: 'furans', label: 'Furans' },
+                  { key: 'reactive_prop', label: 'Reactive' },
+                  { key: 'cyanides', label: 'Cyanides' },
+                  { key: 'radioactive', label: 'Radioactive' },
+                  { key: 'water_reactive', label: 'Water Reactive' },
+                  { key: 'asbestos_non_friable', label: 'Asbestos Non-Friable' },
+                  { key: 'norm', label: 'NORM' },
+                  { key: 'thermally_unstable_air_reactive', label: 'Thermally Unstable Air Reactive' },
+                  { key: 'metal_fines', label: 'Metal Fines' },
+                  { key: 'biohazard_infectious', label: 'Biohazard/Infectious Waste' },
+                  { key: 'reactive_sulfides', label: 'Reactive Sulfides' },
+                ].map(field => (
+                  <label key={field.key} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer',
+                    padding: '0.35rem 0.5rem', borderRadius: 6,
+                    background: properties[field.key] ? '#f0fdf4' : 'transparent',
+                    border: properties[field.key] ? '1px solid #86efac' : '1px solid transparent',
+                  }}>
+                    <input type="checkbox" checked={!!properties[field.key]}
+                      onChange={e => updateProperty(field.key, e.target.checked)} />
+                    <span style={{ fontSize: '0.9rem' }}>{field.label}</span>
+                    <span title={
+                      propertiesSources[field.key] === 'imported' ? 'Imported from SDS'
+                        : propertiesSources[field.key] === 'modified' ? 'Imported then modified'
+                        : propertiesSources[field.key] === 'manual' ? 'Manually entered'
+                        : ''
+                    } style={{ fontSize: '0.8rem', marginLeft: 'auto' }}>
+                      {propertiesSources[field.key] === 'imported' ? '📥'
+                        : propertiesSources[field.key] === 'modified' ? '✏️'
+                        : propertiesSources[field.key] === 'manual' ? '✍' : ''}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
           )}
