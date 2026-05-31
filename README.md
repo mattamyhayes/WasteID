@@ -80,6 +80,8 @@ The frontend is automatically deployed to **https://mattamyhayes.github.io/Waste
 
 The workflow file lives at `.github/workflows/deploy.yml` and runs `npm ci && npm run build` inside `frontend/`, then publishes the `dist/` directory.
 
+Direct URL loads and browser refreshes for client-side routes are supported on GitHub Pages via the SPA fallback files in `frontend/public/404.html` and `frontend/index.html`.
+
 > **Status:** GitHub Pages is enabled. When `VITE_API_URL` is **not** set, the static build runs in **offline mode**: the bundled chemical database is used for search, mixtures and determinations are stored in the browser's `localStorage`, and the RCRA determination engine runs entirely client-side (see `frontend/src/lib/determination.js`, a JS port of `backend/api/determination.py`). Setting `VITE_API_URL` at build time switches every API call back to the Django backend with no code changes — all axios call sites are preserved in `frontend/src/api/client.js`. PDF report generation requires the backend; CSV export and on-screen reports work in both modes.
 
 ## Disclaimer
