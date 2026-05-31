@@ -266,6 +266,153 @@ export default function EPASRSLookup() {
   )
 }
 
+// Categorized characteristic labels
+const PHYSICAL_CHARACTERISTICS = [
+  'Color',
+  'pH',
+  'Odor',
+  'Phases/layers',
+  'Phases/Layers',
+]
+
+const CHEMICAL_CHARACTERISTICS = [
+  'BTU',
+  'Value Specific Gravity (lbs/gal)',
+  'Specific Gravity',
+  'Specific Gravity (lbs/gal)',
+]
+
+const OTHER_CHARACTERISTICS = [
+  'Pyrophoric',
+  'Polymerizable (Inhibited)',
+  'Dioxins',
+  'Shock Sensitive',
+  'Polymerizable',
+  'Organic Peroxides',
+  'Pesticides/Herbicides',
+  'Explosive',
+  'Oxidizer',
+  'Asbestos Friable',
+  'Furans',
+  'Reactive',
+  'Cyanides',
+  'Radioactive',
+  'Water Reactive',
+  'Asbestos Non-Friable',
+  'NORM',
+  'Thermally Unstable',
+  'Air Reactive',
+  'Metal Fines',
+  'Biohazard/Infectious Waste',
+  'Reactive Sulfides',
+]
+
+function categorizeCharacteristics(substance) {
+  // Gather characteristics from the substance data
+  const rawCharacteristics = substance.characteristics || []
+  const physical = []
+  const chemical = []
+  const other = []
+
+  const allItems = Array.isArray(rawCharacteristics) ? rawCharacteristics : []
+
+  allItems.forEach(item => {
+    const label = typeof item === 'string' ? item : (item.name || item.characteristicName || '')
+    const value = typeof item === 'object' ? (item.value || item.characteristicValue || '') : ''
+    const entry = { label, value }
+
+    const labelLower = label.toLowerCase()
+
+    if (PHYSICAL_CHARACTERISTICS.some(p => labelLower.includes(p.toLowerCase()))) {
+      physical.push(entry)
+    } else if (CHEMICAL_CHARACTERISTICS.some(c => labelLower.includes(c.toLowerCase()))) {
+      chemical.push(entry)
+    } else if (OTHER_CHARACTERISTICS.some(o => labelLower.includes(o.toLowerCase()))) {
+      other.push(entry)
+    } else {
+      // Default uncategorized items go to other
+      other.push(entry)
+    }
+  })
+
+  return { physical, chemical, other }
+}
+
+function extractWasteCodes(substance) {
+  // Extract waste codes from lists or classifications
+  const lists = substance.lists || substance.listDetails || []
+  const codes = []
+
+  if (Array.isArray(lists)) {
+    lists.forEach(list => {
+      const acronym = list.listAcronym || list.name || ''
+      const listName = list.listName || ''
+      // Look for RCRA waste codes (D, F, K, P, U codes)
+      if (/^[DFKPU]\d{3}/i.test(acronym) || /^[DFKPU]\d{3}/i.test(listName)) {
+        codes.push(acronym || listName)
+      }
+      // Also check if the list has associated waste codes
+      if (list.supplementalDetails) {
+        const details = Array.isArray(list.supplementalDetails) ? list.supplementalDetails : [list.supplementalDetails]
+        details.forEach(d => {
+          const code = d.wasteCode || d.code || ''
+          if (code) codes.push(code)
+        })
+      }
+    })
+  }
+
+  // Also check for waste codes in classifications
+  const classifications = substance.classifications || []
+  if (Array.isArray(classifications)) {
+    classifications.forEach(cls => {
+      const name = typeof cls === 'string' ? cls : (cls.name || cls.classificationName || '')
+      if (/^[DFKPU]\d{3}/i.test(name)) {
+        codes.push(name)
+      }
+    })
+  }
+
+  return [...new Set(codes)]
+}
+
+function CharacteristicsSection({ title, icon, items, color, bgColor, borderColor }) {
+  if (items.length === 0) return null
+
+  return (
+    <div style={{ marginBottom: '0.8rem' }}>
+      <h5 style={{
+        fontSize: '0.85rem',
+        fontWeight: 600,
+        marginBottom: '0.4rem',
+        color: color,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+      }}>
+        {icon} {title}
+      </h5>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {items.map((item, i) => (
+          <span
+            key={i}
+            style={{
+              background: bgColor,
+              border: `1px solid ${borderColor}`,
+              borderRadius: 4,
+              padding: '0.25rem 0.6rem',
+              fontSize: '0.8rem',
+              color: color,
+            }}
+          >
+            {item.label}{item.value ? `: ${item.value}` : ''}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SubstanceCard({ substance }) {
   // Extract key fields (EPA SRS response structure)
   const name = substance.systematicName || substance.epaName || substance.currentCasNumber || 'Unknown Substance'
@@ -298,13 +445,16 @@ function SubstanceCard({ substance }) {
   ]
 
   const classifications = substance.classifications ? substance.classifications.filter(Boolean) : []
-  const characteristics = substance.characteristics ? substance.characteristics.filter(Boolean) : []
   if (classifications.length > 0) {
     attributes.push({ label: 'Classifications', value: classifications.join(', ') })
   }
-  if (characteristics.length > 0) {
-    attributes.push({ label: 'Characteristics', value: characteristics.join(', ') })
-  }
+
+  // Categorize characteristics
+  const { physical, chemical, other } = categorizeCharacteristics(substance)
+  const hasCharacteristics = physical.length > 0 || chemical.length > 0 || other.length > 0
+
+  // Extract waste codes
+  const wasteCodes = extractWasteCodes(substance)
 
   return (
     <div style={{
@@ -327,6 +477,81 @@ function SubstanceCard({ substance }) {
           </div>
         ))}
       </div>
+
+      {/* Categorized Characteristics */}
+      {hasCharacteristics && (
+        <div style={{
+          background: '#fafafa',
+          border: '1px solid #e5e5e5',
+          borderRadius: 8,
+          padding: '1rem',
+          marginBottom: '1rem',
+        }}>
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.8rem', color: '#1a1a1a' }}>
+            🧪 Characteristics
+          </h4>
+
+          <CharacteristicsSection
+            title="Physical"
+            icon="⚖️"
+            items={physical}
+            color="#4338ca"
+            bgColor="#eef2ff"
+            borderColor="#c7d2fe"
+          />
+
+          <CharacteristicsSection
+            title="Chemical"
+            icon="🔬"
+            items={chemical}
+            color="#b45309"
+            bgColor="#fffbeb"
+            borderColor="#fde68a"
+          />
+
+          <CharacteristicsSection
+            title="Other"
+            icon="⚠️"
+            items={other}
+            color="#dc2626"
+            bgColor="#fef2f2"
+            borderColor="#fecaca"
+          />
+        </div>
+      )}
+
+      {/* Waste Codes */}
+      {wasteCodes.length > 0 && (
+        <div style={{
+          background: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: 8,
+          padding: '1rem',
+          marginBottom: '1rem',
+        }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#166534' }}>
+            🏷️ Related Waste Codes
+          </h4>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {wasteCodes.map((code, i) => (
+              <span
+                key={i}
+                style={{
+                  background: '#dcfce7',
+                  border: '1px solid #86efac',
+                  borderRadius: 4,
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: '#14532d',
+                }}
+              >
+                {code}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Lists */}
       {lists.length > 0 && (
