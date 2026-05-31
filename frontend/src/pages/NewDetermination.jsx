@@ -117,6 +117,7 @@ export default function NewDetermination() {
   const [transactionId, setTransactionId] = useState('')
 
   // Waste Profile
+  const [profileName, setProfileName] = useState('')
   const [name, setName] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [locationId, setLocationId] = useState('')
@@ -160,6 +161,7 @@ export default function NewDetermination() {
     if (!editId) {
       setMixtureId(null)
       setTransactionId('')
+      setProfileName('')
       setName('')
       setCustomerId('')
       setLocationId('')
@@ -189,6 +191,7 @@ export default function NewDetermination() {
         const m = res.data
         setMixtureId(m.id)
         setTransactionId(m.transaction_id || '')
+        setProfileName(m.profile_name || '')
         setName(m.name || '')
         setCustomerId(m.customer ? String(m.customer) : '')
         setLocationId(m.customer_location ? String(m.customer_location) : '')
@@ -284,12 +287,12 @@ export default function NewDetermination() {
   }
 
   const validate = () => {
-    if (!name.trim()) { setError('Please enter a mixture name.'); return false }
+    if (!name.trim()) { setError('Please enter a sample name.'); return false }
     if (!customerId) { setError('Please select a generator.'); return false }
     if (locationsForCustomer.length > 0 && !locationId) {
       setError('Please select a generator location.'); return false
     }
-    if (components.length === 0) { setError('Add at least one component to the mixture.'); return false }
+    if (components.length === 0) { setError('Add at least one constituent.'); return false }
     setError('')
     return true
   }
@@ -298,6 +301,7 @@ export default function NewDetermination() {
   const saveProfileMinimal = async () => {
     const payload = {
       name: name.trim() || 'Untitled Profile',
+      profile_name: profileName.trim(),
       is_discarded: isDiscarded,
       discard_reason: isDiscarded ? discardReason : '',
       process_description: processDesc,
@@ -392,7 +396,7 @@ export default function NewDetermination() {
   }
 
   // Sidebar navigation state
-  const [activeSection, setActiveSection] = useState(editId ? 'upload' : 'myProfiles')
+  const [activeSection, setActiveSection] = useState(editId ? 'generator' : 'myProfiles')
 
   // My Profiles data
   const [myProfiles, setMyProfiles] = useState([])
@@ -434,7 +438,7 @@ export default function NewDetermination() {
 
   const handleSelectProfile = (profile) => {
     navigate(`/profile?edit=${profile.id}`)
-    setActiveSection('upload')
+    setActiveSection('generator')
   }
 
   const handleNewProfile = () => {
@@ -457,18 +461,21 @@ export default function NewDetermination() {
     setShipmentSizeQty('')
     setEpaGeneratorStatus('')
     setGenerationDate('')
-    setActiveSection('upload')
+    setActiveSection('generator')
   }
 
   const SIDEBAR_ITEMS = [
+    { key: 'generator', label: 'Generator', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5 3V6l4 2V4l5 4v11"/><path d="M9 21v-4h3v4"/></svg>
+    )},
+    { key: 'profileName', label: 'Profile Name', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+    )},
     { key: 'upload', label: 'SDS Upload', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
     )},
-    { key: 'mixture', label: 'Mixture', icon: (
+    { key: 'constituents', label: 'Constituents', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><path d="M8 14h8"/></svg>
-    )},
-    { key: 'generator', label: 'Generator', icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5 3V6l4 2V4l5 4v11"/><path d="M9 21v-4h3v4"/></svg>
     )},
     { key: 'analytics', label: 'Analytics', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -484,6 +491,9 @@ export default function NewDetermination() {
   return (
     <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'Profile'}</h1>
+      {mixtureId && profileName && (
+        <div style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '0.5rem', marginTop: '-0.25rem' }}>{profileName}</div>
+      )}
 
       {/* Days Remaining Banner */}
       {shipByInfo && (
@@ -674,6 +684,20 @@ export default function NewDetermination() {
             </div>
           )}
 
+          {activeSection === 'profileName' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Profile Name</h2>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+                Enter a descriptive name for this profile. This name will be displayed alongside the Profile ID.
+              </p>
+              <div className="form-group">
+                <label>Profile Name</label>
+                <input className="form-control" value={profileName} onChange={e => setProfileName(e.target.value)}
+                  placeholder="e.g., Main Lab Waste, Building A Solvents" />
+              </div>
+            </div>
+          )}
+
           {activeSection === 'upload' && (
             <div className="card" style={{ marginTop: 0 }}>
               <FileUpload
@@ -692,15 +716,15 @@ export default function NewDetermination() {
             </div>
           )}
 
-          {activeSection === 'mixture' && (
+          {activeSection === 'constituents' && (
             <div className="card" style={{ marginTop: 0 }}>
-              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Mixture Components</h2>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Constituents</h2>
               <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
                 Search the EPA chemical database or enter custom chemical names with quantities.
                 You can edit component quantities and percentages after adding them.
               </p>
               <div className="form-group">
-                <label>Mixture / Sample Name *</label>
+                <label>Sample Name *</label>
                 <input className="form-control" value={name} onChange={e => setName(e.target.value)}
                   placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
               </div>
