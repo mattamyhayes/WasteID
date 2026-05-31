@@ -4,7 +4,7 @@ import MixtureBuilder from '../components/MixtureBuilder'
 import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
 import DocumentsSection from '../components/DocumentsSection'
-import { mixtures, customers as customersApi, profileDocuments } from '../api/client'
+import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
 

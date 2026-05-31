@@ -655,7 +655,7 @@ class ProfileDocument(models.Model):
     ]
 
     mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='documents')
-    file_type = models.CharField(max_length=5, choices=FILE_TYPE_CHOICES)
+    file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
     short_name = models.CharField(max_length=200, help_text='Short identifier for the document')
     file = models.FileField(upload_to='profile_documents/')
     stored_filename = models.CharField(max_length=300, help_text='Stored filename with profile number prefix')

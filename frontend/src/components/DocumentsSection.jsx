@@ -77,7 +77,7 @@ export default function DocumentsSection({ mixtureId }) {
   const handleDisassociate = async (doc) => {
     // Don't allow disassociating docs that are owned by this profile
     if (doc.mixture === Number(mixtureId)) {
-      setError('Cannot disassociate a document uploaded directly to this profile. Use the SDS Upload or Analytics section to delete it.')
+      setError('Cannot disassociate a document uploaded directly to this profile. Use the appropriate upload section to delete it.')
       return
     }
     setError('')

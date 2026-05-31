@@ -2056,10 +2056,10 @@ export const localDocuments = {
     if (searchQuery && searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase()
       docs = docs.filter(d =>
-        (d.short_name && d.short_name.toLowerCase().includes(q)) ||
-        (d.stored_filename && d.stored_filename.toLowerCase().includes(q)) ||
-        (d.original_filename && d.original_filename.toLowerCase().includes(q)) ||
-        (d.file_type && d.file_type.toLowerCase().includes(q))
+        (d.short_name?.toLowerCase()?.includes(q)) ||
+        (d.stored_filename?.toLowerCase()?.includes(q)) ||
+        (d.original_filename?.toLowerCase()?.includes(q)) ||
+        (d.file_type?.toLowerCase()?.includes(q))
       )
     }
     return ok({ results: docs })
