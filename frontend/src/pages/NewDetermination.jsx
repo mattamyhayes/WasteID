@@ -116,9 +116,10 @@ const STATUS_TILES = [
 
 export default function NewDetermination() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const editId = searchParams.get('edit')
+  const newGeneratorParam = searchParams.get('newGenerator')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -458,7 +459,19 @@ export default function NewDetermination() {
       try {
         const res = await customersApi.list()
         if (cancelled) return
-        setCustomerList(res.data.results || res.data)
+        const list = res.data.results || res.data
+        setCustomerList(list)
+        // Auto-select newly created generator if returning from add-generator flow
+        if (newGeneratorParam && list.find(c => String(c.id) === String(newGeneratorParam))) {
+          setCustomerId(String(newGeneratorParam))
+          setLocationId('')
+          // Clear the param from URL so it doesn't persist on refresh
+          setSearchParams(prev => {
+            const next = new URLSearchParams(prev)
+            next.delete('newGenerator')
+            return next
+          }, { replace: true })
+        }
       } catch (e) {
         if (cancelled) return
         setCustomersError('Could not load generators. You can still proceed by adding a generator first.')
@@ -624,7 +637,7 @@ export default function NewDetermination() {
   }
 
   // Sidebar navigation state
-  const [activeSection, setActiveSection] = useState(editId ? 'generator' : 'myProfiles')
+  const [activeSection, setActiveSection] = useState(editId || newGeneratorParam ? 'generator' : 'myProfiles')
   const autoSaveTimerRef = useRef(null)
   const isSavingRef = useRef(false)
 

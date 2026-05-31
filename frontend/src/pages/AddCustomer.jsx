@@ -88,6 +88,7 @@ export default function AddCustomer() {
         allLocations.push({ ...locForm, name: locForm.name.trim() })
       }
 
+      let targetId = editId
       if (isEdit) {
         await customersApi.update(editId, { ...form, name: form.name.trim() })
         // Handle new locations added during edit (those without an id)
@@ -98,12 +99,18 @@ export default function AddCustomer() {
         }
       } else {
         const res = await customersApi.create({ ...form, name: form.name.trim() })
-        const newId = res.data.id
+        targetId = res.data.id
         for (const loc of allLocations) {
-          await locationsApi.create({ ...loc, customer: newId })
+          await locationsApi.create({ ...loc, customer: targetId })
         }
       }
-      navigate(returnTo || '/generators')
+      // Append newGenerator param so the profile page can auto-select it
+      if (returnTo) {
+        const separator = returnTo.includes('?') ? '&' : '?'
+        navigate(`${returnTo}${separator}newGenerator=${targetId}`)
+      } else {
+        navigate('/generators')
+      }
     } catch (e) {
       const detail = e.response?.data
       setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || `Failed to ${isEdit ? 'update' : 'create'} generator.`))
