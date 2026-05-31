@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-do
 import MixtureBuilder from '../components/MixtureBuilder'
 import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
+import DocumentsSection from '../components/DocumentsSection'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
@@ -485,6 +486,9 @@ export default function NewDetermination() {
     )},
     { key: 'notes', label: 'Notes', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    )},
+    { key: 'documents', label: 'Documents', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     )},
   ]
 
@@ -996,6 +1000,10 @@ export default function NewDetermination() {
                   placeholder="Any additional observations or context…" />
               </div>
             </div>
+          )}
+
+          {activeSection === 'documents' && (
+            <DocumentsSection mixtureId={mixtureId} />
           )}
         </div>
       </div>

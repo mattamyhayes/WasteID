@@ -300,6 +300,18 @@ export const profileDocuments = {
   get: (docId) => useLocalMixtures
     ? localDocuments.get(docId)
     : client.get(`/profile-documents/${docId}/`),
+  listAll: (searchQuery) => useLocalMixtures
+    ? localDocuments.listAll(searchQuery)
+    : client.get('/profile-documents/', { params: { search: searchQuery || '' } }),
+  listForProfile: (mixtureId) => useLocalMixtures
+    ? localDocuments.listForProfile(mixtureId)
+    : client.get('/profile-documents/', { params: { profile: mixtureId } }),
+  associate: (docId, mixtureId) => useLocalMixtures
+    ? localDocuments.associate(docId, mixtureId)
+    : client.post(`/profile-documents/${docId}/associate/`, { mixture_id: mixtureId }),
+  disassociate: (docId, mixtureId) => useLocalMixtures
+    ? localDocuments.disassociate(docId, mixtureId)
+    : client.post(`/profile-documents/${docId}/disassociate/`, { mixture_id: mixtureId }),
 }
 
 export const sds = {  list: (mixtureId) => useLocalMixtures

@@ -2048,6 +2048,63 @@ export const localDocuments = {
     }
     return ok(doc)
   },
+
+  // List ALL documents across all profiles (for search/associate)
+  listAll(searchQuery) {
+    const store = loadDocumentsStore()
+    let docs = store.documents
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      docs = docs.filter(d =>
+        (d.short_name?.toLowerCase()?.includes(q)) ||
+        (d.stored_filename?.toLowerCase()?.includes(q)) ||
+        (d.original_filename?.toLowerCase()?.includes(q)) ||
+        (d.file_type?.toLowerCase()?.includes(q))
+      )
+    }
+    return ok({ results: docs })
+  },
+
+  // Associate an existing document with a profile (many-to-many)
+  associate(docId, mixtureId) {
+    const store = loadDocumentsStore()
+    const doc = store.documents.find(d => d.id === Number(docId))
+    if (!doc) return reject('Document not found.', 404)
+    // Initialize associations array if needed
+    if (!doc.associated_profiles) doc.associated_profiles = []
+    const mid = Number(mixtureId)
+    // Don't duplicate if already the owner or already associated
+    if (doc.mixture === mid) return ok(doc)
+    if (!doc.associated_profiles.includes(mid)) {
+      doc.associated_profiles.push(mid)
+      saveDocumentsStore(store)
+    }
+    return ok(doc)
+  },
+
+  // Disassociate a document from a profile
+  disassociate(docId, mixtureId) {
+    const store = loadDocumentsStore()
+    const doc = store.documents.find(d => d.id === Number(docId))
+    if (!doc) return reject('Document not found.', 404)
+    const mid = Number(mixtureId)
+    if (doc.associated_profiles) {
+      doc.associated_profiles = doc.associated_profiles.filter(id => id !== mid)
+      saveDocumentsStore(store)
+    }
+    return ok(doc)
+  },
+
+  // List documents associated with a profile (both owned and associated)
+  listForProfile(mixtureId) {
+    const store = loadDocumentsStore()
+    const mid = Number(mixtureId)
+    const docs = store.documents.filter(d =>
+      d.mixture === mid ||
+      (d.associated_profiles && d.associated_profiles.includes(mid))
+    )
+    return ok({ results: docs })
+  },
 }
 
 
