@@ -124,21 +124,23 @@ def _build_srs_request(search_type, query, list_acronym='', exclude_synonyms=Fal
     params = {}
 
     if search_type == 'name':
-        url = f"{EPA_SRS_BASE_URL}/substances/name/{query}"
+        url = f"{EPA_SRS_BASE_URL}/substances/name"
+        params['nameList'] = query
         if list_acronym:
             params['listAcronym'] = list_acronym
         if exclude_synonyms:
             params['excludeSynonyms'] = 'true'
 
     elif search_type == 'cas':
-        url = f"{EPA_SRS_BASE_URL}/substances/cas/{query}"
+        url = f"{EPA_SRS_BASE_URL}/substances/cas"
+        params['casList'] = query
         if list_acronym:
             params['listAcronym'] = list_acronym
         if exclude_synonyms:
             params['excludeSynonyms'] = 'true'
 
     elif search_type == 'id':
-        url = f"{EPA_SRS_BASE_URL}/substances/{query}"
+        url = f"{EPA_SRS_BASE_URL}/substance/{query}"
 
     else:
         raise ValueError(

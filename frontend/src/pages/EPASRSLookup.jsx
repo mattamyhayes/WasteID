@@ -372,11 +372,14 @@ function buildEpaSrsUrl(searchType, query, listAcronym, excludeSynonyms) {
   const params = new URLSearchParams()
 
   if (searchType === 'name') {
-    url = `${EPA_SRS_BASE_URL}/substances/name/${encodeURIComponent(query)}`
+    url = `${EPA_SRS_BASE_URL}/substances/name`
+    params.set('nameList', query)
   } else if (searchType === 'cas') {
-    url = `${EPA_SRS_BASE_URL}/substances/cas/${encodeURIComponent(query)}`
+    url = `${EPA_SRS_BASE_URL}/substances/cas`
+    params.set('casList', query)
   } else {
-    url = `${EPA_SRS_BASE_URL}/substances/${encodeURIComponent(query)}`
+    // ID lookup uses singular /substance/{id}
+    url = `${EPA_SRS_BASE_URL}/substance/${encodeURIComponent(query)}`
   }
 
   if ((searchType === 'name' || searchType === 'cas') && listAcronym) {
