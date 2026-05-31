@@ -619,7 +619,7 @@ export default function NewDetermination() {
     // Auto-save current data before switching (if we have meaningful data)
     if (activeSection !== 'myProfiles' && !isSavingRef.current && (mixtureId || name.trim())) {
       isSavingRef.current = true
-      saveProfileMinimal().catch(() => {}).finally(() => { isSavingRef.current = false })
+      saveProfileMinimal().catch(() => { /* auto-save is best-effort */ }).finally(() => { isSavingRef.current = false })
     }
     setActiveSection(section)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -633,11 +633,11 @@ export default function NewDetermination() {
     autoSaveTimerRef.current = setTimeout(() => {
       if (!isSavingRef.current) {
         isSavingRef.current = true
-        saveProfileMinimal().catch(() => {}).finally(() => { isSavingRef.current = false })
+        saveProfileMinimal().catch(() => { /* auto-save is best-effort */ }).finally(() => { isSavingRef.current = false })
       }
     }, 2000)
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current) }
-  }, [profileName, name, customerId, locationId, isDiscarded, discardReason, processDesc, notes,
+  }, [activeSection, mixtureId, profileName, name, customerId, locationId, isDiscarded, discardReason, processDesc, notes,
       shipmentSizeUnit, shipmentSizeQty, epaGeneratorStatus, generationDate, flashPoint, ph,
       isReactive, properties, shippingNameVerified, shippingNameUserNote])
 
