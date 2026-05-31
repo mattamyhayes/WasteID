@@ -5,7 +5,7 @@ import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
 import DocumentsSection from '../components/DocumentsSection'
 import AnalyticsUpload from '../components/AnalyticsUpload'
-import { mixtures, customers as customersApi } from '../api/client'
+import { mixtures, customers as customersApi, sds } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
 import stateWasteCodesData from '../data/stateWasteCodes.json'
@@ -162,6 +162,11 @@ export default function NewDetermination() {
     })
   }
 
+  // Shipping Name
+  const [importedSdsRecord, setImportedSdsRecord] = useState(null)
+  const [shippingNameVerified, setShippingNameVerified] = useState(false)
+  const [shippingNameUserNote, setShippingNameUserNote] = useState('')
+
   // Shipment & EPA fields
   const [shipmentSizeUnit, setShipmentSizeUnit] = useState('')
   const [shipmentSizeQty, setShipmentSizeQty] = useState('')
@@ -180,6 +185,47 @@ export default function NewDetermination() {
     () => calcShipByInfo(epaGeneratorStatus, generationDate),
     [epaGeneratorStatus, generationDate]
   )
+
+  // Derive Proper Shipping Name (PSN) from constituents
+  const derivedPSN = useMemo(() => {
+    if (!components || components.length === 0) return ''
+    // Build PSN from constituent names: use primary component or mixture description
+    const names = components
+      .map(c => c._displayName || c.custom_name || '')
+      .filter(Boolean)
+    if (names.length === 0) return ''
+    if (names.length === 1) return `Waste ${names[0]}`
+    // For mixtures, list top constituents (up to 3)
+    const top = names.slice(0, 3).join(', ')
+    return `Waste ${top}${names.length > 3 ? ', et al.' : ''}`
+  }, [components])
+
+  // DOT Shipping Name from SDS Section 14
+  const dotShippingName = useMemo(() => {
+    return importedSdsRecord?.un_proper_shipping_name || ''
+  }, [importedSdsRecord])
+
+  // Compare PSN and DOT shipping name
+  const shippingNameMatch = useMemo(() => {
+    if (!derivedPSN || !dotShippingName) return null
+    const normPsn = derivedPSN.toLowerCase().replace(/^waste\s+/i, '').trim()
+    const normDot = dotShippingName.toLowerCase().replace(/^waste\s+/i, '').trim()
+    if (normPsn === normDot) return 'exact'
+    if (normDot.includes(normPsn) || normPsn.includes(normDot)) return 'partial'
+    return 'mismatch'
+  }, [derivedPSN, dotShippingName])
+
+  // Load SDS records for the profile when mixtureId is set
+  useEffect(() => {
+    if (!mixtureId) return
+    sds.list(mixtureId).then(res => {
+      const records = res?.data?.results || res?.data || []
+      if (records.length > 0) {
+        // Use the most recent SDS record
+        setImportedSdsRecord(records[records.length - 1])
+      }
+    }).catch(() => {})
+  }, [mixtureId, docRefresh])
 
   // Reset all state on mount (or load existing profile in edit mode)
   useEffect(() => {
@@ -501,6 +547,9 @@ export default function NewDetermination() {
     setGenerationDate('')
     setProperties({ ...PROPERTIES_DEFAULTS })
     setPropertiesSources({})
+    setImportedSdsRecord(null)
+    setShippingNameVerified(false)
+    setShippingNameUserNote('')
     setActiveSection('generator')
   }
 
@@ -516,6 +565,9 @@ export default function NewDetermination() {
     )},
     { key: 'constituents', label: 'Constituents', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><path d="M8 14h8"/></svg>
+    )},
+    { key: 'shippingName', label: 'Shipping Name', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
     )},
     { key: 'properties', label: 'Properties', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><circle cx="12" cy="7" r="1"/></svg>
@@ -760,6 +812,7 @@ export default function NewDetermination() {
               >
                 {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={docRefresh} filterDocType="SDS" components={components} onCompositionImported={(newComponents, sdsRecord) => {
                   setComponents(prev => [...prev, ...newComponents])
+                  if (sdsRecord) setImportedSdsRecord(sdsRecord)
                 }} onPropertiesImported={(extractedProps) => {
                   setProperties(prev => ({ ...prev, ...extractedProps }))
                   setPropertiesSources(prev => {
@@ -920,6 +973,139 @@ export default function NewDetermination() {
                 <textarea className="form-control" rows={3} value={processDesc}
                   onChange={e => setProcessDesc(e.target.value)}
                   placeholder="Describe the process that generated this waste…" />
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'shippingName' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Proper Shipping Name (PSN)</h2>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+                The Proper Shipping Name is derived from the waste constituents and cross-referenced against the DOT Ship Name listed in Section 14 of the SDS.
+                Please verify the results below.
+              </p>
+
+              {/* Derived PSN from Constituents */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontWeight: 600, color: '#374151', display: 'block', marginBottom: '0.4rem' }}>
+                  🧪 Derived PSN (from Constituents)
+                </label>
+                {derivedPSN ? (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: '#f0fdf4',
+                    border: '1px solid #86efac',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    color: '#166534',
+                    fontSize: '1rem',
+                  }}>
+                    {derivedPSN}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                  }}>
+                    No constituents added yet. Add chemicals in the Constituents section to generate a PSN.
+                  </div>
+                )}
+              </div>
+
+              {/* DOT Ship Name from SDS Section 14 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontWeight: 600, color: '#374151', display: 'block', marginBottom: '0.4rem' }}>
+                  🚛 DOT Ship Name (from SDS Section 14)
+                </label>
+                {dotShippingName ? (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: '#eff6ff',
+                    border: '1px solid #93c5fd',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    color: '#1e3a5f',
+                    fontSize: '1rem',
+                  }}>
+                    {dotShippingName}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                  }}>
+                    No SDS imported yet. Upload and import an SDS to retrieve the DOT shipping name from Section 14.
+                  </div>
+                )}
+                {importedSdsRecord && (
+                  <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '0.4rem' }}>
+                    Source: {importedSdsRecord.product_name || importedSdsRecord.sds_id || `SDS #${importedSdsRecord.id}`}
+                    {importedSdsRecord.un_number && ` · UN ${importedSdsRecord.un_number}`}
+                    {importedSdsRecord.transport_hazard_class && ` · Class ${importedSdsRecord.transport_hazard_class}`}
+                  </div>
+                )}
+              </div>
+
+              {/* Comparison / Match Status */}
+              {derivedPSN && dotShippingName && (
+                <div style={{
+                  padding: '1rem 1.25rem',
+                  borderRadius: 10,
+                  marginBottom: '1.5rem',
+                  background: shippingNameMatch === 'exact' ? '#f0fdf4'
+                    : shippingNameMatch === 'partial' ? '#fffbeb'
+                    : '#fef2f2',
+                  border: `2px solid ${shippingNameMatch === 'exact' ? '#16a34a'
+                    : shippingNameMatch === 'partial' ? '#f59e0b'
+                    : '#dc2626'}`,
+                }}>
+                  <div style={{ fontWeight: 700, marginBottom: '0.4rem', color: shippingNameMatch === 'exact' ? '#166534' : shippingNameMatch === 'partial' ? '#92400e' : '#991b1b' }}>
+                    {shippingNameMatch === 'exact' && '✅ Names Match'}
+                    {shippingNameMatch === 'partial' && '⚠️ Partial Match — Please Verify'}
+                    {shippingNameMatch === 'mismatch' && '❌ Names Do Not Match — Verification Required'}
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: '#4b5563' }}>
+                    {shippingNameMatch === 'exact' && 'The derived PSN matches the DOT shipping name from the SDS Section 14.'}
+                    {shippingNameMatch === 'partial' && 'The names partially overlap. This may be due to analytical report changes or naming conventions. Please review and confirm the correct shipping name.'}
+                    {shippingNameMatch === 'mismatch' && 'The derived PSN from constituents does not match the DOT shipping name in SDS Section 14. This may occur due to changes from the Analytical report. Please review both names and verify the correct shipping name below.'}
+                  </div>
+                </div>
+              )}
+
+              {/* User Verification */}
+              <div style={{
+                padding: '1.25rem',
+                background: '#f9fafb',
+                borderRadius: 10,
+                border: '1px solid #e5e7eb',
+              }}>
+                <label style={{ fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={shippingNameVerified}
+                    onChange={e => setShippingNameVerified(e.target.checked)}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  I verify that the Proper Shipping Name is correct
+                </label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.88rem', color: '#6b7280' }}>Notes / Justification (optional)</label>
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    value={shippingNameUserNote}
+                    onChange={e => setShippingNameUserNote(e.target.value)}
+                    placeholder="If the names differ, explain why the selected PSN is appropriate (e.g., analytical results indicate different primary hazard)."
+                  />
+                </div>
               </div>
             </div>
           )}
