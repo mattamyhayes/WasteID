@@ -636,6 +636,7 @@ export default function Reports() {
         <h1 style={{ color: '#14532d' }}>Reports</h1>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Link to="/journey" className="btn btn-secondary">🗺️ Journey</Link>
+          <Link to="/ldr" className="btn btn-secondary">📋 LDR Form</Link>
           {activeTab === 'profiles' && (
             <Link to="/profile" className="btn btn-primary">+ New Profile</Link>
           )}

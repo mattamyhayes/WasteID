@@ -32,6 +32,7 @@ import AdminUsers from './pages/AdminUsers'
 import OutputFormVisualization from './pages/OutputFormVisualization'
 import StateRulesPage from './pages/StateRulesPage'
 import EPASRSLookup from './pages/EPASRSLookup'
+import LDRForm from './pages/LDRForm'
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/output-form" element={<OutputFormVisualization />} />
           <Route path="/state-rules" element={<StateRulesPage />} />
           <Route path="/epa-srs-lookup" element={<EPASRSLookup />} />
+          <Route path="/ldr" element={<LDRForm />} />
         </Routes>
       </main>
       <Footer />
