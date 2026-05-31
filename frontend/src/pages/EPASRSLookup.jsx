@@ -109,7 +109,7 @@ export default function EPASRSLookup() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' }}>
+    <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.5rem' }}>
         🔬 EPA SRS Lookup
       </h1>
@@ -137,7 +137,7 @@ export default function EPASRSLookup() {
         </div>
 
         {/* Main content */}
-        <div>
+        <div className="profile-main-content">
           <form onSubmit={handleSearch} style={{ marginBottom: '1.5rem' }}>
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8, padding: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.3rem' }}>

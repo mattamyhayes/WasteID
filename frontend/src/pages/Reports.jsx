@@ -565,10 +565,31 @@ function ShipmentsTab() {
 
 // ─── Main Reports page ────────────────────────────────────────────────────────
 
+const SIDEBAR_ICON_STYLE = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
+}
+
+const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+
 const TABS = [
-  { key: 'profiles', label: '📂 Profiles' },
-  { key: 'orders', label: '📋 Orders' },
-  { key: 'shipments', label: '🚛 Shipments' },
+  { key: 'profiles', label: 'Profiles', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+  )},
+  { key: 'orders', label: 'Orders', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  )},
+  { key: 'shipments', label: 'Shipments', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+  )},
 ]
 
 export default function Reports() {
@@ -610,7 +631,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem' }}>
+    <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 style={{ color: '#14532d' }}>Reports</h1>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -621,42 +642,35 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Tab switcher */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              padding: '0.5rem 1.25rem',
-              borderRadius: 8,
-              border: activeTab === tab.key ? '2px solid #14532d' : '2px solid #e5e7eb',
-              background: activeTab === tab.key ? '#14532d' : '#fff',
-              color: activeTab === tab.key ? '#fff' : '#374151',
-              fontWeight: 600,
-              fontSize: '0.92rem',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="profile-sidebar-layout">
+        {/* Left sidebar navigation */}
+        <div className="profile-sidebar">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              className={`profile-sidebar-btn${activeTab === tab.key ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{tab.icon}</span></span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Main content area */}
+        <div className="profile-main-content">
+          {activeTab === 'profiles' && (
+            <ProfilesTab
+              profileItems={profileItems}
+              loading={profilesLoading}
+              onDelete={handleDelete}
+              onPdf={handlePdf}
+            />
+          )}
+          {activeTab === 'orders' && <OrdersTab profileItems={profileItems} />}
+          {activeTab === 'shipments' && <ShipmentsTab />}
+        </div>
       </div>
-
-      <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '1.5rem' }} />
-
-      {/* Tab content */}
-      {activeTab === 'profiles' && (
-        <ProfilesTab
-          profileItems={profileItems}
-          loading={profilesLoading}
-          onDelete={handleDelete}
-          onPdf={handlePdf}
-        />
-      )}
-      {activeTab === 'orders' && <OrdersTab profileItems={profileItems} />}
-      {activeTab === 'shipments' && <ShipmentsTab />}
     </div>
   )
 }
