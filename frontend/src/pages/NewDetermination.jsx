@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
 import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
@@ -63,6 +63,7 @@ const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
 export default function NewDetermination() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const editId = searchParams.get('edit')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -178,7 +179,7 @@ export default function NewDetermination() {
     return () => { cancelled = true }
   }, [editId])
 
-  // Load generators once
+  // Load generators (refresh when navigating back to this page)
   useEffect(() => {
     let cancelled = false
     async function loadCustomers() {
@@ -196,7 +197,7 @@ export default function NewDetermination() {
     }
     loadCustomers()
     return () => { cancelled = true }
-  }, [])
+  }, [location.key])
 
   // Location options come from the selected customer's nested `locations` payload.
   const selectedCustomer = customerList.find(c => String(c.id) === String(customerId))
@@ -503,8 +504,8 @@ export default function NewDetermination() {
                 </select>
                 <small style={{ color: '#6b7280' }}>
                   Don't see your generator?{' '}
-                  <Link to="/generators/new" style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
-                  {' '}first, then return here.
+                  <Link to={`/generators/new?returnTo=${encodeURIComponent(editId ? `/profile?edit=${editId}` : '/profile')}`} style={{ color: '#166534', fontWeight: 600 }}>Add a new generator</Link>
+                  {' '}and you'll be returned here.
                 </small>
               </div>
 

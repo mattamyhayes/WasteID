@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { customers as customersApi, customerLocations as locationsApi } from '../api/client'
 
 const emptyCustomer = {
@@ -24,6 +24,10 @@ const emptyLocation = {
 export default function AddCustomer() {
   const navigate = useNavigate()
   const { id: editId } = useParams()
+  const [searchParams] = useSearchParams()
+  const rawReturnTo = searchParams.get('returnTo')
+  // Only allow relative paths to prevent open redirect
+  const returnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : null
   const isEdit = Boolean(editId)
   const [form, setForm] = useState(emptyCustomer)
   const [pendingLocations, setPendingLocations] = useState([])
@@ -78,10 +82,16 @@ export default function AddCustomer() {
     setSubmitting(true)
     setError('')
     try {
+      // Auto-include the current location form if it has a name filled in
+      const allLocations = [...pendingLocations]
+      if (locForm.name.trim()) {
+        allLocations.push({ ...locForm, name: locForm.name.trim() })
+      }
+
       if (isEdit) {
         await customersApi.update(editId, { ...form, name: form.name.trim() })
         // Handle new locations added during edit (those without an id)
-        for (const loc of pendingLocations) {
+        for (const loc of allLocations) {
           if (!loc.id) {
             await locationsApi.create({ ...loc, customer: editId })
           }
@@ -89,11 +99,11 @@ export default function AddCustomer() {
       } else {
         const res = await customersApi.create({ ...form, name: form.name.trim() })
         const newId = res.data.id
-        for (const loc of pendingLocations) {
+        for (const loc of allLocations) {
           await locationsApi.create({ ...loc, customer: newId })
         }
       }
-      navigate('/generators')
+      navigate(returnTo || '/generators')
     } catch (e) {
       const detail = e.response?.data
       setError(typeof detail === 'string' ? detail : (detail?.name?.[0] || `Failed to ${isEdit ? 'update' : 'create'} generator.`))
@@ -155,7 +165,7 @@ export default function AddCustomer() {
 
         <h3 style={{ color: '#166534', marginTop: '1rem', marginBottom: '0.5rem' }}>Locations</h3>
         <p style={{ color: '#6b7280', fontSize: '0.88rem', marginBottom: '0.75rem' }}>
-          Add one or more locations for this generator. You can add more locations later.
+          Add a location for this generator. The location below will be saved automatically. Use "Add Another Location" to add additional locations.
         </p>
 
         {pendingLocations.length > 0 && (
@@ -194,13 +204,13 @@ export default function AddCustomer() {
           <input className="form-control" value={locForm.address}
             onChange={e => setLocForm({ ...locForm, address: e.target.value })} />
         </div>
-        <button type="button" className="btn btn-secondary" onClick={addPendingLocation}>+ Add Location</button>
+        <button type="button" className="btn btn-secondary" onClick={addPendingLocation}>+ Add Another Location</button>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn btn-primary" onClick={submitNewCustomer} disabled={submitting}>
             {submitting ? 'Saving…' : (isEdit ? 'Update Generator' : 'Save Generator')}
           </button>
-          <button className="btn btn-secondary" onClick={() => navigate('/generators')}>
+          <button className="btn btn-secondary" onClick={() => navigate(returnTo || '/generators')}>
             Cancel
           </button>
           {error && <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>⚠ {error}</span>}
