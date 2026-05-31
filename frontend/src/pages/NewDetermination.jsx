@@ -161,6 +161,19 @@ export default function NewDetermination() {
 
   const EPA_SRS_BASE_URL = 'https://cdxapps.epa.gov/oms-substance-registry-services/rest-api'
 
+  const searchEpaSrs = async (searchType, query) => {
+    if (isStaticMode) {
+      const endpoint = searchType === 'cas' ? 'cas' : 'name'
+      const param = searchType === 'cas' ? 'casList' : 'nameList'
+      const url = `${EPA_SRS_BASE_URL}/substances/${endpoint}?${param}=${encodeURIComponent(query)}`
+      const response = await axios.get(url)
+      return Array.isArray(response.data) ? response.data : response.data ? [response.data] : []
+    }
+    const apiUrl = `${import.meta.env.VITE_API_URL}/api/epa-srs-lookup/`
+    const response = await axios.get(apiUrl, { params: { search_type: searchType, query } })
+    return response.data?.results || []
+  }
+
   const handleImportFromSds = async () => {
     if (!components || components.length === 0) {
       setSdsImportError('No constituents found. Add chemicals in the Constituents section first.')
@@ -181,27 +194,9 @@ export default function NewDetermination() {
       try {
         let data
         if (casNumber) {
-          // Search by CAS number
-          if (isStaticMode) {
-            const url = `${EPA_SRS_BASE_URL}/substances/cas?casList=${encodeURIComponent(casNumber)}`
-            const response = await axios.get(url)
-            data = Array.isArray(response.data) ? response.data : response.data ? [response.data] : []
-          } else {
-            const apiUrl = `${import.meta.env.VITE_API_URL}/api/epa-srs-lookup/`
-            const response = await axios.get(apiUrl, { params: { search_type: 'cas', query: casNumber } })
-            data = response.data?.results || []
-          }
+          data = await searchEpaSrs('cas', casNumber)
         } else if (chemName) {
-          // Search by name
-          if (isStaticMode) {
-            const url = `${EPA_SRS_BASE_URL}/substances/name?nameList=${encodeURIComponent(chemName)}`
-            const response = await axios.get(url)
-            data = Array.isArray(response.data) ? response.data : response.data ? [response.data] : []
-          } else {
-            const apiUrl = `${import.meta.env.VITE_API_URL}/api/epa-srs-lookup/`
-            const response = await axios.get(apiUrl, { params: { search_type: 'name', query: chemName } })
-            data = response.data?.results || []
-          }
+          data = await searchEpaSrs('name', chemName)
         } else {
           entry.status = 'skipped'
           entry.error = 'No CAS number or name available'
