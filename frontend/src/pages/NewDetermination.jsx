@@ -157,8 +157,7 @@ export default function NewDetermination() {
     setPropertiesSources(prev => {
       const prevSource = prev[key]
       if (prevSource === 'imported') return { ...prev, [key]: 'modified' }
-      if (!prevSource || prevSource === 'manual') return { ...prev, [key]: 'manual' }
-      return prev
+      return { ...prev, [key]: prev[key] || 'manual' }
     })
   }
 
