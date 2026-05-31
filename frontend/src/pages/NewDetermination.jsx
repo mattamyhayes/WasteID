@@ -8,6 +8,7 @@ import AnalyticsUpload from '../components/AnalyticsUpload'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
+import stateWasteCodesData from '../data/stateWasteCodes.json'
 
 const DISCARD_REASONS = [
   { value: 'spent', label: 'Spent material (used and no longer useful)' },
@@ -521,6 +522,9 @@ export default function NewDetermination() {
     )},
     { key: 'analytics', label: 'Analytics', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    )},
+    { key: 'wasteCodes', label: 'Waste Codes', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
     )},
     { key: 'stateRules', label: 'State Rules', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -1047,6 +1051,105 @@ export default function NewDetermination() {
                   <DocumentList profileId={mixtureId} transactionId={transactionId} key={`analytics-${docRefresh}`} filterDocType="A" components={components} />
                 </div>
               )}
+            </div>
+          )}
+
+          {activeSection === 'wasteCodes' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h2 style={{ marginBottom: '0.5rem', color: '#166534' }}>Waste Codes</h2>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
+                EPA waste codes and state/territory waste codes associated with your profile constituents.
+              </p>
+
+              {/* EPA Waste Codes Section */}
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ color: '#14532d', fontSize: '1.05rem', marginBottom: '0.75rem', borderBottom: '2px solid #dcfce7', paddingBottom: '0.5rem' }}>
+                  🏛️ EPA Waste Codes
+                </h3>
+                {components.filter(c => c._epaCode).length === 0 ? (
+                  <p style={{ color: '#6b7280', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                    No EPA waste codes found. Add constituents with EPA waste codes in the Constituents section.
+                  </p>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style={{ fontSize: '0.85rem' }}>EPA Code</th>
+                          <th style={{ fontSize: '0.85rem' }}>Chemical Name</th>
+                          <th style={{ fontSize: '0.85rem' }}>CAS Number</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {components.filter(c => c._epaCode).map((c, idx) => (
+                          <tr key={`epa-${idx}`}>
+                            <td style={{ fontWeight: 700, color: '#14532d', fontFamily: 'monospace' }}>{c._epaCode}</td>
+                            <td>{c._displayName || c.component_name || c.custom_name || '—'}</td>
+                            <td style={{ fontFamily: 'monospace', color: '#6b7280', fontSize: '0.88rem' }}>{c._casNumber || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* State & Territory Waste Codes Section */}
+              <div>
+                <h3 style={{ color: '#14532d', fontSize: '1.05rem', marginBottom: '0.75rem', borderBottom: '2px solid #e0e7ff', paddingBottom: '0.5rem' }}>
+                  🗺️ State &amp; Territory Waste Codes
+                </h3>
+                <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                  Chemical constituents matched against state and territory hazardous waste code databases.
+                </p>
+                {(() => {
+                  const casNumbers = components
+                    .filter(c => c._casNumber)
+                    .map(c => ({ cas: c._casNumber, name: c._displayName || c.component_name || c.custom_name || '' }))
+                  const matches = []
+                  casNumbers.forEach(({ cas, name }) => {
+                    const stateMatches = stateWasteCodesData.filter(s => s.cas_number === cas)
+                    stateMatches.forEach(m => {
+                      matches.push({ chemical: name, cas, ...m })
+                    })
+                  })
+                  if (matches.length === 0) {
+                    return (
+                      <p style={{ color: '#6b7280', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        {components.length === 0
+                          ? 'No constituents added yet. Add chemicals in the Constituents section to see state/territory waste codes.'
+                          : 'No state or territory waste code matches found for the current constituents.'}
+                      </p>
+                    )
+                  }
+                  return (
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style={{ fontSize: '0.85rem' }}>Chemical</th>
+                            <th style={{ fontSize: '0.85rem' }}>CAS Number</th>
+                            <th style={{ fontSize: '0.85rem' }}>State/Territory</th>
+                            <th style={{ fontSize: '0.85rem' }}>State Waste Code</th>
+                            <th style={{ fontSize: '0.85rem' }}>Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {matches.map((m, idx) => (
+                            <tr key={`state-${idx}`}>
+                              <td style={{ fontWeight: 600 }}>{m.chemical}</td>
+                              <td style={{ fontFamily: 'monospace', color: '#6b7280', fontSize: '0.88rem' }}>{m.cas}</td>
+                              <td style={{ fontWeight: 600, color: '#1e3a5f' }}>{m.state_name} ({m.state_code})</td>
+                              <td style={{ fontWeight: 700, color: '#7c3aed', fontFamily: 'monospace' }}>{m.waste_code}</td>
+                              <td style={{ fontSize: '0.85rem', color: '#6b7280' }}>{m.description}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           )}
 

@@ -1,0 +1,737 @@
+[
+  {
+    "cas_number": "106-44-5",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA230",
+    "description": "Cresol (p-Cresol)"
+  },
+  {
+    "cas_number": "106-46-7",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA223",
+    "description": "1,4-Dichlorobenzene"
+  },
+  {
+    "cas_number": "107-06-2",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA222",
+    "description": "1,2-Dichloroethane"
+  },
+  {
+    "cas_number": "108-39-4",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA229",
+    "description": "Cresol (m-Cresol)"
+  },
+  {
+    "cas_number": "108-88-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA234",
+    "description": "Toluene (Methylbenzene)"
+  },
+  {
+    "cas_number": "108-90-7",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA226",
+    "description": "Chlorobenzene"
+  },
+  {
+    "cas_number": "110-86-1",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA236",
+    "description": "Pyridine"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA232",
+    "description": "Tetrachloroethylene"
+  },
+  {
+    "cas_number": "1330-20-7",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA238",
+    "description": "Xylene"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA225",
+    "description": "Carbon tetrachloride"
+  },
+  {
+    "cas_number": "57-12-5",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA311",
+    "description": "Cyanide compounds"
+  },
+  {
+    "cas_number": "67-66-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA227",
+    "description": "Chloroform"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA224",
+    "description": "Benzene"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA145",
+    "description": "Lead and lead compounds"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA146",
+    "description": "Mercury and mercury compounds"
+  },
+  {
+    "cas_number": "7440-22-4",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA148",
+    "description": "Silver and silver compounds"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA141",
+    "description": "Arsenic and arsenic compounds"
+  },
+  {
+    "cas_number": "7440-39-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA142",
+    "description": "Barium and barium compounds"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA143",
+    "description": "Cadmium and cadmium compounds"
+  },
+  {
+    "cas_number": "7440-47-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA144",
+    "description": "Chromium and chromium compounds"
+  },
+  {
+    "cas_number": "75-01-4",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA237",
+    "description": "Vinyl chloride"
+  },
+  {
+    "cas_number": "75-09-2",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA231",
+    "description": "Methylene chloride"
+  },
+  {
+    "cas_number": "75-35-4",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA221",
+    "description": "1,1-Dichloroethylene"
+  },
+  {
+    "cas_number": "7664-39-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA312",
+    "description": "Hydrogen fluoride"
+  },
+  {
+    "cas_number": "7782-49-2",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA147",
+    "description": "Selenium and selenium compounds"
+  },
+  {
+    "cas_number": "78-93-3",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA235",
+    "description": "Methyl ethyl ketone"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA233",
+    "description": "Trichloroethylene"
+  },
+  {
+    "cas_number": "95-48-7",
+    "state_code": "CA",
+    "state_name": "California",
+    "waste_code": "CA228",
+    "description": "Cresol (o-Cresol)"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "GU",
+    "state_name": "Guam",
+    "waste_code": "GU-HW02",
+    "description": "Benzene - Guam EPA hazardous waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "GU",
+    "state_name": "Guam",
+    "waste_code": "GU-HW01",
+    "description": "Lead - Guam EPA hazardous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "GU",
+    "state_name": "Guam",
+    "waste_code": "GU-HW01",
+    "description": "Mercury - Guam EPA hazardous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "GU",
+    "state_name": "Guam",
+    "waste_code": "GU-HW01",
+    "description": "Arsenic - Guam EPA hazardous waste"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW02",
+    "description": "Tetrachloroethylene - IL special waste organic"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW02",
+    "description": "Carbon tetrachloride - IL special waste organic"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW02",
+    "description": "Benzene - IL special waste organic"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW01",
+    "description": "Lead - IL special waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW01",
+    "description": "Mercury - IL special waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW01",
+    "description": "Arsenic - IL special waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW01",
+    "description": "Cadmium - IL special waste"
+  },
+  {
+    "cas_number": "7440-47-3",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW01",
+    "description": "Chromium - IL special waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "IL",
+    "state_name": "Illinois",
+    "waste_code": "IL-SW02",
+    "description": "Trichloroethylene - IL special waste organic"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA02",
+    "description": "Tetrachloroethylene - MA listed organic hazardous waste"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA02",
+    "description": "Carbon tetrachloride - MA listed organic hazardous waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA02",
+    "description": "Benzene - MA listed organic hazardous waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA01",
+    "description": "Lead - MA listed hazardous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA01",
+    "description": "Mercury - MA listed hazardous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA01",
+    "description": "Arsenic - MA listed hazardous waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA01",
+    "description": "Cadmium - MA listed hazardous waste"
+  },
+  {
+    "cas_number": "75-01-4",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA02",
+    "description": "Vinyl chloride - MA listed organic hazardous waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "MA",
+    "state_name": "Massachusetts",
+    "waste_code": "MA02",
+    "description": "Trichloroethylene - MA listed organic hazardous waste"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW02",
+    "description": "Tetrachloroethylene - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW02",
+    "description": "Carbon tetrachloride - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW02",
+    "description": "Benzene - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW01",
+    "description": "Lead - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW01",
+    "description": "Mercury - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW01",
+    "description": "Arsenic - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW01",
+    "description": "Cadmium - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "75-01-4",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW02",
+    "description": "Vinyl chloride - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "NJ",
+    "state_name": "New Jersey",
+    "waste_code": "NJ-SHW02",
+    "description": "Trichloroethylene - NJ special hazardous waste"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Tetrachloroethylene - NY state-listed organic"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Carbon tetrachloride - NY state-listed organic"
+  },
+  {
+    "cas_number": "57-12-5",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Cyanide - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Benzene - NY state-listed organic"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Lead - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Mercury - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Arsenic - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Cadmium - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "7440-47-3",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY01",
+    "description": "Chromium - NY state-listed hazardous waste"
+  },
+  {
+    "cas_number": "75-01-4",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Vinyl chloride - NY state-listed organic"
+  },
+  {
+    "cas_number": "75-09-2",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Methylene chloride - NY state-listed organic"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "NY",
+    "state_name": "New York",
+    "waste_code": "NY02",
+    "description": "Trichloroethylene - NY state-listed organic"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW02",
+    "description": "Tetrachloroethylene - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW02",
+    "description": "Benzene - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW01",
+    "description": "Lead - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW01",
+    "description": "Mercury - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW01",
+    "description": "Arsenic - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "PR",
+    "state_name": "Puerto Rico",
+    "waste_code": "PR-HW02",
+    "description": "Trichloroethylene - PR DNER hazardous waste"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-02",
+    "description": "Tetrachloroethylene - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-02",
+    "description": "Carbon tetrachloride - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-02",
+    "description": "Benzene - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-01",
+    "description": "Lead - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-01",
+    "description": "Mercury - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-01",
+    "description": "Arsenic - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-01",
+    "description": "Cadmium - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "TX",
+    "state_name": "Texas",
+    "waste_code": "TX-C1-02",
+    "description": "Trichloroethylene - TX Class 1 industrial solid waste"
+  },
+  {
+    "cas_number": "106-46-7",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "1,4-Dichlorobenzene - persistent dangerous waste"
+  },
+  {
+    "cas_number": "107-06-2",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "1,2-Dichloroethane - persistent dangerous waste"
+  },
+  {
+    "cas_number": "108-88-3",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WSC2",
+    "description": "Toluene - state criteria dangerous waste"
+  },
+  {
+    "cas_number": "110-86-1",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT02",
+    "description": "Pyridine - toxic dangerous waste"
+  },
+  {
+    "cas_number": "127-18-4",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "Tetrachloroethylene - persistent dangerous waste"
+  },
+  {
+    "cas_number": "1330-20-7",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WSC2",
+    "description": "Xylene - state criteria dangerous waste"
+  },
+  {
+    "cas_number": "56-23-5",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP01",
+    "description": "Carbon tetrachloride - persistent dangerous waste"
+  },
+  {
+    "cas_number": "57-12-5",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Cyanide - toxic dangerous waste"
+  },
+  {
+    "cas_number": "67-66-3",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "Chloroform - persistent dangerous waste"
+  },
+  {
+    "cas_number": "71-43-2",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP01",
+    "description": "Benzene - persistent dangerous waste"
+  },
+  {
+    "cas_number": "7439-92-1",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Lead - toxic dangerous waste"
+  },
+  {
+    "cas_number": "7439-97-6",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Mercury - toxic dangerous waste"
+  },
+  {
+    "cas_number": "7440-38-2",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Arsenic - toxic dangerous waste"
+  },
+  {
+    "cas_number": "7440-43-9",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Cadmium - toxic dangerous waste"
+  },
+  {
+    "cas_number": "7440-47-3",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WT01",
+    "description": "Chromium - toxic dangerous waste"
+  },
+  {
+    "cas_number": "75-01-4",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP01",
+    "description": "Vinyl chloride - persistent dangerous waste"
+  },
+  {
+    "cas_number": "75-09-2",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "Methylene chloride - persistent dangerous waste"
+  },
+  {
+    "cas_number": "75-35-4",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "1,1-Dichloroethylene - persistent dangerous waste"
+  },
+  {
+    "cas_number": "78-93-3",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WSC2",
+    "description": "Methyl ethyl ketone - state criteria dangerous waste"
+  },
+  {
+    "cas_number": "79-01-6",
+    "state_code": "WA",
+    "state_name": "Washington",
+    "waste_code": "WP02",
+    "description": "Trichloroethylene - persistent dangerous waste"
+  }
+]
