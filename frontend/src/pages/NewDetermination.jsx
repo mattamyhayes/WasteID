@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom'
 import MixtureBuilder from '../components/MixtureBuilder'
 import FileUpload from '../components/FileUpload'
@@ -50,8 +50,8 @@ const EPA_GENERATOR_STATUS_GUIDANCE = {
 }
 
 const SIDEBAR_ICON_STYLE = {
-  width: 32,
-  height: 32,
+  width: 24,
+  height: 24,
   borderRadius: '50%',
   background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
   color: '#fff',
@@ -59,12 +59,12 @@ const SIDEBAR_ICON_STYLE = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-  boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
+  boxShadow: '0 2px 6px rgba(20,83,45,0.15)',
 }
 
 const SIDEBAR_ICON_STYLE_BLUE = {
-  width: 32,
-  height: 32,
+  width: 24,
+  height: 24,
   borderRadius: '50%',
   background: 'linear-gradient(135deg, #1e3a5f 0%, #4a90a4 100%)',
   color: '#fff',
@@ -72,10 +72,23 @@ const SIDEBAR_ICON_STYLE_BLUE = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-  boxShadow: '0 4px 8px rgba(30,58,95,0.15)',
+  boxShadow: '0 2px 6px rgba(30,58,95,0.15)',
 }
 
-const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+const SIDEBAR_ICON_STYLE_AMBER = {
+  width: 24,
+  height: 24,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #92400e 0%, #d97706 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 2px 6px rgba(146,64,14,0.15)',
+}
+
+const SIDEBAR_SVG_STYLE = { width: 12, height: 12, display: 'inline-flex' }
 
 const STAGE_COLORS = {
   'Draft': { background: '#f3f4f6', color: '#4b5563' },
@@ -598,6 +611,35 @@ export default function NewDetermination() {
 
   // Sidebar navigation state
   const [activeSection, setActiveSection] = useState(editId ? 'generator' : 'myProfiles')
+  const autoSaveTimerRef = useRef(null)
+  const isSavingRef = useRef(false)
+
+  // Scroll to top and auto-save when changing tabs
+  const navigateToSection = useCallback((section) => {
+    // Auto-save current data before switching (if we have meaningful data)
+    if (activeSection !== 'myProfiles' && !isSavingRef.current && (mixtureId || name.trim())) {
+      isSavingRef.current = true
+      saveProfileMinimal().catch(() => {}).finally(() => { isSavingRef.current = false })
+    }
+    setActiveSection(section)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeSection, mixtureId, name])
+
+  // Debounced auto-save: save profile data after user stops changing fields
+  useEffect(() => {
+    // Only auto-save if we have some data entered and we are editing a profile tab
+    if (activeSection === 'myProfiles' || (!mixtureId && !name.trim())) return
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (!isSavingRef.current) {
+        isSavingRef.current = true
+        saveProfileMinimal().catch(() => {}).finally(() => { isSavingRef.current = false })
+      }
+    }, 2000)
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current) }
+  }, [profileName, name, customerId, locationId, isDiscarded, discardReason, processDesc, notes,
+      shipmentSizeUnit, shipmentSizeQty, epaGeneratorStatus, generationDate, flashPoint, ph,
+      isReactive, properties, shippingNameVerified, shippingNameUserNote])
 
   // My Profiles data
   const [myProfiles, setMyProfiles] = useState([])
@@ -640,6 +682,7 @@ export default function NewDetermination() {
   const handleSelectProfile = (profile) => {
     navigate(`/profile?edit=${profile.id}`)
     setActiveSection('generator')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleNewProfile = () => {
@@ -668,6 +711,7 @@ export default function NewDetermination() {
     setShippingNameVerified(false)
     setShippingNameUserNote('')
     setActiveSection('generator')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const SIDEBAR_ITEMS = [
@@ -707,8 +751,8 @@ export default function NewDetermination() {
   ]
 
   return (
-    <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
-      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'Profile'}</h1>
+    <div className="profile-page" style={{ padding: '0.75rem 1.5rem' }}>
+      <h1 style={{ color: '#14532d', marginBottom: '0.25rem', fontSize: '1.3rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'Profile'}</h1>
       {mixtureId && profileName && (
         <div style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '0.5rem', marginTop: '-0.25rem' }}>{profileName}</div>
       )}
@@ -762,7 +806,7 @@ export default function NewDetermination() {
           {/* My Profiles - earthy blue icon */}
           <button
             className={`profile-sidebar-btn${activeSection === 'myProfiles' ? ' active' : ''}`}
-            onClick={() => setActiveSection('myProfiles')}
+            onClick={() => navigateToSection('myProfiles')}
           >
             <span style={SIDEBAR_ICON_STYLE_BLUE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span></span>
             My Profiles
@@ -776,10 +820,10 @@ export default function NewDetermination() {
             <span style={SIDEBAR_ICON_STYLE_BLUE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></span>
             New Profile
           </button>
-          <div style={{ borderBottom: '1px solid #e5e7eb', margin: '0.5rem 0' }} />
+          <div style={{ borderBottom: '1px solid #e5e7eb', margin: '0.35rem 0' }} />
           {/* Profile PID label when editing */}
           {mixtureId && (
-            <div style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', color: '#4a90a4', fontFamily: 'monospace', fontWeight: 600, marginBottom: '0.25rem' }}>
+            <div style={{ padding: '0.15rem 0.5rem', fontSize: '0.72rem', color: '#4a90a4', fontFamily: 'monospace', fontWeight: 600, marginBottom: '0.15rem' }}>
               PID: {transactionId || mixtureId}
             </div>
           )}
@@ -787,27 +831,30 @@ export default function NewDetermination() {
             <button
               key={item.key}
               className={`profile-sidebar-btn${activeSection === item.key ? ' active' : ''}`}
-              onClick={() => setActiveSection(item.key)}
+              onClick={() => navigateToSection(item.key)}
             >
               <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{item.icon}</span></span>
               {item.label}
             </button>
           ))}
+          <div style={{ borderBottom: '1px solid #e5e7eb', margin: '0.35rem 0' }} />
           <button
             className="profile-sidebar-btn"
             onClick={handleSubmitForReview}
             disabled={submitting}
+            style={{ borderLeft: '3px solid #d97706' }}
           >
-            <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span></span>
+            <span style={SIDEBAR_ICON_STYLE_AMBER}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span></span>
             {submitting ? 'Saving…' : 'Submit for Review'}
           </button>
           <button
             className="profile-sidebar-btn"
             onClick={handleCreateDetermination}
             disabled={submitting}
+            style={{ borderLeft: '3px solid #d97706' }}
           >
-            <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><circle cx="12" cy="14" r="1"/></svg></span></span>
-            {submitting ? 'Saving…' : 'Create Determination'}
+            <span style={SIDEBAR_ICON_STYLE_AMBER}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><circle cx="12" cy="14" r="1"/></svg></span></span>
+            {submitting ? 'Saving…' : 'New Determination'}
           </button>
         </div>
 
