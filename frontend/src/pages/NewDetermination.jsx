@@ -171,6 +171,7 @@ export default function NewDetermination() {
   const [sdsImportLoading, setSdsImportLoading] = useState(false)
   const [sdsImportResults, setSdsImportResults] = useState(null)
   const [sdsImportError, setSdsImportError] = useState('')
+  const [sdsImportProgress, setSdsImportProgress] = useState(null) // { current, total, currentName }
 
   const EPA_SRS_BASE_URL = 'https://cdxapps.epa.gov/oms-substance-registry-services/rest-api'
 
@@ -196,44 +197,57 @@ export default function NewDetermination() {
     setSdsImportLoading(true)
     setSdsImportError('')
     setSdsImportResults(null)
+    setSdsImportProgress({ current: 0, total: components.length, currentName: '' })
 
-    const results = []
+    try {
+      const results = []
 
-    for (const comp of components) {
-      const chemName = comp._displayName || comp.custom_name || ''
-      const casNumber = comp._casNumber || ''
-      const entry = { name: chemName, cas: casNumber, status: 'pending', data: null, error: null }
+      for (let i = 0; i < components.length; i++) {
+        const comp = components[i]
+        const chemName = comp._displayName || comp.custom_name || ''
+        const casNumber = comp._casNumber || ''
+        const entry = { name: chemName, cas: casNumber, status: 'pending', data: null, error: null }
 
-      try {
-        let data
-        if (casNumber) {
-          data = await searchEpaSrs('cas', casNumber)
-        } else if (chemName) {
-          data = await searchEpaSrs('name', chemName)
-        } else {
-          entry.status = 'skipped'
-          entry.error = 'No CAS number or name available'
-          results.push(entry)
-          continue
+        // Update progress indicator
+        setSdsImportProgress({ current: i + 1, total: components.length, currentName: chemName || casNumber || `Component ${i + 1}` })
+
+        try {
+          let data
+          if (casNumber) {
+            data = await searchEpaSrs('cas', casNumber)
+          } else if (chemName) {
+            data = await searchEpaSrs('name', chemName)
+          } else {
+            entry.status = 'skipped'
+            entry.error = 'No CAS number or name available'
+            results.push(entry)
+            // Show incremental results
+            setSdsImportResults([...results])
+            continue
+          }
+
+          if (data && data.length > 0) {
+            entry.status = 'found'
+            entry.data = data[0] // Use first match
+          } else {
+            entry.status = 'not_found'
+            entry.error = 'No results found in EPA SRS'
+          }
+        } catch (err) {
+          entry.status = 'error'
+          entry.error = err.response?.data?.error || err.message || 'Request failed'
         }
 
-        if (data && data.length > 0) {
-          entry.status = 'found'
-          entry.data = data[0] // Use first match
-        } else {
-          entry.status = 'not_found'
-          entry.error = 'No results found in EPA SRS'
-        }
-      } catch (err) {
-        entry.status = 'error'
-        entry.error = err.response?.data?.error || err.message || 'Request failed'
+        results.push(entry)
+        // Show incremental results as each component completes
+        setSdsImportResults([...results])
       }
-
-      results.push(entry)
+    } catch (err) {
+      setSdsImportError('Import process encountered an unexpected error: ' + (err.message || 'Unknown error. Please try again.'))
+    } finally {
+      setSdsImportLoading(false)
+      setSdsImportProgress(null)
     }
-
-    setSdsImportResults(results)
-    setSdsImportLoading(false)
   }
 
   const applyImportedSdsProperties = (substance) => {
@@ -1309,11 +1323,36 @@ export default function NewDetermination() {
                     Looks up each constituent in the EPA SRS database to populate properties.
                   </span>
                 </div>
-                {(!components || components.length === 0) && (
-                  <p style={{ fontSize: '0.83rem', color: '#9ca3af', marginTop: '0.5rem', marginBottom: 0 }}>
-                    Add constituents first to enable this feature.
-                  </p>
-                )}
+               {/* Progress indicator during import */}
+               {sdsImportLoading && sdsImportProgress && (
+                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                     <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e40af' }}>
+                       Processing {sdsImportProgress.current} of {sdsImportProgress.total}
+                     </span>
+                     <span style={{ fontSize: '0.82rem', color: '#6b7280' }}>
+                       — {sdsImportProgress.currentName}
+                     </span>
+                   </div>
+                   <div style={{ background: '#e2e8f0', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                     <div style={{
+                       background: 'linear-gradient(90deg, #166534, #16a34a)',
+                       height: '100%',
+                       width: `${(sdsImportProgress.current / sdsImportProgress.total) * 100}%`,
+                       transition: 'width 0.3s ease',
+                       borderRadius: 4,
+                     }} />
+                   </div>
+                   <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.35rem', marginBottom: 0 }}>
+                     Looking up chemicals in the EPA SRS database. Please stay on this page.
+                   </p>
+                 </div>
+               )}
+               {(!components || components.length === 0) && (
+                 <p style={{ fontSize: '0.83rem', color: '#9ca3af', marginTop: '0.5rem', marginBottom: 0 }}>
+                   Add constituents first to enable this feature.
+                 </p>
+               )}
               </div>
 
               {/* ─── SDS Import Error ─── */}
