@@ -76,16 +76,37 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
     }
 
     const fileUrl = doc?.file_url || doc?.file
-    if (!fileUrl) throw new Error('File is not available.')
-
-    const res = await fetch(fileUrl)
-    if (!res.ok) throw new Error('Unable to fetch document file.')
-    const blob = await res.blob()
-    return {
-      blob,
-      mime: blob.type || 'application/octet-stream',
-      filename: getDocFilename(doc),
+    if (fileUrl) {
+      const res = await fetch(fileUrl)
+      if (!res.ok) throw new Error('Unable to fetch document file.')
+      const blob = await res.blob()
+      return {
+        blob,
+        mime: blob.type || 'application/octet-stream',
+        filename: getDocFilename(doc),
+      }
     }
+
+    // File data not inline (stored in IndexedDB in local mode). Fetch the full record.
+    if (doc?.id) {
+      try {
+        const res = await profileDocuments.get(doc.id)
+        const full = res?.data
+        if (full?.file_data) {
+          // Inline data URL returned from IndexedDB — decode directly without recursing.
+          return resolveDocumentFile({ ...full, file_url: null, file: null })
+        }
+        const hydratedUrl = full?.file_url || full?.file
+        if (hydratedUrl) {
+          const res2 = await fetch(hydratedUrl)
+          if (!res2.ok) throw new Error('Unable to fetch document file.')
+          const blob2 = await res2.blob()
+          return { blob: blob2, mime: blob2.type || 'application/octet-stream', filename: getDocFilename(full) }
+        }
+      } catch { /* fall through */ }
+    }
+
+    throw new Error('File is not available.')
   }
 
   const handleView = async (docId) => {

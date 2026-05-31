@@ -1,6 +1,9 @@
 // localStorage-backed form template store for the Form Manager feature.
 // Stores imported form templates with their field definitions and original
 // document image/PDF so they can be used to generate filled PDFs from profiles.
+// Large file data (base64) is kept in IndexedDB to avoid localStorage quota limits.
+
+import { setFileData, getFileData, deleteFileData } from './idbFileStore.js'
 
 const FORMS_STORAGE_KEY = 'wasteid_forms_v1'
 
@@ -82,7 +85,9 @@ function loadForms() {
 function saveForms(forms) {
   try {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(FORMS_STORAGE_KEY, JSON.stringify(forms))
+      // Strip large binary fields before writing to localStorage.
+      const slim = forms.map(({ file_data, ...rest }) => rest)
+      localStorage.setItem(FORMS_STORAGE_KEY, JSON.stringify(slim))
     }
   } catch {
     // Storage unavailable
@@ -106,11 +111,15 @@ export function listForms() {
 }
 
 /**
- * Get a single form template by id
+ * Get a single form template by id (includes file_data from IndexedDB)
  */
-export function getForm(id) {
+export async function getForm(id) {
   const forms = loadForms()
-  return forms.find(f => f.id === id) || null
+  const form = forms.find(f => f.id === id)
+  if (!form) return null
+  const fileData = await getFileData(`form_${id}`).catch(() => null)
+  if (fileData) return { ...form, file_data: fileData }
+  return form
 }
 
 /**
@@ -129,14 +138,16 @@ export async function createForm(name, file) {
     file_name: file.name,
     file_size: file.size,
     mime_type: file.type || 'application/octet-stream',
-    file_data: base64,
+    // File content is stored in IndexedDB, not localStorage.
+    file_data: null,
     fields: [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
   forms.push(form)
   saveForms(forms)
-  return form
+  await setFileData(`form_${nextId}`, base64).catch(() => {})
+  return { ...form, file_data: base64 }
 }
 
 /**
@@ -149,7 +160,9 @@ export function updateForm(id, updates) {
   const forms = loadForms()
   const idx = forms.findIndex(f => f.id === id)
   if (idx === -1) return null
-  forms[idx] = { ...forms[idx], ...updates, updated_at: new Date().toISOString() }
+  // Don't persist file_data back to localStorage via this path.
+  const { file_data, ...safeUpdates } = updates
+  forms[idx] = { ...forms[idx], ...safeUpdates, updated_at: new Date().toISOString() }
   saveForms(forms)
   return forms[idx]
 }
@@ -161,6 +174,7 @@ export function deleteForm(id) {
   let forms = loadForms()
   forms = forms.filter(f => f.id !== id)
   saveForms(forms)
+  deleteFileData(`form_${id}`).catch(() => {})
 }
 
 /**

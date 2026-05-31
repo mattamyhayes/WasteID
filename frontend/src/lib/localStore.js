@@ -10,6 +10,7 @@
 import localChemicals from '../data/chemicals.json'
 import stateRulesData from '../data/stateRules.json'
 import { determineHazardousWaste } from './determination.js'
+import { setFileData, getFileData, deleteFileData } from './idbFileStore.js'
 
 const STORAGE_KEY = 'wasteid_local_store_v2'
 const CUSTOMERS_STORAGE_KEY = 'wasteid_customers_v2'
@@ -1836,6 +1837,17 @@ function migrateLegacyDocuments(arr) {
   return { documents, nextId: maxId + 1 }
 }
 
+// Migrate inline file_data from an array of records into IndexedDB (fire-and-forget).
+// After migration, callers should re-save the store so the data is stripped from localStorage.
+function migrateFileDataToIdb(records, prefix) {
+  for (const rec of records) {
+    const data = rec.file_data || rec.file_url
+    if (data) {
+      setFileData(`${prefix}_${rec.id}`, data).catch(() => {})
+    }
+  }
+}
+
 function loadDocumentsStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DOCUMENTS_STORAGE_KEY) : null
@@ -1845,8 +1857,11 @@ function loadDocumentsStore() {
     // which shared this same storage key. Migrate it to the current shape once.
     if (Array.isArray(parsed)) {
       const migrated = migrateLegacyDocuments(parsed)
+      // Migrate any inline file_data to IndexedDB before persisting metadata-only
+      migrateFileDataToIdb(migrated.documents, 'doc')
+      migrated.idb_migrated = true
       saveDocumentsStore(migrated)
-      return migrated
+      return { ...migrated, documents: migrated.documents.map(({ file_data, file_url, ...rest }) => rest) }
     }
     // Guard against malformed or partial objects so callers can rely on the shape.
     if (!parsed || !Array.isArray(parsed.documents)) {
@@ -1855,6 +1870,20 @@ function loadDocumentsStore() {
     if (typeof parsed.nextId !== 'number') {
       const maxId = parsed.documents.reduce((m, d) => Math.max(m, Number(d.id) || 0), 0)
       parsed.nextId = maxId + 1
+    }
+    // One-time migration: move any inline file_data still present in localStorage into
+    // IndexedDB.  Once migrated the flag is set so this check is skipped on future loads.
+    if (!parsed.idb_migrated) {
+      const hasInline = parsed.documents.some(d => d.file_data || d.file_url)
+      if (hasInline) {
+        migrateFileDataToIdb(parsed.documents, 'doc')
+      }
+      parsed.idb_migrated = true
+      saveDocumentsStore(parsed)
+      return {
+        ...parsed,
+        documents: parsed.documents.map(({ file_data, file_url, ...rest }) => rest),
+      }
     }
     return parsed
   } catch {
@@ -1865,7 +1894,14 @@ function loadDocumentsStore() {
 function saveDocumentsStore(store) {
   try {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(store))
+      // Strip large binary fields before writing to localStorage so we never
+      // hit the ~5 MB per-origin quota.  File content is kept in IndexedDB
+      // (see idbFileStore.js) and re-hydrated on demand in localDocuments.get.
+      const slim = {
+        ...store,
+        documents: store.documents.map(({ file_data, file_url, ...rest }) => rest),
+      }
+      localStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(slim))
     }
   } catch { /* storage unavailable */ }
 }
@@ -1925,12 +1961,16 @@ export const localDocuments = {
       original_filename: name,
       file_size: fileSize || 0,
       uploaded_at: new Date().toISOString(),
-      file_data: fileData || null,
-      file_url: fileData || null,
+      // File content is stored in IndexedDB, not localStorage.
+      file_data: null,
+      file_url: null,
     }
     store.documents.push(doc)
     saveDocumentsStore(store)
-    return doc
+    if (fileData) {
+      setFileData(`doc_${doc.id}`, fileData).catch(() => {})
+    }
+    return { ...doc, file_data: fileData || null, file_url: fileData || null }
   },
 
   upload(mixtureId, fileType, shortName, file) {
@@ -1962,23 +2002,24 @@ export const localDocuments = {
       original_filename: file.name,
       file_size: file.size,
       uploaded_at: new Date().toISOString(),
-      // Store file data as base64 for local mode
-      file_data: null, // Will be set asynchronously
+      file_data: null,
       file_url: null,
     }
 
-    // Read file as data URL for local storage
+    // Read file as data URL and persist in IndexedDB (not localStorage).
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onload = () => {
-        doc.file_data = reader.result
-        doc.file_url = reader.result
+        const dataUrl = reader.result
         store.documents.push(doc)
         saveDocumentsStore(store)
-        resolve({ data: doc })
+        // Write file content to IndexedDB asynchronously (fire-and-forget for the
+        // save path; callers that need the data use localDocuments.get).
+        setFileData(`doc_${doc.id}`, dataUrl).catch(() => {})
+        resolve({ data: { ...doc, file_data: dataUrl, file_url: dataUrl } })
       }
       reader.onerror = () => {
-        // Still save without file data
+        // Still save metadata without file data
         store.documents.push(doc)
         saveDocumentsStore(store)
         resolve({ data: doc })
@@ -1993,13 +2034,18 @@ export const localDocuments = {
     if (idx === -1) return reject('Document not found.', 404)
     store.documents.splice(idx, 1)
     saveDocumentsStore(store)
+    deleteFileData(`doc_${docId}`).catch(() => {})
     return ok({})
   },
 
-  get(docId) {
+  async get(docId) {
     const store = loadDocumentsStore()
     const doc = store.documents.find(d => d.id === Number(docId))
     if (!doc) return reject('Document not found.', 404)
+    const fileData = await getFileData(`doc_${docId}`).catch(() => null)
+    if (fileData) {
+      return ok({ ...doc, file_data: fileData, file_url: fileData })
+    }
     return ok(doc)
   },
 }
@@ -2013,16 +2059,39 @@ function loadSdsStore() {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SDS_STORAGE_KEY) : null
     if (!raw) return { records: [], nextId: 1 }
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    if (!parsed || !Array.isArray(parsed.records)) return { records: [], nextId: 1 }
+    // One-time migration: move any inline file_data still present in localStorage into
+    // IndexedDB.  Once migrated the flag is set so this check is skipped on future loads.
+    if (!parsed.idb_migrated) {
+      const hasInline = parsed.records.some(r => r.file_data)
+      if (hasInline) {
+        migrateFileDataToIdb(parsed.records, 'sds')
+      }
+      parsed.idb_migrated = true
+      saveSdsStore(parsed)
+      return {
+        ...parsed,
+        records: parsed.records.map(({ file_data, ...rest }) => rest),
+      }
+    }
+    return parsed
   } catch {
     return { records: [], nextId: 1 }
   }
 }
 
 function saveSdsStore(store) {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(SDS_STORAGE_KEY, JSON.stringify(store))
-  }
+  try {
+    if (typeof localStorage !== 'undefined') {
+      // Strip large binary fields before writing to localStorage.
+      const slim = {
+        ...store,
+        records: store.records.map(({ file_data, ...rest }) => rest),
+      }
+      localStorage.setItem(SDS_STORAGE_KEY, JSON.stringify(slim))
+    }
+  } catch { /* storage unavailable */ }
 }
 
 export const localSds = {
@@ -2034,10 +2103,14 @@ export const localSds = {
     return ok({ results: records })
   },
 
-  get(id) {
+  async get(id) {
     const store = loadSdsStore()
     const record = store.records.find(r => r.id === Number(id))
     if (!record) return reject('SDS not found.', 404)
+    const fileData = await getFileData(`sds_${id}`).catch(() => null)
+    if (fileData) {
+      return ok({ ...record, file_data: fileData })
+    }
     return ok(record)
   },
 
@@ -2110,11 +2183,16 @@ export const localSds = {
       // Ensure id and sds_id are not overwritten
       id: store.nextId - 1,
       sds_id: sdsId,
+      // File content is stored in IndexedDB, not localStorage.
+      file_data: null,
     }
 
     store.records.push(record)
     saveSdsStore(store)
-    return ok(record)
+    if (data.file_data) {
+      setFileData(`sds_${record.id}`, data.file_data).catch(() => {})
+    }
+    return ok({ ...record, file_data: data.file_data || null })
   },
 
   update(id, data) {
@@ -2143,6 +2221,7 @@ export const localSds = {
     if (idx === -1) return reject('SDS not found.', 404)
     store.records.splice(idx, 1)
     saveSdsStore(store)
+    deleteFileData(`sds_${id}`).catch(() => {})
     return ok({})
   },
 

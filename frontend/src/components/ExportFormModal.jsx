@@ -28,14 +28,14 @@ export default function ExportFormModal({ profile, onClose }) {
     setForms(allForms)
   }, [])
 
-  const handleFormSelect = (formId) => {
+  const handleFormSelect = async (formId) => {
     setSelectedFormId(formId)
     if (!formId) {
       setSelectedForm(null)
       setUnmappedFields([])
       return
     }
-    const form = getForm(Number(formId))
+    const form = await getForm(Number(formId))
     setSelectedForm(form)
     if (form) {
       const unmapped = getUnmappedFields(form, profile)
