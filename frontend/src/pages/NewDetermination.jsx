@@ -153,8 +153,7 @@ export default function NewDetermination() {
     setSubmitting(false)
     if (editId) {
       setActiveSection('upload')
-    } else if (!editId && activeSection !== 'myProfiles') {
-      // When navigating to /profile without edit, show myProfiles unless already there
+    } else if (activeSection !== 'myProfiles') {
       setActiveSection('myProfiles')
     }
     if (!editId) {
