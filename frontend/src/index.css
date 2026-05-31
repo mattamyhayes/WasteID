@@ -68,31 +68,31 @@ input, select, textarea {
 /* Sidebar + main content layout for the profile page. */
 .profile-sidebar-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 170px 1fr;
+  gap: 1rem;
   align-items: start;
 }
 
 .profile-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem;
   position: sticky;
-  top: 1rem;
+  top: 0.5rem;
 }
 
 .profile-sidebar-btn {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
   width: 100%;
   text-align: left;
-  padding: 0.6rem 1rem;
+  padding: 0.35rem 0.6rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: #374151;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
