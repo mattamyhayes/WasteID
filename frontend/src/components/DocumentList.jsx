@@ -11,7 +11,7 @@ const canonicalType = (docType) => {
   return type
 }
 
-export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, components, filterDocType }) {
+export default function DocumentList({ profileId, transactionId, showUpload, onCompositionImported, onPropertiesImported, components, filterDocType }) {
   const navigate = useNavigate()
   const [docs, setDocs] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -216,6 +216,22 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
           }
         } catch {
           // Non-critical - composition parsing failed
+        }
+      }
+      // If physical/chemical properties were parsed, populate them
+      if (onPropertiesImported && parsedData) {
+        try {
+          const extractedProps = {}
+          if (parsedData.color) extractedProps.color = parsedData.color
+          if (parsedData.ph) extractedProps.ph_prop = parsedData.ph
+          if (parsedData.odor) extractedProps.odor = parsedData.odor
+          if (parsedData.physical_state) extractedProps.phases_layers = parsedData.physical_state
+          if (parsedData.relative_density) extractedProps.specific_gravity = parsedData.relative_density
+          if (Object.keys(extractedProps).length > 0) {
+            onPropertiesImported(extractedProps)
+          }
+        } catch {
+          // Non-critical - properties extraction failed
         }
       }
     } catch (err) {
