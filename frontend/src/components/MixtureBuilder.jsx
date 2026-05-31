@@ -221,7 +221,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
           <div className="form-group">
             <label>— or enter custom chemical name —</label>
             <input className="form-control" value={customName} onChange={e => setCustomName(e.target.value)}
-              placeholder="e.g., Waste Solvent Mixture" />
+              placeholder="e.g., Waste Solvent Constituent" />
           </div>
         )}
 
@@ -245,7 +245,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
           onClick={handleAdd}
           disabled={(!selectedChem && !customName.trim()) || !qty}
         >
-          + Add to Mixture
+          + Add to Constituents
         </button>
       </div>
     </div>
