@@ -2,10 +2,8 @@
 // Implements EPA 40 CFR 261 threshold comparison for waste codes D, F, U, P, K
 //
 // Key rules:
-// - If testing type is "Totals", apply the Rule of 20 (divide TCLP threshold by 20
-//   to get the Totals threshold, or equivalently multiply the detected result by 1
-//   and compare against tclp_threshold * 20 ... the standard approach is:
-//   Totals threshold = TCLP regulatory level × 20)
+// - If testing type is "Totals", apply the Rule of 20
+//   (Totals threshold = TCLP regulatory level × 20)
 // - If testing type is "TCLP", compare directly against tclp_threshold_mgl
 // - If units are ppb, convert to ppm (divide by 1000) before comparison
 // - ND (Non-Detect) results require no further action
@@ -135,8 +133,8 @@ export function analyzeLabResults(results, chemicals, testType, units, existingC
       category: matchedChemical.category,
       status: reportable ? 'REPORTABLE' : 'BELOW_THRESHOLD',
       message: reportable
-        ? `REPORTABLE: ${valuePpm.toFixed(4)} mg/L detected ≥ threshold ${threshold} mg/L (EPA waste code: ${matchedChemical.epa_waste_code})`
-        : `Below threshold: ${valuePpm.toFixed(4)} mg/L < ${threshold} mg/L`,
+        ? `REPORTABLE: ${valuePpm.toFixed(4)} mg/L detected ≥ threshold ${threshold != null ? threshold : 'N/A'} mg/L (EPA waste code: ${matchedChemical.epa_waste_code})`
+        : `Below threshold: ${valuePpm.toFixed(4)} mg/L < ${threshold != null ? threshold : 'N/A'} mg/L`,
     }
 
     if (reportable) {
@@ -145,7 +143,7 @@ export function analyzeLabResults(results, chemicals, testType, units, existingC
         entry.actionMessage = `Chemical is in Constituents – add waste code ${matchedChemical.epa_waste_code} to profile`
       } else {
         entry.action = 'ADD_TO_CONSTITUENTS'
-        entry.actionMessage = `Chemical NOT in Constituents – add ${matchedChemical.name} with quantity ${valuePpm} mg/L (min/max match) and waste code ${matchedChemical.epa_waste_code}`
+        entry.actionMessage = `Chemical NOT in Constituents – add ${matchedChemical.name} with exact quantity ${valuePpm} mg/L and waste code ${matchedChemical.epa_waste_code}`
       }
       reportableResults.push(entry)
     }
