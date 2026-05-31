@@ -4,6 +4,7 @@ import MixtureBuilder from '../components/MixtureBuilder'
 import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
 import DocumentsSection from '../components/DocumentsSection'
+import AnalyticsUpload from '../components/AnalyticsUpload'
 import { mixtures, customers as customersApi } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
@@ -873,18 +874,18 @@ export default function NewDetermination() {
           )}
 
           {activeSection === 'analytics' && (
-            <div className="card" style={{ marginTop: 0 }}>
-              <FileUpload
+            <div style={{ marginTop: 0 }}>
+              <AnalyticsUpload
                 profileId={mixtureId}
-                transactionId={transactionId}
-                fixedDocType="A"
-                title="Analytic Upload"
-                description="Upload analytical files for this profile. Uploaded files are automatically treated as Analytic."
                 onBeforeUpload={!mixtureId ? saveProfileMinimal : undefined}
                 onUploaded={() => setDocRefresh(r => r + 1)}
-              >
-                {mixtureId && <DocumentList profileId={mixtureId} transactionId={transactionId} key={`analytics-${docRefresh}`} filterDocType="A" components={components} />}
-              </FileUpload>
+                components={components}
+              />
+              {mixtureId && (
+                <div className="card">
+                  <DocumentList profileId={mixtureId} transactionId={transactionId} key={`analytics-${docRefresh}`} filterDocType="A" components={components} />
+                </div>
+              )}
             </div>
           )}
 
