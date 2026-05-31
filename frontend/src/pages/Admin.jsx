@@ -323,8 +323,12 @@ export function ContactFormSubmissions() {
 }
 
 export default function Admin() {
+  const [activeSection, setActiveSection] = useState(null)
+
+  const activeLink = adminLinks.find(l => l.to === activeSection)
+
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem 3rem', maxWidth: 1100 }}>
+    <div className="profile-page" style={{ padding: '2rem 1.5rem 3rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>Admin</h1>
         <p style={{ color: '#6b7280', maxWidth: 680 }}>
@@ -336,22 +340,38 @@ export default function Admin() {
         {/* Left sidebar navigation */}
         <div className="profile-sidebar">
           {adminLinks.map(({ to, title, icon }) => (
-            <Link
+            <button
               key={to}
-              to={to}
-              className="profile-sidebar-btn"
+              className={`profile-sidebar-btn${activeSection === to ? ' active' : ''}`}
+              onClick={() => setActiveSection(to)}
             >
               <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{icon}</span></span>
               {title}
-            </Link>
+            </button>
           ))}
         </div>
 
         {/* Main content area */}
         <div className="profile-main-content">
-          <div className="card" style={{ marginTop: 0, padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
-            <p style={{ fontSize: '0.95rem' }}>Select an admin section from the menu to get started.</p>
-          </div>
+          {!activeSection && (
+            <div className="card" style={{ marginTop: 0, padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+              <p style={{ fontSize: '0.95rem' }}>Select an admin section from the menu to get started.</p>
+            </div>
+          )}
+          {activeSection === '/admin/contact-submissions' && <ContactFormSubmissions />}
+          {activeSection === '/admin/users' && <UserManagement />}
+          {activeSection && activeSection !== '/admin/contact-submissions' && activeSection !== '/admin/users' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{activeLink?.icon}</span></span>
+                <h2 style={{ color: '#14532d', margin: 0 }}>{activeLink?.title}</h2>
+              </div>
+              <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>{activeLink?.description}</p>
+              <Link to={activeSection} className="btn btn-primary">
+                Open {activeLink?.title}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
