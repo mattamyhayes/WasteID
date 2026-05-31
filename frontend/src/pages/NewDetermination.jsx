@@ -5,7 +5,8 @@ import FileUpload from '../components/FileUpload'
 import DocumentList from '../components/DocumentList'
 import DocumentsSection from '../components/DocumentsSection'
 import AnalyticsUpload from '../components/AnalyticsUpload'
-import { mixtures, customers as customersApi, sds } from '../api/client'
+import axios from 'axios'
+import { mixtures, customers as customersApi, sds, isStaticMode } from '../api/client'
 import { EPA_STATUS_HOLD_DAYS, calcShipByInfo } from '../lib/shipByUtils'
 import stateRulesData from '../data/stateRules.json'
 import stateWasteCodesData from '../data/stateWasteCodes.json'
@@ -152,6 +153,122 @@ export default function NewDetermination() {
   const [properties, setProperties] = useState({ ...PROPERTIES_DEFAULTS })
   // Track source per field: 'imported' | 'manual' | 'modified'
   const [propertiesSources, setPropertiesSources] = useState({})
+
+  // Import from SDS via EPA SRS
+  const [sdsImportLoading, setSdsImportLoading] = useState(false)
+  const [sdsImportResults, setSdsImportResults] = useState(null)
+  const [sdsImportError, setSdsImportError] = useState('')
+
+  const EPA_SRS_BASE_URL = 'https://cdxapps.epa.gov/oms-substance-registry-services/rest-api'
+
+  const searchEpaSrs = async (searchType, query) => {
+    if (isStaticMode) {
+      const endpoint = searchType === 'cas' ? 'cas' : 'name'
+      const param = searchType === 'cas' ? 'casList' : 'nameList'
+      const url = `${EPA_SRS_BASE_URL}/substances/${endpoint}?${param}=${encodeURIComponent(query)}`
+      const response = await axios.get(url)
+      return Array.isArray(response.data) ? response.data : response.data ? [response.data] : []
+    }
+    const apiUrl = `${import.meta.env.VITE_API_URL}/api/epa-srs-lookup/`
+    const response = await axios.get(apiUrl, { params: { search_type: searchType, query } })
+    return response.data?.results || []
+  }
+
+  const handleImportFromSds = async () => {
+    if (!components || components.length === 0) {
+      setSdsImportError('No constituents found. Add chemicals in the Constituents section first.')
+      return
+    }
+
+    setSdsImportLoading(true)
+    setSdsImportError('')
+    setSdsImportResults(null)
+
+    const results = []
+
+    for (const comp of components) {
+      const chemName = comp._displayName || comp.custom_name || ''
+      const casNumber = comp._casNumber || ''
+      const entry = { name: chemName, cas: casNumber, status: 'pending', data: null, error: null }
+
+      try {
+        let data
+        if (casNumber) {
+          data = await searchEpaSrs('cas', casNumber)
+        } else if (chemName) {
+          data = await searchEpaSrs('name', chemName)
+        } else {
+          entry.status = 'skipped'
+          entry.error = 'No CAS number or name available'
+          results.push(entry)
+          continue
+        }
+
+        if (data && data.length > 0) {
+          entry.status = 'found'
+          entry.data = data[0] // Use first match
+        } else {
+          entry.status = 'not_found'
+          entry.error = 'No results found in EPA SRS'
+        }
+      } catch (err) {
+        entry.status = 'error'
+        entry.error = err.response?.data?.error || err.message || 'Request failed'
+      }
+
+      results.push(entry)
+    }
+
+    setSdsImportResults(results)
+    setSdsImportLoading(false)
+  }
+
+  const applyImportedSdsProperties = (substance) => {
+    const characteristics = substance.characteristics || []
+    const newProps = {}
+
+    characteristics.forEach(item => {
+      const label = (typeof item === 'string' ? item : (item.name || item.characteristicName || '')).toLowerCase()
+      const value = typeof item === 'object' ? (item.value || item.characteristicValue || '') : ''
+
+      if (label.includes('color')) newProps.color = value || 'Yes'
+      else if (label.includes('ph')) newProps.ph_prop = value || ''
+      else if (label.includes('odor')) newProps.odor = value || 'Yes'
+      else if (label.includes('phase') || label.includes('layer')) newProps.phases_layers = value || ''
+      else if (label.includes('btu')) newProps.btu_value = value || ''
+      else if (label.includes('specific gravity') || label.includes('gravity')) newProps.specific_gravity = value || ''
+      else if (label.includes('pyrophoric')) newProps.pyrophoric = true
+      else if (label.includes('polymerizable') && label.includes('inhibited')) newProps.polymerizable_inhibited = true
+      else if (label.includes('dioxin')) newProps.dioxins = true
+      else if (label.includes('shock')) newProps.shock_sensitive = true
+      else if (label.includes('organic peroxide') || (label.includes('polymerizable') && !label.includes('inhibited'))) newProps.polymerizable_organic_peroxides = true
+      else if (label.includes('pesticide') || label.includes('herbicide')) newProps.pesticides_herbicides = true
+      else if (label.includes('explosive') || label.includes('oxidizer')) newProps.explosive_oxidizer = true
+      else if (label.includes('asbestos') && label.includes('friable') && !label.includes('non')) newProps.asbestos_friable = true
+      else if (label.includes('furan')) newProps.furans = true
+      else if (label.includes('reactive') && label.includes('water')) newProps.water_reactive = true
+      else if (label.includes('reactive') && label.includes('sulfide')) newProps.reactive_sulfides = true
+      else if (label.includes('reactive')) newProps.reactive_prop = true
+      else if (label.includes('cyanide')) newProps.cyanides = true
+      else if (label.includes('radioactive')) newProps.radioactive = true
+      else if (label.includes('asbestos') && label.includes('non')) newProps.asbestos_non_friable = true
+      else if (label.includes('norm')) newProps.norm = true
+      else if (label.includes('thermally unstable') || label.includes('air reactive')) newProps.thermally_unstable_air_reactive = true
+      else if (label.includes('metal fines') || label.includes('metal fine')) newProps.metal_fines = true
+      else if (label.includes('biohazard') || label.includes('infectious')) newProps.biohazard_infectious = true
+    })
+
+    if (Object.keys(newProps).length > 0) {
+      setProperties(prev => ({ ...prev, ...newProps }))
+      setPropertiesSources(prev => {
+        const newSources = { ...prev }
+        Object.keys(newProps).forEach(k => { newSources[k] = 'imported' })
+        return newSources
+      })
+    }
+
+    return Object.keys(newProps).length
+  }
 
   const updateProperty = (key, value) => {
     setProperties(prev => ({ ...prev, [key]: value }))
@@ -1116,6 +1233,120 @@ export default function NewDetermination() {
               <p style={{ color: '#6b7280', marginBottom: '1.25rem', fontSize: '0.92rem' }}>
                 Properties imported from an SDS are marked with 📥. Manually entered values show ✍. Modified imported values show ✏️.
               </p>
+
+              {/* ─── Import from SDS Button ─── */}
+              <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleImportFromSds}
+                    disabled={sdsImportLoading || !components || components.length === 0}
+                    style={{
+                      background: '#166534',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '0.55rem 1.2rem',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      cursor: (sdsImportLoading || !components || components.length === 0) ? 'not-allowed' : 'pointer',
+                      opacity: (sdsImportLoading || !components || components.length === 0) ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    {sdsImportLoading ? '⏳ Looking up…' : '📥 Import from SDS'}
+                  </button>
+                  <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                    Looks up each constituent in the EPA SRS database to populate properties.
+                  </span>
+                </div>
+                {(!components || components.length === 0) && (
+                  <p style={{ fontSize: '0.83rem', color: '#9ca3af', marginTop: '0.5rem', marginBottom: 0 }}>
+                    Add constituents first to enable this feature.
+                  </p>
+                )}
+              </div>
+
+              {/* ─── SDS Import Error ─── */}
+              {sdsImportError && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '0.75rem 1rem', color: '#991b1b', marginBottom: '1rem', fontSize: '0.88rem' }}>
+                  ⚠️ {sdsImportError}
+                </div>
+              )}
+
+              {/* ─── SDS Import Results Table ─── */}
+              {sdsImportResults && (
+                <div style={{ marginBottom: '1.5rem', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f9fafb' }}>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Chemical</th>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>CAS #</th>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>EPA Name</th>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Characteristics</th>
+                        <th style={{ padding: '0.6rem 0.75rem', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Apply</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sdsImportResults.map((result, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>{result.name || '—'}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', fontFamily: 'monospace', fontSize: '0.82rem' }}>{result.cas || '—'}</td>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>
+                            {result.status === 'found' && <span style={{ color: '#166534', fontWeight: 500 }}>✅ Found</span>}
+                            {result.status === 'not_found' && <span style={{ color: '#9ca3af' }}>Not found</span>}
+                            {result.status === 'error' && <span style={{ color: '#dc2626' }}>❌ Error</span>}
+                            {result.status === 'skipped' && <span style={{ color: '#6b7280' }}>⏭ Skipped</span>}
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.84rem' }}>
+                            {result.data ? (result.data.epaName || result.data.systematicName || '—') : '—'}
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.82rem' }}>
+                            {result.data && result.data.characteristics
+                              ? result.data.characteristics.slice(0, 3).map((c, i) => (
+                                  <span key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 3, padding: '0.1rem 0.4rem', marginRight: '0.3rem', display: 'inline-block', marginBottom: '0.2rem' }}>
+                                    {typeof c === 'string' ? c : (c.name || c.characteristicName || '')}
+                                  </span>
+                                ))
+                              : '—'}
+                            {result.data && result.data.characteristics && result.data.characteristics.length > 3 && (
+                              <span style={{ color: '#6b7280', fontSize: '0.8rem' }}> +{result.data.characteristics.length - 3} more</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                            {result.status === 'found' && result.data && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const count = applyImportedSdsProperties(result.data)
+                                  if (count === 0) {
+                                    setSdsImportError(`No mappable properties found for ${result.name}.`)
+                                  }
+                                }}
+                                style={{
+                                  background: '#166534',
+                                  color: '#fff',
+                                  border: 'none',
+                                  padding: '0.3rem 0.7rem',
+                                  borderRadius: 4,
+                                  fontSize: '0.8rem',
+                                  cursor: 'pointer',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                Apply
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* ─── Physical ─── */}
               <h3 style={{ color: '#14532d', marginTop: '0.5rem', marginBottom: '0.75rem', fontSize: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.4rem' }}>Physical</h3>
