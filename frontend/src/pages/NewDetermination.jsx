@@ -58,7 +58,44 @@ const SIDEBAR_ICON_STYLE = {
   boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
 }
 
+const SIDEBAR_ICON_STYLE_BLUE = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #1e3a5f 0%, #4a90a4 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 4px 8px rgba(30,58,95,0.15)',
+}
+
 const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+
+const STAGE_COLORS = {
+  'Draft': { background: '#f3f4f6', color: '#4b5563' },
+  'Pending Review': { background: '#fef3c7', color: '#92400e' },
+  'Approved': { background: '#dcfce7', color: '#166534' },
+  'Rejected': { background: '#fef2f2', color: '#991b1b' },
+}
+
+function getProfileStage(m) {
+  if (m.profile_stage) return m.profile_stage
+  if (!m.review_status || m.review_status === 'draft') return 'Draft'
+  if (m.review_status === 'pending_review') return 'Pending Review'
+  if (m.review_status === 'approved') return 'Approved'
+  if (m.review_status === 'rejected') return 'Rejected'
+  return 'Draft'
+}
+
+const STATUS_TILES = [
+  { key: 'all', label: 'All', color: '#4a90a4', bg: '#f0f7fa', border: '#4a90a4' },
+  { key: 'draft', label: 'Draft', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' },
+  { key: 'pending_review', label: 'Pending Review', color: '#f59e0b', bg: '#fffbeb', border: '#fbbf24' },
+  { key: 'approved', label: 'Approved', color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+  { key: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
+]
 
 export default function NewDetermination() {
   const navigate = useNavigate()
@@ -114,6 +151,12 @@ export default function NewDetermination() {
   useEffect(() => {
     setError('')
     setSubmitting(false)
+    if (editId) {
+      setActiveSection('upload')
+    } else if (!editId && activeSection !== 'myProfiles') {
+      // When navigating to /profile without edit, show myProfiles unless already there
+      setActiveSection('myProfiles')
+    }
     if (!editId) {
       setMixtureId(null)
       setTransactionId('')
@@ -349,7 +392,73 @@ export default function NewDetermination() {
   }
 
   // Sidebar navigation state
-  const [activeSection, setActiveSection] = useState('upload')
+  const [activeSection, setActiveSection] = useState(editId ? 'upload' : 'myProfiles')
+
+  // My Profiles data
+  const [myProfiles, setMyProfiles] = useState([])
+  const [myProfilesLoading, setMyProfilesLoading] = useState(false)
+  const [myProfilesTile, setMyProfilesTile] = useState('all')
+
+  const loadMyProfiles = async () => {
+    setMyProfilesLoading(true)
+    try {
+      const res = await mixtures.list()
+      const all = res.data.results || res.data
+      setMyProfiles(all)
+    } finally {
+      setMyProfilesLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeSection === 'myProfiles') {
+      loadMyProfiles()
+    }
+  }, [activeSection])
+
+  const myProfilesTileCounts = useMemo(() => {
+    return {
+      all: myProfiles.length,
+      draft: myProfiles.filter(m => !m.review_status || m.review_status === 'draft').length,
+      pending_review: myProfiles.filter(m => m.review_status === 'pending_review').length,
+      approved: myProfiles.filter(m => m.review_status === 'approved').length,
+      rejected: myProfiles.filter(m => m.review_status === 'rejected').length,
+    }
+  }, [myProfiles])
+
+  const filteredMyProfiles = useMemo(() => {
+    if (myProfilesTile === 'all') return myProfiles
+    if (myProfilesTile === 'draft') return myProfiles.filter(m => !m.review_status || m.review_status === 'draft')
+    return myProfiles.filter(m => m.review_status === myProfilesTile)
+  }, [myProfiles, myProfilesTile])
+
+  const handleSelectProfile = (profile) => {
+    navigate(`/profile?edit=${profile.id}`)
+    setActiveSection('upload')
+  }
+
+  const handleNewProfile = () => {
+    navigate('/profile')
+    // Reset state for a new profile
+    setMixtureId(null)
+    setTransactionId('')
+    setName('')
+    setCustomerId('')
+    setLocationId('')
+    setIsDiscarded(true)
+    setDiscardReason('spent')
+    setProcessDesc('')
+    setComponents([])
+    setFlashPoint('')
+    setPh('')
+    setIsReactive(false)
+    setNotes('')
+    setShipmentSizeUnit('')
+    setShipmentSizeQty('')
+    setEpaGeneratorStatus('')
+    setGenerationDate('')
+    setActiveSection('upload')
+  }
 
   const SIDEBAR_ITEMS = [
     { key: 'upload', label: 'SDS Upload', icon: (
@@ -422,6 +531,30 @@ export default function NewDetermination() {
       <div className="profile-sidebar-layout">
         {/* Left sidebar navigation */}
         <div className="profile-sidebar">
+          {/* My Profiles - earthy blue icon */}
+          <button
+            className={`profile-sidebar-btn${activeSection === 'myProfiles' ? ' active' : ''}`}
+            onClick={() => setActiveSection('myProfiles')}
+          >
+            <span style={SIDEBAR_ICON_STYLE_BLUE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span></span>
+            My Profiles
+          </button>
+          {/* New Profile - earthy blue tone */}
+          <button
+            className="profile-sidebar-btn"
+            onClick={handleNewProfile}
+            style={{ borderLeft: '3px solid #4a90a4' }}
+          >
+            <span style={SIDEBAR_ICON_STYLE_BLUE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></span>
+            New Profile
+          </button>
+          <div style={{ borderBottom: '1px solid #e5e7eb', margin: '0.5rem 0' }} />
+          {/* Profile PID label when editing */}
+          {mixtureId && (
+            <div style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', color: '#4a90a4', fontFamily: 'monospace', fontWeight: 600, marginBottom: '0.25rem' }}>
+              PID: {transactionId || mixtureId}
+            </div>
+          )}
           {SIDEBAR_ITEMS.map(item => (
             <button
               key={item.key}
@@ -452,6 +585,95 @@ export default function NewDetermination() {
 
         {/* Main content area */}
         <div className="profile-main-content">
+          {activeSection === 'myProfiles' && (
+            <div className="card" style={{ marginTop: 0 }}>
+              <h3 style={{ color: '#1e3a5f', marginBottom: '1rem' }}>My Profiles</h3>
+
+              {myProfilesLoading && <p style={{ color: '#6b7280' }}>Loading…</p>}
+
+              {!myProfilesLoading && (
+                <>
+                  {/* Status tiles */}
+                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    {STATUS_TILES.map(tile => (
+                      <button
+                        key={tile.key}
+                        onClick={() => setMyProfilesTile(myProfilesTile === tile.key ? 'all' : tile.key)}
+                        style={{
+                          background: myProfilesTile === tile.key ? tile.bg : '#fff',
+                          border: `2px solid ${myProfilesTile === tile.key ? tile.border : '#e5e7eb'}`,
+                          borderRadius: 8,
+                          padding: '0.5rem 1rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          transition: 'all 0.15s',
+                          boxShadow: myProfilesTile === tile.key ? `0 2px 8px ${tile.border}40` : '0 1px 4px rgba(0,0,0,0.06)',
+                        }}
+                      >
+                        <span style={{ fontSize: '1.4rem', fontWeight: 800, color: tile.color, lineHeight: 1 }}>
+                          {myProfilesTileCounts[tile.key]}
+                        </span>
+                        <span style={{ fontSize: '0.88rem', fontWeight: 600, color: tile.color }}>{tile.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Profiles table */}
+                  {filteredMyProfiles.length === 0 ? (
+                    <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>
+                      No profiles found. Click "New Profile" to get started.
+                    </p>
+                  ) : (
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style={{ fontSize: '0.88rem', whiteSpace: 'nowrap' }}>Profile Name</th>
+                            <th style={{ fontSize: '0.88rem', whiteSpace: 'nowrap' }}>PID</th>
+                            <th style={{ fontSize: '0.88rem', whiteSpace: 'nowrap' }}>Generator</th>
+                            <th style={{ fontSize: '0.88rem', whiteSpace: 'nowrap' }}>Created</th>
+                            <th style={{ fontSize: '0.88rem', whiteSpace: 'nowrap' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredMyProfiles.map(m => {
+                            const stage = getProfileStage(m)
+                            const stageStyle = STAGE_COLORS[stage] || STAGE_COLORS['Draft']
+                            return (
+                              <tr
+                                key={m.id}
+                                onClick={() => handleSelectProfile(m)}
+                                style={{ cursor: 'pointer', transition: 'background 0.1s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = '#f0f7fa'}
+                                onMouseLeave={e => e.currentTarget.style.background = ''}
+                              >
+                                <td style={{ fontWeight: 600, color: '#1e3a5f' }}>{m.name || 'Untitled'}</td>
+                                <td style={{ fontSize: '0.82rem', color: '#6b7280', fontFamily: 'monospace' }}>
+                                  {m.transaction_id || '—'}
+                                </td>
+                                <td style={{ fontSize: '0.9rem' }}>{m.customer_name || '—'}</td>
+                                <td style={{ fontSize: '0.88rem', color: '#6b7280' }}>
+                                  {m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}
+                                </td>
+                                <td>
+                                  <span style={{ ...stageStyle, padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600, fontSize: '0.8rem' }}>
+                                    {stage}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {activeSection === 'upload' && (
             <div className="card" style={{ marginTop: 0 }}>
               <FileUpload
