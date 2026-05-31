@@ -245,20 +245,44 @@ export default function EPASRSLookup() {
 }
 
 function SubstanceCard({ substance }) {
-  const [expanded, setExpanded] = useState(false)
-
   // Extract key fields (EPA SRS response structure)
   const name = substance.systematicName || substance.epaName || substance.currentCasNumber || 'Unknown Substance'
-  const casNumber = substance.currentCasNumber || substance.casNumber || '-'
-  const substanceId = substance.substanceId || substance.internalTrackingNumber || '-'
-  const epaName = substance.epaName || '-'
-  const molecularFormula = substance.molecularFormula || '-'
-  const molecularWeight = substance.molecularWeight || '-'
 
   // Lists this substance appears on
   const lists = substance.lists || substance.listDetails || []
   // Synonyms
   const synonyms = substance.synonyms || substance.synonymDetails || []
+
+  // All initial attributes to display
+  const attributes = [
+    { label: 'Substance Key', value: substance.subsKey },
+    { label: 'Internal Tracking Number', value: substance.internalTrackingNumber },
+    { label: 'Systematic Name', value: substance.systematicName },
+    { label: 'EPA Identification Number', value: substance.epaIdentificationNumber },
+    { label: 'Current CAS Number', value: substance.currentCasNumber || substance.casNumber },
+    { label: 'Current Taxonomic Serial Number', value: substance.currentTaxonomicSerialNumber },
+    { label: 'EPA Name', value: substance.epaName },
+    { label: 'Substance Type', value: substance.substanceType },
+    { label: 'Category Class', value: substance.categoryClass },
+    { label: 'Kingdom Code', value: substance.kingdomCode },
+    { label: 'IUPAC Name', value: substance.iupacName },
+    { label: 'PubChem ID', value: substance.pubChemId },
+    { label: 'DTX SID', value: substance.dtxsid },
+    { label: 'CompTox Update Date', value: substance.comptoxUpdateDate },
+    { label: 'Molecular Weight', value: substance.molecularWeight },
+    { label: 'Molecular Formula', value: substance.molecularFormula },
+    { label: 'InChI Notation', value: substance.inchiNotation },
+    { label: 'SMILES Notation', value: substance.smilesNotation },
+  ]
+
+  const classifications = substance.classifications ? substance.classifications.filter(Boolean) : []
+  const characteristics = substance.characteristics ? substance.characteristics.filter(Boolean) : []
+  if (classifications.length > 0) {
+    attributes.push({ label: 'Classifications', value: classifications.join(', ') })
+  }
+  if (characteristics.length > 0) {
+    attributes.push({ label: 'Characteristics', value: characteristics.join(', ') })
+  }
 
   return (
     <div style={{
@@ -268,101 +292,77 @@ function SubstanceCard({ substance }) {
       padding: '1.2rem',
       marginBottom: '1rem',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '0.3rem', color: '#1a1a1a' }}>
-            {name}
-          </h3>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.88rem', color: '#555' }}>
-            <span><strong>CAS:</strong> {casNumber}</span>
-            <span><strong>SRS ID:</strong> {substanceId}</span>
-            {epaName !== '-' && <span><strong>EPA Name:</strong> {epaName}</span>}
+      <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '0.8rem', color: '#1a1a1a' }}>
+        {name}
+      </h3>
+
+      {/* All attributes */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.3rem 1rem', fontSize: '0.88rem', marginBottom: '1rem' }}>
+        {attributes.map((attr, i) => (
+          <div key={i} style={{ display: 'contents' }}>
+            <span style={{ fontWeight: 600, color: '#333' }}>{attr.label}:</span>
+            <span style={{ color: '#555' }}>{attr.value != null ? attr.value : '—'}</span>
           </div>
-        </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          style={{
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: 6,
-            padding: '0.3rem 0.7rem',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            fontWeight: 500,
-            color: '#166534',
-          }}
-        >
-          {expanded ? 'Less ▲' : 'More ▼'}
-        </button>
+        ))}
       </div>
 
-      {expanded && (
-        <div style={{ marginTop: '1rem', borderTop: '1px solid #f0f0f0', paddingTop: '1rem' }}>
-          {/* Molecular info */}
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem', fontSize: '0.9rem' }}>
-            <div><strong>Molecular Formula:</strong> {molecularFormula}</div>
-            <div><strong>Molecular Weight:</strong> {molecularWeight}</div>
+      {/* Lists */}
+      {lists.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>EPA Lists</h4>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {(Array.isArray(lists) ? lists : []).map((list, i) => (
+              <span
+                key={i}
+                style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: 4,
+                  padding: '0.2rem 0.5rem',
+                  fontSize: '0.8rem',
+                  color: '#1d4ed8',
+                }}
+              >
+                {list.listAcronym || list.name || list}
+              </span>
+            ))}
           </div>
-
-          {/* Lists */}
-          {lists.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>EPA Lists</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {(Array.isArray(lists) ? lists : []).map((list, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      background: '#eff6ff',
-                      border: '1px solid #bfdbfe',
-                      borderRadius: 4,
-                      padding: '0.2rem 0.5rem',
-                      fontSize: '0.8rem',
-                      color: '#1d4ed8',
-                    }}
-                  >
-                    {list.listAcronym || list.name || list}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Synonyms */}
-          {synonyms.length > 0 && (
-            <div>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>Synonyms</h4>
-              <div style={{ fontSize: '0.85rem', color: '#555', lineHeight: 1.6 }}>
-                {(Array.isArray(synonyms) ? synonyms.slice(0, 20) : []).map((syn, i) => (
-                  <span key={i}>
-                    {syn.synonymName || syn.name || syn}
-                    {i < Math.min(synonyms.length, 20) - 1 ? ', ' : ''}
-                  </span>
-                ))}
-                {synonyms.length > 20 && <span style={{ color: '#888' }}> ...and {synonyms.length - 20} more</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Raw data toggle for advanced users */}
-          <details style={{ marginTop: '1rem' }}>
-            <summary style={{ fontSize: '0.82rem', cursor: 'pointer', color: '#666' }}>
-              View Raw Data
-            </summary>
-            <pre style={{
-              background: '#f5f5f5',
-              padding: '0.8rem',
-              borderRadius: 6,
-              fontSize: '0.75rem',
-              overflow: 'auto',
-              maxHeight: 300,
-              marginTop: '0.5rem',
-            }}>
-              {JSON.stringify(substance, null, 2)}
-            </pre>
-          </details>
         </div>
       )}
+
+      {/* Synonyms */}
+      {synonyms.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>Synonyms</h4>
+          <div style={{ fontSize: '0.85rem', color: '#555', lineHeight: 1.6 }}>
+            {(Array.isArray(synonyms) ? synonyms.slice(0, 20) : []).map((syn, i) => (
+              <span key={i}>
+                {syn.synonymName || syn.name || syn}
+                {i < Math.min(synonyms.length, 20) - 1 ? ', ' : ''}
+              </span>
+            ))}
+            {synonyms.length > 20 && <span style={{ color: '#888' }}> ...and {synonyms.length - 20} more</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Raw data toggle */}
+      <details style={{ marginTop: '0.5rem' }}>
+        <summary style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#166534', fontWeight: 500 }}>
+          📋 Click to see raw data
+        </summary>
+        <pre style={{
+          background: '#f5f5f5',
+          padding: '0.8rem',
+          borderRadius: 6,
+          fontSize: '0.75rem',
+          overflow: 'auto',
+          maxHeight: 300,
+          marginTop: '0.5rem',
+        }}>
+          {JSON.stringify(substance, null, 2)}
+        </pre>
+      </details>
     </div>
   )
 }
