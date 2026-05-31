@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import ChemicalSearch from './ChemicalSearch'
 
-const UNITS = ['kg', 'L', 'pct_weight', 'pct_volume', 'g', 'mL', 'lb', 'gal']
+const UNITS = ['ppm', 'ppb', 'pct', 'kg', 'L', 'g', 'mL', 'lb', 'gal']
 const UNIT_LABELS = {
-  kg: 'kg', L: 'L', pct_weight: '% wt', pct_volume: '% vol',
-  g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
+  ppm: 'ppm (mg/L)', ppb: 'ppb', pct: '%',
+  kg: 'kg', L: 'L', g: 'g', mL: 'mL', lb: 'lb', gal: 'gal'
 }
 
 const CATEGORY_LABELS = {
@@ -43,22 +43,26 @@ function getCategoryDisplay(chem) {
  * @param {boolean} [editable=false]
  */
 export default function MixtureBuilder({ components, onChange, editable = false }) {
-  const [qty, setQty] = useState('')
-  const [unit, setUnit] = useState('kg')
+  const [qtyMin, setQtyMin] = useState('')
+  const [qtyMax, setQtyMax] = useState('')
+  const [unit, setUnit] = useState('ppm')
   const [customName, setCustomName] = useState('')
   const [selectedChem, setSelectedChem] = useState(null)
   const [editingIndex, setEditingIndex] = useState(null)
-  const [editQty, setEditQty] = useState('')
-  const [editUnit, setEditUnit] = useState('kg')
+  const [editQtyMin, setEditQtyMin] = useState('')
+  const [editQtyMax, setEditQtyMax] = useState('')
+  const [editUnit, setEditUnit] = useState('ppm')
 
   const handleAdd = () => {
-    if (!qty || isNaN(parseFloat(qty))) return
+    if (!qtyMin || isNaN(parseFloat(qtyMin))) return
     if (!selectedChem && !customName.trim()) return
 
     const comp = {
       chemical: selectedChem ? selectedChem.id : null,
       custom_name: selectedChem ? '' : customName.trim(),
-      quantity: parseFloat(qty),
+      quantity_min: parseFloat(qtyMin),
+      quantity_max: qtyMax && !isNaN(parseFloat(qtyMax)) ? parseFloat(qtyMax) : null,
+      quantity: parseFloat(qtyMin),
       unit,
       _displayName: selectedChem ? selectedChem.name : customName.trim(),
       _epaCode: selectedChem ? selectedChem.epa_waste_code : '',
@@ -70,8 +74,9 @@ export default function MixtureBuilder({ components, onChange, editable = false 
     onChange([...components, comp])
     setSelectedChem(null)
     setCustomName('')
-    setQty('')
-    setUnit('kg')
+    setQtyMin('')
+    setQtyMax('')
+    setUnit('ppm')
   }
 
   const handleRemove = (index) => {
@@ -81,15 +86,22 @@ export default function MixtureBuilder({ components, onChange, editable = false 
 
   const handleStartEdit = (index) => {
     setEditingIndex(index)
-    setEditQty(String(components[index].quantity))
+    setEditQtyMin(String(components[index].quantity_min ?? components[index].quantity ?? ''))
+    setEditQtyMax(String(components[index].quantity_max ?? ''))
     setEditUnit(components[index].unit)
   }
 
   const handleSaveEdit = (index) => {
-    if (!editQty || isNaN(parseFloat(editQty))) return
+    if (!editQtyMin || isNaN(parseFloat(editQtyMin))) return
     const updated = components.map((comp, i) => {
       if (i !== index) return comp
-      const newComp = { ...comp, quantity: parseFloat(editQty), unit: editUnit }
+      const newComp = {
+        ...comp,
+        quantity_min: parseFloat(editQtyMin),
+        quantity_max: editQtyMax && !isNaN(parseFloat(editQtyMax)) ? parseFloat(editQtyMax) : null,
+        quantity: parseFloat(editQtyMin),
+        unit: editUnit,
+      }
       // If an imported row is edited, mark it as modified
       if (comp._source === 'imported') {
         newComp._source = 'modified'
@@ -117,7 +129,8 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                 <th>EPA Code</th>
                 <th>Characteristic Category</th>
                 <th>Characteristic</th>
-                <th>Quantity</th>
+                <th>Quantity (Min)</th>
+                <th>Quantity (Max)</th>
                 <th>Unit</th>
                 <th></th>
               </tr>
@@ -162,9 +175,17 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                   <td>
                     {editable && editingIndex === i
                       ? <input className="form-control" type="number" min="0" step="any"
-                          value={editQty} onChange={e => setEditQty(e.target.value)}
+                          value={editQtyMin} onChange={e => setEditQtyMin(e.target.value)}
                           style={{ width: 80, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
-                      : comp.quantity}
+                      : (comp.quantity_min ?? comp.quantity ?? '')}
+                  </td>
+                  <td>
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="number" min="0" step="any"
+                          value={editQtyMax} onChange={e => setEditQtyMax(e.target.value)}
+                          placeholder="—"
+                          style={{ width: 80, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : (comp.quantity_max != null ? comp.quantity_max : <span style={{ color: '#9ca3af' }}>—</span>)}
                   </td>
                   <td>
                     {editable && editingIndex === i
@@ -227,9 +248,14 @@ export default function MixtureBuilder({ components, onChange, editable = false 
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-            <label>Quantity</label>
+            <label>Quantity (Min)</label>
             <input className="form-control" type="number" min="0" step="any"
-              value={qty} onChange={e => setQty(e.target.value)} placeholder="0" />
+              value={qtyMin} onChange={e => setQtyMin(e.target.value)} placeholder="0" />
+          </div>
+          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+            <label>Quantity (Max)</label>
+            <input className="form-control" type="number" min="0" step="any"
+              value={qtyMax} onChange={e => setQtyMax(e.target.value)} placeholder="Optional" />
           </div>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
             <label>Unit</label>
@@ -243,7 +269,7 @@ export default function MixtureBuilder({ components, onChange, editable = false 
           className="btn btn-primary"
           style={{ marginTop: '1rem' }}
           onClick={handleAdd}
-          disabled={(!selectedChem && !customName.trim()) || !qty}
+          disabled={(!selectedChem && !customName.trim()) || !qtyMin}
         >
           + Add to Constituents
         </button>

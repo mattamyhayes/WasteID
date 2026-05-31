@@ -227,6 +227,9 @@ class Mixture(models.Model):
 
 class MixtureComponent(models.Model):
     UNIT_CHOICES = [
+        ('ppm', 'ppm (mg/L)'),
+        ('ppb', 'ppb'),
+        ('pct', '%'),
         ('kg', 'Kilograms (kg)'),
         ('L', 'Liters (L)'),
         ('pct_weight', '% by Weight'),
@@ -242,6 +245,8 @@ class MixtureComponent(models.Model):
     custom_name = models.CharField(max_length=200, blank=True)
     cas_number = models.CharField(max_length=50, blank=True, help_text='CAS number for components without a linked Chemical record (e.g. parsed from an SDS import)')
     quantity = models.FloatField()
+    quantity_min = models.FloatField(null=True, blank=True, help_text='Minimum concentration/quantity')
+    quantity_max = models.FloatField(null=True, blank=True, help_text='Maximum concentration/quantity')
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
 
     override_flash_point_c = models.FloatField(null=True, blank=True)
