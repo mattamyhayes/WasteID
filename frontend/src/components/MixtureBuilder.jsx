@@ -52,6 +52,11 @@ export default function MixtureBuilder({ components, onChange, editable = false 
   const [editQtyMin, setEditQtyMin] = useState('')
   const [editQtyMax, setEditQtyMax] = useState('')
   const [editUnit, setEditUnit] = useState('ppm')
+  const [editName, setEditName] = useState('')
+  const [editCas, setEditCas] = useState('')
+  const [editEpaCode, setEditEpaCode] = useState('')
+  const [editCategory, setEditCategory] = useState('')
+  const [editCharacteristics, setEditCharacteristics] = useState([])
 
   const handleAdd = () => {
     if (!qtyMin || isNaN(parseFloat(qtyMin))) return
@@ -85,14 +90,21 @@ export default function MixtureBuilder({ components, onChange, editable = false 
   }
 
   const handleStartEdit = (index) => {
+    const comp = components[index]
     setEditingIndex(index)
-    setEditQtyMin(String(components[index].quantity_min ?? components[index].quantity ?? ''))
-    setEditQtyMax(String(components[index].quantity_max ?? ''))
-    setEditUnit(components[index].unit)
+    setEditQtyMin(String(comp.quantity_min ?? comp.quantity ?? ''))
+    setEditQtyMax(String(comp.quantity_max ?? ''))
+    setEditUnit(comp.unit)
+    setEditName(comp._displayName || comp.custom_name || '')
+    setEditCas(comp._casNumber || comp.component_cas_number || comp.cas_number || comp.chemical_detail?.cas_number || '')
+    setEditEpaCode(comp._epaCode || '')
+    setEditCategory(comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail) || '')
+    setEditCharacteristics(comp._characteristics?.length > 0 ? [...comp._characteristics] : getCharacteristics(comp.chemical_detail))
   }
 
   const handleSaveEdit = (index) => {
     if (!editQtyMin || isNaN(parseFloat(editQtyMin))) return
+    if (!editName.trim()) return
     const updated = components.map((comp, i) => {
       if (i !== index) return comp
       const newComp = {
@@ -101,6 +113,12 @@ export default function MixtureBuilder({ components, onChange, editable = false 
         quantity_max: editQtyMax && !isNaN(parseFloat(editQtyMax)) ? parseFloat(editQtyMax) : null,
         quantity: parseFloat(editQtyMin),
         unit: editUnit,
+        _displayName: editName.trim(),
+        custom_name: editName.trim(),
+        _casNumber: editCas.trim(),
+        _epaCode: editEpaCode.trim(),
+        _categoryDisplay: editCategory.trim(),
+        _characteristics: [...editCharacteristics],
       }
       // If an imported row is edited, mark it as modified
       if (comp._source === 'imported') {
@@ -155,22 +173,49 @@ export default function MixtureBuilder({ components, onChange, editable = false 
                         : '✍'}
                     </span>
                   </td>
-                  <td>{comp._displayName || comp.custom_name || `Component ${i + 1}`}</td>
                   <td>
-                    {casNumber
-                      ? casNumber
-                      : <span style={{ color: '#9ca3af' }}>—</span>}
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="text"
+                          value={editName} onChange={e => setEditName(e.target.value)}
+                          style={{ width: 140, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : (comp._displayName || comp.custom_name || `Component ${i + 1}`)}
                   </td>
                   <td>
-                    {comp._epaCode
-                      ? <span className="badge badge-warning">{comp._epaCode}</span>
-                      : <span style={{ color: '#9ca3af' }}>—</span>}
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="text"
+                          value={editCas} onChange={e => setEditCas(e.target.value)}
+                          placeholder="—"
+                          style={{ width: 100, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : (casNumber
+                        ? casNumber
+                        : <span style={{ color: '#9ca3af' }}>—</span>)}
                   </td>
                   <td>
-                    {(comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail)) || <span style={{ color: '#9ca3af' }}>—</span>}
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="text"
+                          value={editEpaCode} onChange={e => setEditEpaCode(e.target.value)}
+                          placeholder="—"
+                          style={{ width: 80, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : (comp._epaCode
+                        ? <span className="badge badge-warning">{comp._epaCode}</span>
+                        : <span style={{ color: '#9ca3af' }}>—</span>)}
                   </td>
                   <td>
-                    {(comp._characteristics?.length > 0 ? comp._characteristics : getCharacteristics(comp.chemical_detail)).join(', ') || <span style={{ color: '#9ca3af' }}>—</span>}
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="text"
+                          value={editCategory} onChange={e => setEditCategory(e.target.value)}
+                          placeholder="—"
+                          style={{ width: 100, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : ((comp._categoryDisplay || getCategoryDisplay(comp.chemical_detail)) || <span style={{ color: '#9ca3af' }}>—</span>)}
+                  </td>
+                  <td>
+                    {editable && editingIndex === i
+                      ? <input className="form-control" type="text"
+                          value={editCharacteristics.join(', ')}
+                          onChange={e => setEditCharacteristics(e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(s => s) : [])}
+                          placeholder="—"
+                          style={{ width: 140, padding: '0.2rem 0.4rem', fontSize: '0.85rem' }} />
+                      : ((comp._characteristics?.length > 0 ? comp._characteristics : getCharacteristics(comp.chemical_detail)).join(', ') || <span style={{ color: '#9ca3af' }}>—</span>)}
                   </td>
                   <td>
                     {editable && editingIndex === i
