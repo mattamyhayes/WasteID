@@ -35,16 +35,17 @@ export default function FormEditor() {
 
   useEffect(() => {
     if (isEdit) {
-      const existing = getForm(Number(id))
-      if (existing) {
-        setForm(existing)
-        setName(existing.name)
-        setFields(existing.fields || [])
-        setFilePreview(existing.file_data)
-        setConverted(existing.fields && existing.fields.length > 0)
-      } else {
-        setError('Form not found.')
-      }
+      getForm(Number(id)).then(existing => {
+        if (existing) {
+          setForm(existing)
+          setName(existing.name)
+          setFields(existing.fields || [])
+          setFilePreview(existing.file_data)
+          setConverted(existing.fields && existing.fields.length > 0)
+        } else {
+          setError('Form not found.')
+        }
+      })
     }
   }, [id, isEdit])
 

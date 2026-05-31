@@ -199,15 +199,27 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
     }
   }
 
-  const handleView = (doc) => {
+  const handleView = async (doc) => {
     // For local mode, file_data contains a data URL
-    if (doc.file_data || doc.file_url) {
-      const url = doc.file_data || doc.file_url
+    const url = doc.file_data || doc.file_url
+    if (url) {
       window.open(url, '_blank')
-    } else if (doc.file) {
+      return
+    }
+    if (doc.file) {
       // Backend mode - file field contains the URL
       window.open(doc.file, '_blank')
+      return
     }
+    // File data not inline (stored in IndexedDB in local mode). Fetch the full record.
+    try {
+      const res = await profileDocuments.get(doc.id)
+      const full = res?.data
+      const fullUrl = full?.file_data || full?.file_url || full?.file
+      if (fullUrl) {
+        window.open(fullUrl, '_blank')
+      }
+    } catch { /* ignore */ }
   }
 
   if (!mixtureId) {

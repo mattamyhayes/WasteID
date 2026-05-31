@@ -42,8 +42,8 @@ export default function OutputFormVisualization() {
     setSelectedProfile(found || null)
   }
 
-  const handleExport = ({ formId, filledFields }) => {
-    const form = getForm(formId)
+  const handleExport = async ({ formId, filledFields }) => {
+    const form = await getForm(formId)
     if (!form) return
 
     const doc = new jsPDF('p', 'mm', 'letter')

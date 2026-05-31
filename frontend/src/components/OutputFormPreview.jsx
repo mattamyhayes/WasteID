@@ -31,7 +31,7 @@ export default function OutputFormPreview({ profile, formId: initialFormId, onEx
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFormId])
 
-  const selectForm = (formId) => {
+  const selectForm = async (formId) => {
     setSelectedFormId(formId)
     if (!formId) {
       setSelectedForm(null)
@@ -39,7 +39,7 @@ export default function OutputFormPreview({ profile, formId: initialFormId, onEx
       setUnmappedFields([])
       return
     }
-    const form = getForm(Number(formId))
+    const form = await getForm(Number(formId))
     setSelectedForm(form)
     if (form) {
       const unmapped = getUnmappedFields(form, profile)

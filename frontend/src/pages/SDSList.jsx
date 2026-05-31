@@ -34,14 +34,23 @@ export default function SDSList() {
     }
   }
 
-  const handleViewFile = (record) => {
-    if (record.file_data) {
-      window.open(record.file_data, '_blank')
-    } else if (record.file_url) {
-      window.open(record.file_url, '_blank')
-    } else {
-      alert('No file available to view. The original PDF file data was not stored with this record.')
+  const handleViewFile = async (record) => {
+    const url = record.file_data || record.file_url
+    if (url) {
+      window.open(url, '_blank')
+      return
     }
+    // File data not inline (stored in IndexedDB in local mode). Fetch the full record.
+    try {
+      const res = await sds.get(record.id)
+      const full = res?.data
+      const fullUrl = full?.file_data || full?.file_url
+      if (fullUrl) {
+        window.open(fullUrl, '_blank')
+        return
+      }
+    } catch { /* fall through */ }
+    alert('No file available to view. The original PDF file data was not stored with this record.')
   }
 
   const thStyle = {
