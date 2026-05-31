@@ -651,14 +651,20 @@ class ProfileDocument(models.Model):
     FILE_TYPE_CHOICES = [
         ('SDS', 'Safety Data Sheet'),
         ('A', 'Analytical'),
+        ('OTHER', 'Other'),
     ]
 
     mixture = models.ForeignKey(Mixture, on_delete=models.CASCADE, related_name='documents')
-    file_type = models.CharField(max_length=3, choices=FILE_TYPE_CHOICES)
+    file_type = models.CharField(max_length=5, choices=FILE_TYPE_CHOICES)
     short_name = models.CharField(max_length=200, help_text='Short identifier for the document')
     file = models.FileField(upload_to='profile_documents/')
     stored_filename = models.CharField(max_length=300, help_text='Stored filename with profile number prefix')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    # Many-to-many: a document can be associated with multiple profiles
+    associated_profiles = models.ManyToManyField(
+        Mixture, related_name='associated_documents', blank=True,
+        help_text='Additional profiles this document is associated with'
+    )
 
     class Meta:
         ordering = ['-uploaded_at']
