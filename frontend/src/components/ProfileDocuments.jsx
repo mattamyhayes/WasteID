@@ -119,7 +119,7 @@ export default function ProfileDocuments({ mixtureId, profileName, onComposition
                   chemical: null,
                   custom_name: entry.name || (entry.cas_number ? `CAS ${entry.cas_number}` : 'Unknown Component'),
                   quantity: parseConcentration(entry.concentration),
-                  unit: 'pct_weight',
+                  unit: 'pct',
                   _displayName: entry.name || (entry.cas_number ? `CAS ${entry.cas_number}` : 'Unknown Component'),
                   _epaCode: '',
                   _casNumber: entry.cas_number || '',

@@ -203,7 +203,7 @@ export default function DocumentList({ profileId, transactionId, showUpload, onC
               chemical: null,
               custom_name: entry.name || `CAS ${entry.cas_number}`,
               quantity: parseConcentration(entry.concentration),
-              unit: 'pct_weight',
+              unit: 'pct',
               _displayName: entry.name || `CAS ${entry.cas_number}`,
               _epaCode: '',
               _casNumber: entry.cas_number || '',

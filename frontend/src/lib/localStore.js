@@ -347,7 +347,7 @@ function seedMixtureStore() {
         chemical: chem?.id || null,
         custom_name: '',
         quantity: Number((5 + ((compId % 8) * 2.5)).toFixed(2)),
-        unit: 'pct_weight',
+        unit: 'pct',
         override_flash_point_c: null,
         override_ph: null,
         override_is_reactive: false,

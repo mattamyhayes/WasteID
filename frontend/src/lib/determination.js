@@ -165,7 +165,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
         for (const solvent of fInfo.chemicals) {
           const sLower = solvent.toLowerCase()
           if (chemNameLower && (chemNameLower.includes(sLower) || sLower.includes(chemNameLower))) {
-            if ((comp.unit === 'pct_weight' || comp.unit === 'pct_volume') &&
+            if ((comp.unit === 'pct_weight' || comp.unit === 'pct_volume' || comp.unit === 'pct') &&
                 comp.quantity >= fInfo.threshold_pct) {
               if (!listedCodes.includes(fCode)) {
                 listedCodes.push(fCode)
@@ -285,7 +285,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
     const chem = comp.chemical_detail
     if (!chem) continue
     if (chem.tclp_threshold_mgl != null && chem.epa_waste_code && chem.epa_waste_code.startsWith('D')) {
-      if ((comp.unit === 'pct_weight' || comp.unit === 'pct_volume') && comp.quantity > 0) {
+      if ((comp.unit === 'pct_weight' || comp.unit === 'pct_volume' || comp.unit === 'pct') && comp.quantity > 0) {
         // Simplified TCLP estimate: (pct/100) * 1,000,000 mg/kg / 20 dilution = mg/L
         const tclpEstimate = (comp.quantity / 100.0) * 1_000_000 / 20.0
         if (tclpEstimate >= chem.tclp_threshold_mgl) {
@@ -298,7 +298,7 @@ export function determineHazardousWaste(mixture, additionalProps = {}) {
             )
           }
         }
-      } else if (comp.unit !== 'pct_weight' && comp.unit !== 'pct_volume' && comp.quantity > 0) {
+      } else if (comp.unit !== 'pct_weight' && comp.unit !== 'pct_volume' && comp.unit !== 'pct' && comp.quantity > 0) {
         const dCode = chem.epa_waste_code
         if (!toxicCodes.includes(dCode)) {
           toxicCodes.push(dCode)
