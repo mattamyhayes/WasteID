@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import wasteIdLeaf from '../assets/branding/wasteid-leaf.svg'
 
 export const navLinks = [
-  { to: '/profile', label: 'New Profile', icon: '🚀' },
+  { to: '/profile', label: 'Profile', icon: '🚀' },
   { to: '/review', label: 'Review', icon: '📋' },
   { to: '/shipping', label: 'Shipping', icon: '🚛' },
   { to: '/epa-srs-lookup', label: 'EPA SRS Lookup', icon: '🔬' },

@@ -2,78 +2,93 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { contactSubmissions } from '../api/client'
 
+const SIDEBAR_ICON_STYLE = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
+}
+
+const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+
 const adminLinks = [
   {
     to: '/orders',
     title: 'Orders',
     description: 'View and manage waste disposal orders.',
-    icon: '📦',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>),
   },
   {
     to: '/generators',
     title: 'Generators',
     description: 'Manage generator profiles and locations.',
-    icon: '🏭',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5 3V6l4 2V4l5 4v11"/><path d="M9 21v-4h3v4"/></svg>),
   },
   {
     to: '/shippers',
     title: 'Shippers',
     description: 'Create and maintain shipper profiles.',
-    icon: '🚢',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>),
   },
   {
     to: '/incinerators',
     title: 'Incinerators',
     description: 'Manage incinerator and disposal facility profiles.',
-    icon: '🔥',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c1 3 3 5 6 6-2 4-4 8-6 12-2-4-4-8-6-12 3-1 5-3 6-6z"/></svg>),
   },
   {
     to: '/epa-form',
     title: 'EPA Form',
     description: 'Open the EPA hazardous waste manifest form.',
-    icon: '📋',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>),
   },
   {
     to: '/forms',
     title: 'Incinerator Form Manager',
     description: 'Import and manage form templates for auto-population.',
-    icon: '📄',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>),
   },
   {
     to: '/sds',
     title: 'SDS',
     description: 'Import and manage Safety Data Sheets.',
-    icon: '🧪',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><path d="M8 14h8"/></svg>),
   },
   {
     to: '/marketplace',
     title: 'Marketplace',
     description: 'Manage and review marketplace listings and bids.',
-    icon: '🏬',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>),
   },
   {
     to: '/admin/chemicals',
     title: 'Chemical Database',
     description: 'View all chemical records, sources, and import history.',
-    icon: '🧪',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><circle cx="12" cy="14" r="1"/></svg>),
   },
   {
     to: '/site-manager',
     title: 'Site Manager',
     description: 'Review system error logs, including storage failures.',
-    icon: '🛠️',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>),
   },
   {
     to: '/admin/contact-submissions',
     title: 'Contact Form Submissions',
     description: 'Review contact and demo submissions from the home page.',
-    icon: '📬',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>),
   },
   {
     to: '/admin/users',
     title: 'User Management',
     description: 'Manage user accounts and role assignments.',
-    icon: '👤',
+    icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>),
   },
 ]
 
@@ -317,24 +332,27 @@ export default function Admin() {
         </p>
       </div>
 
-      <div className="admin-links-grid">
-        {adminLinks.map(({ to, title, icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className="card admin-link-card"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#14532d',
-            }}
-          >
-            <div style={{ fontSize: '2rem' }}>{icon}</div>
-            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{title}</h2>
-          </Link>
-        ))}
+      <div className="profile-sidebar-layout">
+        {/* Left sidebar navigation */}
+        <div className="profile-sidebar">
+          {adminLinks.map(({ to, title, icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="profile-sidebar-btn"
+            >
+              <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{icon}</span></span>
+              {title}
+            </Link>
+          ))}
+        </div>
+
+        {/* Main content area */}
+        <div className="profile-main-content">
+          <div className="card" style={{ marginTop: 0, padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+            <p style={{ fontSize: '0.95rem' }}>Select an admin section from the menu to get started.</p>
+          </div>
+        </div>
       </div>
 
     </div>

@@ -2,10 +2,31 @@ import { useState } from 'react'
 import axios from 'axios'
 import { isStaticMode } from '../api/client'
 
+const SIDEBAR_ICON_STYLE = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
+}
+
+const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+
 const SEARCH_TYPES = [
-  { key: 'name', label: '🔤 By Name', description: 'Search by substance or synonym name' },
-  { key: 'cas', label: '🔢 By CAS Number', description: 'Search by CAS Registry Number (e.g. 67-64-1)' },
-  { key: 'id', label: '🆔 By SRS ID', description: 'Search by EPA internal Substance ID' },
+  { key: 'name', label: 'By Name', description: 'Search by substance or synonym name', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+  )},
+  { key: 'cas', label: 'By CAS Number', description: 'Search by CAS Registry Number (e.g. 67-64-1)', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18" cy="18" r="3"/></svg>
+  )},
+  { key: 'id', label: 'By SRS ID', description: 'Search by EPA internal Substance ID', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>
+  )},
 ]
 
 const LIST_ACRONYMS = [
@@ -109,6 +130,7 @@ export default function EPASRSLookup() {
               className={`profile-sidebar-btn${activeType === item.key ? ' active' : ''}`}
               onClick={() => { setActiveType(item.key); setResults(null); setError('') }}
             >
+              <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{item.icon}</span></span>
               {item.label}
             </button>
           ))}
