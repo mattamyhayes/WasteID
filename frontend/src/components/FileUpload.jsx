@@ -11,12 +11,14 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
   const [docType, setDocType] = useState(fixedDocType || '')
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
   const effectiveDocType = fixedDocType || docType
 
   const handleFileChange = (e) => {
     setError('')
+    setSuccess('')
     const selected = e.target.files?.[0] || null
     if (!selected) {
       setFile(null)
@@ -43,6 +45,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
     }
     setUploading(true)
     setError('')
+    setSuccess('')
     try {
       // If profile hasn't been saved yet, auto-save it first
       let resolvedProfileId = profileId
@@ -59,6 +62,7 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
       setFile(null)
       setDocType(fixedDocType || '')
       if (fileInputRef.current) fileInputRef.current.value = ''
+      setSuccess(`✓ "${shortName}" uploaded successfully.`)
       if (onUploaded) onUploaded()
     } catch (e) {
       setError(e?.response?.data?.detail || 'Failed to upload document. Please try again.')
@@ -77,6 +81,12 @@ export default function FileUpload({ profileId, transactionId, onBeforeUpload, o
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '0.75rem', color: '#b91c1c', fontSize: '0.88rem' }}>
           ⚠ {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '0.75rem', color: '#166534', fontSize: '0.88rem' }}>
+          {success}
         </div>
       )}
 

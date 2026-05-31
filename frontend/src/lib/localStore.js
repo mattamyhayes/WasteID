@@ -1907,7 +1907,7 @@ function saveDocumentsStore(store) {
 }
 
 // Allowed and blocked extensions mirroring the backend
-const ALLOWED_EXTENSIONS = new Set(['.pdf', '.sds', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.tif', '.tiff'])
+const ALLOWED_EXTENSIONS = new Set(['.pdf', '.sds', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg', '.gif', '.tif', '.tiff', '.rtf'])
 const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.js', '.vbs',
   '.wsf', '.ps1', '.sh', '.bash', '.php', '.py', '.rb', '.pl', '.jar',
   '.dll', '.sys', '.htm', '.html', '.svg', '.swf'])
