@@ -82,7 +82,9 @@ input, select, textarea {
 }
 
 .profile-sidebar-btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   width: 100%;
   text-align: left;
   padding: 0.6rem 1rem;

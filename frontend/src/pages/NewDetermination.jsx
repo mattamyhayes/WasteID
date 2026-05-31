@@ -45,6 +45,21 @@ const EPA_GENERATOR_STATUS_GUIDANCE = {
   ],
 }
 
+const SIDEBAR_ICON_STYLE = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
+  color: '#fff',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: '0 4px 8px rgba(20,83,45,0.15)',
+}
+
+const SIDEBAR_SVG_STYLE = { width: 16, height: 16, display: 'inline-flex' }
+
 export default function NewDetermination() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -337,17 +352,29 @@ export default function NewDetermination() {
   const [activeSection, setActiveSection] = useState('upload')
 
   const SIDEBAR_ITEMS = [
-    { key: 'upload', label: '📄 SDS Upload' },
-    { key: 'mixture', label: '🧪 Mixture' },
-    { key: 'generator', label: '🏭 Generator' },
-    { key: 'analytics', label: '📊 Analytics' },
-    { key: 'stateRules', label: '📜 State Rules' },
-    { key: 'notes', label: '📝 Notes' },
+    { key: 'upload', label: 'SDS Upload', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+    )},
+    { key: 'mixture', label: 'Mixture', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><path d="M8 14h8"/></svg>
+    )},
+    { key: 'generator', label: 'Generator', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5 3V6l4 2V4l5 4v11"/><path d="M9 21v-4h3v4"/></svg>
+    )},
+    { key: 'analytics', label: 'Analytics', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    )},
+    { key: 'stateRules', label: 'State Rules', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    )},
+    { key: 'notes', label: 'Notes', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    )},
   ]
 
   return (
     <div className="profile-page" style={{ padding: '2rem 1.5rem' }}>
-      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'New Profile'}</h1>
+      <h1 style={{ color: '#14532d', marginBottom: '0.5rem' }}>{mixtureId ? `Profile: ${transactionId || mixtureId}` : 'Profile'}</h1>
 
       {/* Days Remaining Banner */}
       {shipByInfo && (
@@ -401,6 +428,7 @@ export default function NewDetermination() {
               className={`profile-sidebar-btn${activeSection === item.key ? ' active' : ''}`}
               onClick={() => setActiveSection(item.key)}
             >
+              <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}>{item.icon}</span></span>
               {item.label}
             </button>
           ))}
@@ -409,14 +437,16 @@ export default function NewDetermination() {
             onClick={handleSubmitForReview}
             disabled={submitting}
           >
-            {submitting ? 'Saving…' : '📋 Submit for Review'}
+            <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span></span>
+            {submitting ? 'Saving…' : 'Submit for Review'}
           </button>
           <button
             className="profile-sidebar-btn"
             onClick={handleCreateDetermination}
             disabled={submitting}
           >
-            {submitting ? 'Saving…' : '🧪 Create Determination'}
+            <span style={SIDEBAR_ICON_STYLE}><span style={SIDEBAR_SVG_STYLE}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L9 7V3z"/><line x1="9" y1="3" x2="15" y2="3"/><circle cx="12" cy="14" r="1"/></svg></span></span>
+            {submitting ? 'Saving…' : 'Create Determination'}
           </button>
         </div>
 
