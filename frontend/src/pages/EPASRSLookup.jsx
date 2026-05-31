@@ -271,7 +271,6 @@ const PHYSICAL_CHARACTERISTICS = [
   'Color',
   'pH',
   'Odor',
-  'Phases/layers',
   'Phases/Layers',
 ]
 
@@ -307,6 +306,8 @@ const OTHER_CHARACTERISTICS = [
   'Reactive Sulfides',
 ]
 
+const WASTE_CODE_PATTERN = /^[DFKPU]\d{3}/i
+
 function categorizeCharacteristics(substance) {
   // Gather characteristics from the substance data
   const rawCharacteristics = substance.characteristics || []
@@ -314,9 +315,7 @@ function categorizeCharacteristics(substance) {
   const chemical = []
   const other = []
 
-  const allItems = Array.isArray(rawCharacteristics) ? rawCharacteristics : []
-
-  allItems.forEach(item => {
+  rawCharacteristics.forEach(item => {
     const label = typeof item === 'string' ? item : (item.name || item.characteristicName || '')
     const value = typeof item === 'object' ? (item.value || item.characteristicValue || '') : ''
     const entry = { label, value }
@@ -348,7 +347,7 @@ function extractWasteCodes(substance) {
       const acronym = list.listAcronym || list.name || ''
       const listName = list.listName || ''
       // Look for RCRA waste codes (D, F, K, P, U codes)
-      if (/^[DFKPU]\d{3}/i.test(acronym) || /^[DFKPU]\d{3}/i.test(listName)) {
+      if (WASTE_CODE_PATTERN.test(acronym) || WASTE_CODE_PATTERN.test(listName)) {
         codes.push(acronym || listName)
       }
       // Also check if the list has associated waste codes
@@ -367,7 +366,7 @@ function extractWasteCodes(substance) {
   if (Array.isArray(classifications)) {
     classifications.forEach(cls => {
       const name = typeof cls === 'string' ? cls : (cls.name || cls.classificationName || '')
-      if (/^[DFKPU]\d{3}/i.test(name)) {
+      if (WASTE_CODE_PATTERN.test(name)) {
         codes.push(name)
       }
     })
