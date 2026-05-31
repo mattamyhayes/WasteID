@@ -477,6 +477,11 @@ export default function NewDetermination() {
                 Search the EPA chemical database or enter custom chemical names with quantities.
                 You can edit component quantities and percentages after adding them.
               </p>
+              <div className="form-group">
+                <label>Mixture / Sample Name *</label>
+                <input className="form-control" value={name} onChange={e => setName(e.target.value)}
+                  placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
+              </div>
               <MixtureBuilder components={components} onChange={setComponents} editable />
             </div>
           )}
@@ -524,12 +529,6 @@ export default function NewDetermination() {
                     <Link to="/generators" style={{ color: '#166534', fontWeight: 600 }}>View generators</Link> to add a location.
                   </small>
                 )}
-              </div>
-
-              <div className="form-group">
-                <label>Mixture / Sample Name *</label>
-                <input className="form-control" value={name} onChange={e => setName(e.target.value)}
-                  placeholder="e.g., Waste Solvent Batch #12, Lab Cleanup Mixture" />
               </div>
 
               <div className="form-group">
